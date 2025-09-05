@@ -65,7 +65,7 @@ The application features a modern, responsive UI with real-time resource control
 
 3. **Access your deployed application**:
    - Frontend: `https://upsun-demo-app-{project}.upsunapp.com`
-   - API Gateway: `https://api-gateway-upsun-demo-app-{project}.upsunapp.com`
+   - API Gateway: `https://api.upsun-demo-app-{project}.upsunapp.com`
 
 **Note**: The application uses Upsun's internal relationships for service communication. Services communicate via `http://service-name.internal` URLs, which are automatically configured by Upsun based on the relationships defined in `.upsun/config.yaml`.
 
