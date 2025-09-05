@@ -1,8 +1,8 @@
 applications:
   api-gateway:
-    type: python:3.13
+    type: python:3.11
     source:
-      root: /api-gateway
+      root: api-gateway
     hooks:
       build: |
         set -ex
@@ -25,9 +25,9 @@ applications:
         endpoint: "http"
 
   cpu-worker:
-    type: python:3.13
+    type: python:3.11
     source:
-      root: /cpu-worker
+      root: cpu-worker
     hooks:
       build: |
         set -ex
@@ -40,9 +40,9 @@ applications:
           passthru: true
 
   memory-worker:
-    type: python:3.13
+    type: python:3.11
     source:
-      root: /memory-worker
+      root: memory-worker
     hooks:
       build: |
         set -ex
@@ -55,9 +55,9 @@ applications:
           passthru: true
 
   network-simulator:
-    type: python:3.13
+    type: python:3.11
     source:
-      root: /network-simulator
+      root: network-simulator
     hooks:
       build: |
         set -ex
@@ -70,19 +70,17 @@ applications:
           passthru: true
 
   frontend:
-    type: nodejs:22
+    type: nodejs:20
     source:
-      root: /frontend
-    build:
-      flavor: none
+      root: frontend
     hooks:
       build: |
         set -ex
-        npm install --omit=dev
+        npm ci
         npm run build
     web:
       commands:
-        start: npm start
+        start: npx serve -s build -l 3000
       locations:
         /:
           root: build
