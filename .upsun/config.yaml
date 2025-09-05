@@ -1,0 +1,102 @@
+applications:
+  api-gateway:
+    type: python:3.13
+    source:
+      root: /api-gateway
+    hooks:
+      build: |
+        set -ex
+        pip install -r requirements.txt
+    web:
+      commands:
+        start: python app.py
+      locations:
+        /:
+          passthru: true
+    relationships:
+      redis: {}
+
+  cpu-worker:
+    type: python:3.13
+    source:
+      root: /cpu-worker
+    hooks:
+      build: |
+        set -ex
+        pip install -r requirements.txt
+    web:
+      commands:
+        start: python app.py
+      locations:
+        /:
+          passthru: true
+    relationships:
+      api-gateway: {}
+      redis: {}
+
+  memory-worker:
+    type: python:3.13
+    source:
+      root: /memory-worker
+    hooks:
+      build: |
+        set -ex
+        pip install -r requirements.txt
+    web:
+      commands:
+        start: python app.py
+      locations:
+        /:
+          passthru: true
+    relationships:
+      api-gateway: {}
+      redis: {}
+
+  network-simulator:
+    type: python:3.13
+    source:
+      root: /network-simulator
+    hooks:
+      build: |
+        set -ex
+        pip install -r requirements.txt
+    web:
+      commands:
+        start: python app.py
+      locations:
+        /:
+          passthru: true
+    relationships:
+      api-gateway: {}
+      redis: {}
+
+  frontend:
+    type: nodejs:22
+    source:
+      root: /frontend
+    build:
+      flavor: none
+    hooks:
+      build: |
+        set -ex
+        npm install --omit=dev
+        npm run build
+    web:
+      commands:
+        start: npm start
+      locations:
+        /:
+          root: build
+          passthru: true
+          index: [index.html]
+    relationships:
+      api-gateway: {}
+
+services:
+  redis:
+    type: redis:7.2
+
+routes:
+  https://{default}/:
+    type: upstream
+    upstream: frontend:http
