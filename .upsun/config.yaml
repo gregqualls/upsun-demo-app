@@ -76,6 +76,9 @@ applications:
     hooks:
       build: |
         set -ex
+        pwd
+        ls -la
+        ls -la public/
         npm ci
         npm run build
         ls -la build/
