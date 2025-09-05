@@ -2,6 +2,12 @@
 
 A multi-service application that simulates resource utilization to demonstrate Upsun's auto-scaling and monitoring capabilities. Perfect for showcasing Upsun's platform features in demos and presentations.
 
+[![GitHub](https://img.shields.io/github/license/gregqualls/upsun-demo-app)](https://github.com/gregqualls/upsun-demo-app)
+[![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![React](https://img.shields.io/badge/react-18.2.0-blue.svg)](https://reactjs.org/)
+[![FastAPI](https://img.shields.io/badge/fastapi-0.104.1-green.svg)](https://fastapi.tiangolo.com/)
+[![Tailwind CSS](https://img.shields.io/badge/tailwindcss-3.3.0-blue.svg)](https://tailwindcss.com/)
+
 ## 🏗️ Architecture
 
 - **Frontend**: React + Tailwind CSS with dark mode
