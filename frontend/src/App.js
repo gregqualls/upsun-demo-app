@@ -15,6 +15,7 @@ function App() {
     network: 0
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [apiError, setApiError] = useState(null);
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8004';
 
@@ -25,16 +26,15 @@ function App() {
         mode: 'cors',
         credentials: 'omit'
       });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       const data = await response.json();
       setServices(data);
+      setApiError(null);
     } catch (error) {
       console.error('Error fetching services status:', error);
-      // Set mock data for demo purposes
-      setServices({
-        cpu_worker: { status: 'healthy', url: 'http://cpu-worker.internal' },
-        memory_worker: { status: 'healthy', url: 'http://memory-worker.internal' },
-        network_simulator: { status: 'healthy', url: 'http://network-simulator.internal' }
-      });
+      setApiError(`API Error: ${error.message}`);
     }
   };
 
@@ -45,38 +45,15 @@ function App() {
         mode: 'cors',
         credentials: 'omit'
       });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       const data = await response.json();
       setMetrics(data);
+      setApiError(null);
     } catch (error) {
       console.error('Error fetching metrics:', error);
-      // Set mock data for demo purposes when SSL fails
-      setMetrics({
-        cpu_worker: {
-          cpu_percent: Math.random() * 20 + 5,
-          memory_percent: Math.random() * 30 + 20,
-          memory_used_mb: Math.random() * 10000 + 5000,
-          memory_total_mb: 60000,
-          current_level: resourceLevels.cpu || 0,
-          is_running: resourceLevels.cpu > 0
-        },
-        memory_worker: {
-          memory_percent: Math.random() * 30 + 20,
-          memory_used_mb: Math.random() * 10000 + 5000,
-          memory_total_mb: 60000,
-          process_memory_mb: Math.random() * 100 + 50,
-          data_structures_count: Math.floor(Math.random() * 1000),
-          current_level: resourceLevels.memory || 0,
-          is_running: resourceLevels.memory > 0
-        },
-        network_simulator: {
-          request_count: Math.floor(Math.random() * 1000),
-          error_count: Math.floor(Math.random() * 10),
-          success_rate: Math.random() * 20 + 80,
-          current_level: resourceLevels.network || 0,
-          is_running: resourceLevels.network > 0,
-          target_requests_per_second: (resourceLevels.network || 0) * 10
-        }
-      });
+      setApiError(`API Error: ${error.message}`);
     }
   };
 
@@ -87,14 +64,15 @@ function App() {
         mode: 'cors',
         credentials: 'omit'
       });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       const data = await response.json();
       setResourceLevels(data);
+      setApiError(null);
     } catch (error) {
       console.error('Error fetching resource levels:', error);
-      // Keep current resource levels or set defaults
-      if (Object.keys(resourceLevels).length === 0) {
-        setResourceLevels({ cpu: 0, memory: 0, network: 0 });
-      }
+      setApiError(`API Error: ${error.message}`);
     }
   };
 
@@ -114,13 +92,15 @@ function App() {
       if (response.ok) {
         const data = await response.json();
         setResourceLevels(data.levels);
+        setApiError(null);
+        // Refresh metrics after successful update
+        fetchMetrics();
+      } else {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
     } catch (error) {
       console.error('Error updating resource levels:', error);
-      // Update local state even if API call fails (for demo purposes)
-      setResourceLevels(newLevels);
-      // Refresh metrics with mock data
-      fetchMetrics();
+      setApiError(`API Error: ${error.message}`);
     }
   };
 
@@ -167,6 +147,28 @@ function App() {
         <Header />
         
         <main className="container mx-auto px-4 py-8">
+          {/* API Error Display */}
+          {apiError && (
+            <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                    API Connection Error
+                  </h3>
+                  <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+                    <p>{apiError}</p>
+                    <p className="mt-1">The application cannot connect to the backend API. This may be due to SSL certificate issues or network connectivity problems.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Service Status */}
             <div className="lg:col-span-1">
