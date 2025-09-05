@@ -96,7 +96,7 @@ applications:
         endpoint: "http"
     variables:
       env:
-        REACT_APP_API_URL: "https://api.{default}/"
+        REACT_APP_API_URL: "https://api.%{default}/"
 
 
 routes:
