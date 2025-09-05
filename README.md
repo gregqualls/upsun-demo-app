@@ -51,13 +51,13 @@ The application features a modern, responsive UI with real-time resource control
 
 1. **Prerequisites**:
    - Upsun account and organization
-   - Your preferred Upsun deployment tool
+   - Upsun CLI installed
 
 2. **Deploy to Upsun**:
    ```bash
-   ./deploy.sh  # Shows deployment instructions
+   upsun project:create upsun-demo-app
+   upsun app:deploy
    ```
-   Use your Upsun deployment tool to create the services listed in the script.
 
 3. **Access your deployed application**:
    - Frontend: `https://upsun-demo-frontend-{project}.upsunapp.com`
