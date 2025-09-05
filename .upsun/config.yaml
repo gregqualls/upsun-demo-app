@@ -14,7 +14,15 @@ applications:
         /:
           passthru: true
     relationships:
-      redis: {}
+      cpu-worker:
+        service: "cpu-worker"
+        endpoint: "http"
+      memory-worker:
+        service: "memory-worker"
+        endpoint: "http"
+      network-simulator:
+        service: "network-simulator"
+        endpoint: "http"
 
   cpu-worker:
     type: python:3.13
@@ -30,9 +38,6 @@ applications:
       locations:
         /:
           passthru: true
-    relationships:
-      api-gateway: {}
-      redis: {}
 
   memory-worker:
     type: python:3.13
@@ -48,9 +53,6 @@ applications:
       locations:
         /:
           passthru: true
-    relationships:
-      api-gateway: {}
-      redis: {}
 
   network-simulator:
     type: python:3.13
@@ -66,9 +68,6 @@ applications:
       locations:
         /:
           passthru: true
-    relationships:
-      api-gateway: {}
-      redis: {}
 
   frontend:
     type: nodejs:22
@@ -90,13 +89,18 @@ applications:
           passthru: true
           index: [index.html]
     relationships:
-      api-gateway: {}
+      api-gateway:
+        service: "api-gateway"
+        endpoint: "http"
+    variables:
+      env:
+        REACT_APP_API_URL: "https://api-gateway-{default}/"
 
-services:
-  redis:
-    type: redis:7.2
 
 routes:
   https://{default}/:
     type: upstream
     upstream: frontend:http
+  https://api-gateway-{default}/:
+    type: upstream
+    upstream: api-gateway:http

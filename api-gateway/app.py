@@ -18,13 +18,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Service URLs (will be configured via environment variables in Upsun)
+# Service URLs - Use Upsun internal relationships or localhost for development
 SERVICES = {
-    "cpu_worker": os.getenv("CPU_WORKER_URL", "http://localhost:8001"),
-    "memory_worker": os.getenv("MEMORY_WORKER_URL", "http://localhost:8002"),
-    "network_simulator": os.getenv("NETWORK_SIMULATOR_URL", "http://localhost:8003"),
-    "redis": os.getenv("REDIS_URL", "redis://localhost:6379")
+    "cpu_worker": os.getenv("CPU_WORKER_HOST", "cpu-worker.internal"),
+    "memory_worker": os.getenv("MEMORY_WORKER_HOST", "memory-worker.internal"),
+    "network_simulator": os.getenv("NETWORK_SIMULATOR_HOST", "network-simulator.internal"),
 }
+
+# For local development, use localhost URLs
+if os.getenv("PLATFORM_APPLICATION_NAME") is None:  # Not running on Upsun
+    SERVICES = {
+        "cpu_worker": "http://localhost:8001",
+        "memory_worker": "http://localhost:8002", 
+        "network_simulator": "http://localhost:8003",
+    }
+else:  # Running on Upsun, use internal URLs
+    SERVICES = {
+        "cpu_worker": "http://cpu-worker.internal",
+        "memory_worker": "http://memory-worker.internal",
+        "network_simulator": "http://network-simulator.internal",
+    }
 
 # Global state for resource levels
 resource_levels = {
@@ -48,9 +61,6 @@ async def get_services_status():
     status = {}
     
     for service_name, service_url in SERVICES.items():
-        if service_name == "redis":
-            continue  # Skip Redis for now
-            
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
                 response = await client.get(f"{service_url}/health")
@@ -91,9 +101,6 @@ async def update_resource_levels(levels: Dict[str, int]):
     async with httpx.AsyncClient(timeout=10.0) as client:
         tasks = []
         for service_name, service_url in SERVICES.items():
-            if service_name == "redis":
-                continue
-                
             # Send only relevant resource type to each service
             service_resources = {}
             if service_name == "cpu_worker" and "cpu" in levels:
@@ -128,9 +135,6 @@ async def get_metrics():
     metrics = {}
     
     for service_name, service_url in SERVICES.items():
-        if service_name == "redis":
-            continue
-            
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
                 response = await client.get(f"{service_url}/metrics")
