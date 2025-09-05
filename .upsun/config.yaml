@@ -78,6 +78,7 @@ applications:
         set -ex
         npm ci
         npm run build
+        ls -la build/
     web:
       commands:
         start: npx serve -s build -l 3000
