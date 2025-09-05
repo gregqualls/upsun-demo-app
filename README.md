@@ -25,7 +25,8 @@ The application features a modern, responsive UI with real-time resource control
 - **CPU Worker**: Python service for CPU-intensive tasks
 - **Memory Worker**: Python service for memory-intensive tasks
 - **Network Simulator**: Service for inter-service communication
-- **Redis**: Caching and message queuing (managed by Upsun)
+
+**Service Communication**: All services communicate via HTTP using Upsun's internal relationships (`http://service-name.internal`), eliminating the need for external dependencies like Redis.
 
 ## 🚀 Quick Start
 
@@ -55,13 +56,18 @@ The application features a modern, responsive UI with real-time resource control
 
 2. **Deploy to Upsun**:
    ```bash
+   # Create a new project
    upsun project:create upsun-demo-app
+   
+   # Deploy the application
    upsun app:deploy
    ```
 
 3. **Access your deployed application**:
-   - Frontend: `https://upsun-demo-frontend-{project}.upsunapp.com`
-   - API Gateway: `https://upsun-demo-api-gateway-{project}.upsunapp.com`
+   - Frontend: `https://upsun-demo-app-{project}.upsunapp.com`
+   - API Gateway: `https://api-gateway-upsun-demo-app-{project}.upsunapp.com`
+
+**Note**: The application uses Upsun's internal relationships for service communication. Services communicate via `http://service-name.internal` URLs, which are automatically configured by Upsun based on the relationships defined in `.upsun/config.yaml`.
 
 ## 🎯 Demo Features
 
