@@ -8,6 +8,16 @@ A multi-service application that simulates resource utilization to demonstrate U
 [![FastAPI](https://img.shields.io/badge/fastapi-0.104.1-green.svg)](https://fastapi.tiangolo.com/)
 [![Tailwind CSS](https://img.shields.io/badge/tailwindcss-3.3.0-blue.svg)](https://tailwindcss.com/)
 
+## 🎬 Demo
+
+The application features a modern, responsive UI with real-time resource controls and monitoring:
+
+- **Resource Control Sliders**: Adjust CPU, memory, and network usage in real-time
+- **Service Status Dashboard**: Live health checks and status indicators
+- **Real-time Metrics**: Live updates of resource consumption and performance
+- **Dark Mode Toggle**: Switch between light and dark themes
+- **Demo-Optimized UI**: Large, clear elements perfect for screen recording
+
 ## 🏗️ Architecture
 
 - **Frontend**: React + Tailwind CSS with dark mode
