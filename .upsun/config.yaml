@@ -94,13 +94,13 @@ applications:
         endpoint: "http"
     variables:
       env:
-        REACT_APP_API_URL: "https://api-gateway-{default}/"
+        REACT_APP_API_URL: "https://api.{default}/"
 
 
 routes:
   https://{default}/:
     type: upstream
     upstream: frontend:http
-  https://api-gateway-{default}/:
+  https://api.{default}/:
     type: upstream
     upstream: api-gateway:http
