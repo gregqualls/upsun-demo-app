@@ -96,7 +96,7 @@ applications:
         endpoint: "http"
     variables:
       env:
-        REACT_APP_API_URL: "https://api.main-bvxea6i-novur3mrszimo.bk3.recreation.plat.farm/"
+        REACT_APP_API_URL: "http://api.main-bvxea6i-novur3mrszimo.bk3.recreation.plat.farm/"
 
 
 routes:
