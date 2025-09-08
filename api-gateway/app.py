@@ -18,26 +18,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Service URLs - Use Upsun internal relationships or localhost for development
-SERVICES = {
-    "cpu_worker": os.getenv("CPU_WORKER_HOST", "cpu-worker.internal"),
-    "memory_worker": os.getenv("MEMORY_WORKER_HOST", "memory-worker.internal"),
-    "network_simulator": os.getenv("NETWORK_SIMULATOR_HOST", "network-simulator.internal"),
-}
+# Service URLs - Use Upsun relationship environment variables
+def get_service_urls():
+    """Get service URLs based on environment (Upsun vs local)"""
+    if os.getenv("PLATFORM_APPLICATION_NAME"):  # Running on Upsun
+        # Use Upsun relationship environment variables
+        return {
+            "cpu_worker": os.getenv("PLATFORM_RELATIONSHIPS_CPU_WORKER_0_URL", "http://cpu-worker.internal"),
+            "memory_worker": os.getenv("PLATFORM_RELATIONSHIPS_MEMORY_WORKER_0_URL", "http://memory-worker.internal"),
+            "network_simulator": os.getenv("PLATFORM_RELATIONSHIPS_NETWORK_SIMULATOR_0_URL", "http://network-simulator.internal"),
+        }
+    else:  # Local development
+        return {
+            "cpu_worker": "http://localhost:8001",
+            "memory_worker": "http://localhost:8002", 
+            "network_simulator": "http://localhost:8003",
+        }
 
-# For local development, use localhost URLs
-if os.getenv("PLATFORM_APPLICATION_NAME") is None:  # Not running on Upsun
-    SERVICES = {
-        "cpu_worker": "http://localhost:8001",
-        "memory_worker": "http://localhost:8002", 
-        "network_simulator": "http://localhost:8003",
-    }
-else:  # Running on Upsun, use internal URLs
-    SERVICES = {
-        "cpu_worker": "http://cpu-worker.internal",
-        "memory_worker": "http://memory-worker.internal",
-        "network_simulator": "http://network-simulator.internal",
-    }
+SERVICES = get_service_urls()
 
 # Global state for resource levels
 resource_levels = {
@@ -60,15 +58,23 @@ async def get_services_status():
     """Get status of all services"""
     status = {}
     
+    # Debug: Print environment variables and service URLs
+    print(f"Platform Application Name: {os.getenv('PLATFORM_APPLICATION_NAME')}")
+    print(f"Service URLs: {SERVICES}")
+    
     for service_name, service_url in SERVICES.items():
         try:
+            print(f"Checking {service_name} at {service_url}")
             async with httpx.AsyncClient(timeout=5.0) as client:
                 response = await client.get(f"{service_url}/health")
                 status[service_name] = {
                     "status": "healthy" if response.status_code == 200 else "unhealthy",
-                    "url": service_url
+                    "url": service_url,
+                    "response_code": response.status_code
                 }
+                print(f"{service_name} responded with status {response.status_code}")
         except Exception as e:
+            print(f"Error connecting to {service_name}: {e}")
             status[service_name] = {
                 "status": "unhealthy",
                 "error": str(e),
