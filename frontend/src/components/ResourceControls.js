@@ -228,38 +228,55 @@ const ResourceControls = ({ resourceLevels, onUpdate, systemInfo, stressMode, on
         ))}
       </div>
 
-      {/* System Information */}
+      {/* Dynamic System Information */}
       {systemInfo && systemInfo.cpu_worker && (
         <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
           <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-3 flex items-center">
             <Cpu className="w-5 h-5 mr-2" />
-            System Resources
+            Dynamic System Resources
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-blue-700 dark:text-blue-300 font-medium">CPU Cores:</span>
-              <span className="ml-2 text-blue-900 dark:text-blue-100">
-                {systemInfo.cpu_worker.upsun_cpu_limit || systemInfo.cpu_worker.cpu_count}
+              <span className="text-blue-700 dark:text-blue-300 font-medium">CPU Cores (Upsun):</span>
+              <span className="ml-2 text-blue-900 dark:text-blue-100 font-mono">
+                {systemInfo.cpu_worker.upsun_cpu_limit} cores
               </span>
             </div>
             <div>
-              <span className="text-blue-700 dark:text-blue-300 font-medium">Memory Limit:</span>
-              <span className="ml-2 text-blue-900 dark:text-blue-100">
-                {Math.round(systemInfo.cpu_worker.upsun_memory_limit_mb || systemInfo.cpu_worker.memory_total_mb)} MB
+              <span className="text-blue-700 dark:text-blue-300 font-medium">Memory Limit (Upsun):</span>
+              <span className="ml-2 text-blue-900 dark:text-blue-100 font-mono">
+                {Math.round(systemInfo.cpu_worker.upsun_memory_limit_mb)} MB
               </span>
             </div>
             <div>
-              <span className="text-blue-700 dark:text-blue-300 font-medium">Platform:</span>
-              <span className="ml-2 text-blue-900 dark:text-blue-100 capitalize">
-                {systemInfo.cpu_worker.platform}
+              <span className="text-blue-700 dark:text-blue-300 font-medium">Container Profile:</span>
+              <span className="ml-2 text-blue-900 dark:text-blue-100 font-mono">
+                {systemInfo.cpu_worker.container_profile}
+              </span>
+            </div>
+            <div>
+              <span className="text-blue-700 dark:text-blue-300 font-medium">Instances:</span>
+              <span className="ml-2 text-blue-900 dark:text-blue-100 font-mono">
+                {systemInfo.cpu_worker.instance_count}
+              </span>
+            </div>
+            <div>
+              <span className="text-blue-700 dark:text-blue-300 font-medium">Memory Used:</span>
+              <span className="ml-2 text-blue-900 dark:text-blue-100 font-mono">
+                {Math.round(systemInfo.cpu_worker.memory_used_mb)} MB ({Math.round(systemInfo.cpu_worker.memory_percent)}%)
               </span>
             </div>
             <div>
               <span className="text-blue-700 dark:text-blue-300 font-medium">Available Memory:</span>
-              <span className="ml-2 text-blue-900 dark:text-blue-100">
+              <span className="ml-2 text-blue-900 dark:text-blue-100 font-mono">
                 {Math.round(systemInfo.cpu_worker.memory_available_mb)} MB
               </span>
             </div>
+          </div>
+          <div className="mt-3 p-2 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
+            <p className="text-xs text-green-700 dark:text-green-300">
+              ✅ <strong>Fully Dynamic:</strong> These values are pulled directly from Upsun's container environment in real-time
+            </p>
           </div>
         </div>
       )}

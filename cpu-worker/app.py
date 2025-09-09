@@ -38,51 +38,70 @@ def get_system_info():
     upsun_cpu_limit = None
     upsun_memory_limit = None
     
-    # Check for Upsun environment variables
+    # Check for Upsun environment variables - get ACTUAL resource limits
     if os.getenv("PLATFORM_APPLICATION"):
         try:
             app_config = json.loads(os.getenv("PLATFORM_APPLICATION", "{}"))
-            if "build" in app_config and "container_profile" in app_config["build"]:
-                profile = app_config["build"]["container_profile"]
-                if profile == "HIGH_CPU":
-                    upsun_cpu_limit = 2.0  # 2 CPU cores
-                elif profile == "MEDIUM_CPU":
-                    upsun_cpu_limit = 1.0  # 1 CPU core
-                else:
-                    upsun_cpu_limit = 0.5  # 0.5 CPU cores
+            # Get actual CPU limit from Upsun resources
+            if "resources" in app_config and "default" in app_config["resources"]:
+                upsun_cpu_limit = app_config["resources"]["default"].get("cpu", 0.5)
             else:
-                # Default to 0.5 CPU for Upsun if no profile specified
-                upsun_cpu_limit = 0.5
-        except:
-            # Default to 0.5 CPU for Upsun if parsing fails
+                # Fallback to container profile if resources not available
+                if "build" in app_config and "container_profile" in app_config["build"]:
+                    profile = app_config["build"]["container_profile"]
+                    if profile == "HIGH_CPU":
+                        upsun_cpu_limit = 2.0  # 2 CPU cores
+                    elif profile == "MEDIUM_CPU":
+                        upsun_cpu_limit = 1.0  # 1 CPU core
+                    else:
+                        upsun_cpu_limit = 0.5  # 0.5 CPU cores
+                else:
+                    upsun_cpu_limit = 0.5
+        except Exception as e:
+            print(f"Error parsing PLATFORM_APPLICATION: {e}")
             upsun_cpu_limit = 0.5
     
     # Fallback to detected CPU count if no Upsun limits
     if upsun_cpu_limit is None:
         upsun_cpu_limit = cpu_count
     
-    # Memory limit detection (Upsun typically provides this)
+    # Memory limit detection - get ACTUAL memory limits from Upsun
     if os.getenv("PLATFORM_APPLICATION"):
         try:
             app_config = json.loads(os.getenv("PLATFORM_APPLICATION", "{}"))
-            if "build" in app_config and "container_profile" in app_config["build"]:
-                profile = app_config["build"]["container_profile"]
-                if profile == "HIGH_CPU":
-                    upsun_memory_limit = 1024  # 1GB
-                elif profile == "MEDIUM_CPU":
-                    upsun_memory_limit = 512   # 512MB
-                else:
-                    upsun_memory_limit = 256   # 256MB
+            # Get actual memory limit from Upsun resources (in MB)
+            if "resources" in app_config and "default" in app_config["resources"]:
+                upsun_memory_limit = app_config["resources"]["default"].get("memory", 256)
             else:
-                # Default to 256MB for Upsun if no profile specified
-                upsun_memory_limit = 256
-        except:
-            # Default to 256MB for Upsun if parsing fails
+                # Fallback to container profile if resources not available
+                if "build" in app_config and "container_profile" in app_config["build"]:
+                    profile = app_config["build"]["container_profile"]
+                    if profile == "HIGH_CPU":
+                        upsun_memory_limit = 1024  # 1GB
+                    elif profile == "MEDIUM_CPU":
+                        upsun_memory_limit = 512   # 512MB
+                    else:
+                        upsun_memory_limit = 256   # 256MB
+                else:
+                    upsun_memory_limit = 256
+        except Exception as e:
+            print(f"Error parsing PLATFORM_APPLICATION for memory: {e}")
             upsun_memory_limit = 256
     
     # Fallback to detected memory if no Upsun limits
     if upsun_memory_limit is None:
         upsun_memory_limit = memory_info.total / (1024 * 1024)  # Convert to MB
+    
+    # Get additional Upsun information
+    container_profile = "unknown"
+    instance_count = 1
+    if os.getenv("PLATFORM_APPLICATION"):
+        try:
+            app_config = json.loads(os.getenv("PLATFORM_APPLICATION", "{}"))
+            container_profile = app_config.get("container_profile", "unknown")
+            instance_count = app_config.get("instance_count", 1)
+        except:
+            pass
     
     system_info = {
         "cpu_count": cpu_count,
@@ -90,7 +109,11 @@ def get_system_info():
         "memory_total_mb": memory_info.total / (1024 * 1024),
         "upsun_memory_limit_mb": upsun_memory_limit,
         "memory_available_mb": memory_info.available / (1024 * 1024),
-        "platform": "upsun" if os.getenv("PLATFORM_APPLICATION") else "local"
+        "platform": "upsun" if os.getenv("PLATFORM_APPLICATION") else "local",
+        "container_profile": container_profile,
+        "instance_count": instance_count,
+        "memory_used_mb": memory_info.used / (1024 * 1024),
+        "memory_percent": memory_info.percent
     }
     
     return system_info
