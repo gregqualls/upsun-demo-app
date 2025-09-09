@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Cpu, Database, Network, Play, Pause, RotateCcw } from 'lucide-react';
+import { Cpu, Database, Network, Play, Pause, RotateCcw, Zap, AlertTriangle } from 'lucide-react';
 
-const ResourceControls = ({ resourceLevels, onUpdate }) => {
+const ResourceControls = ({ resourceLevels, onUpdate, systemInfo, stressMode, onToggleStress }) => {
   const [localLevels, setLocalLevels] = useState(resourceLevels);
   const [isRunning, setIsRunning] = useState(false);
 
@@ -39,6 +39,22 @@ const ResourceControls = ({ resourceLevels, onUpdate }) => {
     setLocalLevels(newLevels);
     onUpdate(newLevels);
     setIsRunning(false);
+  };
+
+  const handleStressMode = () => {
+    if (onToggleStress) {
+      onToggleStress();
+    }
+  };
+
+  const handleTurnItUpTo11 = () => {
+    const newLevels = { cpu: 100, memory: 100, network: 100 };
+    setLocalLevels(newLevels);
+    onUpdate(newLevels);
+    setIsRunning(true);
+    if (!stressMode && onToggleStress) {
+      onToggleStress();
+    }
   };
 
   const getResourceIcon = (resource) => {
@@ -121,6 +137,24 @@ const ResourceControls = ({ resourceLevels, onUpdate }) => {
             <RotateCcw className="w-4 h-4" />
             <span>Reset</span>
           </button>
+          <button
+            onClick={handleStressMode}
+            className={`flex items-center space-x-2 ${
+              stressMode 
+                ? 'bg-orange-600 hover:bg-orange-700 text-white' 
+                : 'bg-gray-600 hover:bg-gray-700 text-white'
+            } px-4 py-2 rounded-lg font-medium transition-colors`}
+          >
+            <Zap className="w-4 h-4" />
+            <span>{stressMode ? 'Stress ON' : 'Stress OFF'}</span>
+          </button>
+          <button
+            onClick={handleTurnItUpTo11}
+            className="bg-red-600 hover:bg-red-700 text-white flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            <AlertTriangle className="w-4 h-4" />
+            <span>Turn it up to 11!</span>
+          </button>
         </div>
       </div>
 
@@ -194,6 +228,42 @@ const ResourceControls = ({ resourceLevels, onUpdate }) => {
         ))}
       </div>
 
+      {/* System Information */}
+      {systemInfo && systemInfo.cpu_worker && (
+        <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-3 flex items-center">
+            <Cpu className="w-5 h-5 mr-2" />
+            System Resources
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-blue-700 dark:text-blue-300 font-medium">CPU Cores:</span>
+              <span className="ml-2 text-blue-900 dark:text-blue-100">
+                {systemInfo.cpu_worker.upsun_cpu_limit || systemInfo.cpu_worker.cpu_count}
+              </span>
+            </div>
+            <div>
+              <span className="text-blue-700 dark:text-blue-300 font-medium">Memory Limit:</span>
+              <span className="ml-2 text-blue-900 dark:text-blue-100">
+                {Math.round(systemInfo.cpu_worker.upsun_memory_limit_mb || systemInfo.cpu_worker.memory_total_mb)} MB
+              </span>
+            </div>
+            <div>
+              <span className="text-blue-700 dark:text-blue-300 font-medium">Platform:</span>
+              <span className="ml-2 text-blue-900 dark:text-blue-100 capitalize">
+                {systemInfo.cpu_worker.platform}
+              </span>
+            </div>
+            <div>
+              <span className="text-blue-700 dark:text-blue-300 font-medium">Available Memory:</span>
+              <span className="ml-2 text-blue-900 dark:text-blue-100">
+                {Math.round(systemInfo.cpu_worker.memory_available_mb)} MB
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
         <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
           Demo Instructions
@@ -203,6 +273,8 @@ const ResourceControls = ({ resourceLevels, onUpdate }) => {
           <li>• Watch Upsun's auto-scaling in action</li>
           <li>• Monitor service health and performance</li>
           <li>• Use "Start All" for a quick demo setup</li>
+          <li>• <strong>Stress Mode:</strong> Exceeds 100% CPU utilization (up to 200%)</li>
+          <li>• <strong>Turn it up to 11:</strong> Maximum stress test with all resources at 100%</li>
         </ul>
       </div>
     </div>

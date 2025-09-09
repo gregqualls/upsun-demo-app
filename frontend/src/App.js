@@ -9,6 +9,8 @@ import './index.css';
 function App() {
   const [services, setServices] = useState({});
   const [metrics, setMetrics] = useState({});
+  const [systemInfo, setSystemInfo] = useState({});
+  const [stressMode, setStressMode] = useState(false);
   const [resourceLevels, setResourceLevels] = useState({
     cpu: 0,
     memory: 0,
@@ -94,6 +96,64 @@ function App() {
     }
   };
 
+  // Fetch system information
+  const fetchSystemInfo = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/system`, {
+        mode: 'cors',
+        credentials: 'omit'
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const data = await response.json();
+      setSystemInfo(data);
+      setApiError(null);
+    } catch (error) {
+      console.error('Error fetching system info:', error);
+      setApiError(`API Error: ${error.message}`);
+    }
+  };
+
+  // Fetch stress mode status
+  const fetchStressMode = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/stress`, {
+        mode: 'cors',
+        credentials: 'omit'
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const data = await response.json();
+      setStressMode(data.stress_mode || false);
+      setApiError(null);
+    } catch (error) {
+      console.error('Error fetching stress mode:', error);
+      setApiError(`API Error: ${error.message}`);
+    }
+  };
+
+  // Toggle stress mode
+  const toggleStressMode = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/stress`, {
+        method: 'POST',
+        mode: 'cors',
+        credentials: 'omit'
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const data = await response.json();
+      setStressMode(data.stress_mode || false);
+      setApiError(null);
+    } catch (error) {
+      console.error('Error toggling stress mode:', error);
+      setApiError(`API Error: ${error.message}`);
+    }
+  };
+
   // Update resource levels
   const updateResourceLevels = async (newLevels) => {
     try {
@@ -128,7 +188,9 @@ function App() {
       await Promise.all([
         fetchServicesStatus(),
         fetchResourceLevels(),
-        fetchMetrics()
+        fetchMetrics(),
+        fetchSystemInfo(),
+        fetchStressMode()
       ]);
       setIsLoading(false);
     };
@@ -141,6 +203,7 @@ function App() {
     const interval = setInterval(() => {
       fetchServicesStatus();
       fetchMetrics();
+      fetchStressMode();
     }, 2000); // Update every 2 seconds
 
     return () => clearInterval(interval);
@@ -198,6 +261,9 @@ function App() {
               <ResourceControls 
                 resourceLevels={resourceLevels}
                 onUpdate={updateResourceLevels}
+                systemInfo={systemInfo}
+                stressMode={stressMode}
+                onToggleStress={toggleStressMode}
               />
             </div>
             

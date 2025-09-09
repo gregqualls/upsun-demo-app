@@ -151,6 +151,48 @@ async def get_metrics():
     
     return metrics
 
+@app.get("/system")
+async def get_system_info():
+    """Get system information from all services"""
+    system_info = {}
+    
+    for service_name, service_url in SERVICES.items():
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                response = await client.get(f"{service_url}/system")
+                if response.status_code == 200:
+                    system_info[service_name] = response.json()
+        except Exception as e:
+            system_info[service_name] = {"error": str(e)}
+    
+    return system_info
+
+@app.post("/stress")
+async def toggle_stress_mode():
+    """Toggle stress mode for CPU worker"""
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.post(f"{SERVICES['cpu_worker']}/stress")
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return {"error": f"Failed to toggle stress mode: {response.status_code}"}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/stress")
+async def get_stress_mode():
+    """Get stress mode status for CPU worker"""
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get(f"{SERVICES['cpu_worker']}/stress")
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return {"error": f"Failed to get stress mode: {response.status_code}"}
+    except Exception as e:
+        return {"error": str(e)}
+
 if __name__ == "__main__":
     import uvicorn
     # Use port 8000 for Upsun deployment, 8004 for local development
