@@ -11,6 +11,8 @@ function App() {
   const [metrics, setMetrics] = useState({});
   const [systemInfo, setSystemInfo] = useState({});
   const [stressMode, setStressMode] = useState(false);
+  const [loadLevel, setLoadLevel] = useState(0);
+  const [isSimulatingLoad, setIsSimulatingLoad] = useState(false);
   const [resourceLevels, setResourceLevels] = useState({
     cpu: 0,
     memory: 0,
@@ -154,6 +156,37 @@ function App() {
     }
   };
 
+  const simulateLoad = async (level) => {
+    try {
+      setIsSimulatingLoad(true);
+      const response = await fetch(`${API_BASE_URL}/load`, {
+        method: 'POST',
+        mode: 'cors',
+        credentials: 'omit',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ load_level: level }),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const data = await response.json();
+      setLoadLevel(data.load_level);
+      setApiError(null);
+      console.log(`Load simulation set to ${level}%`);
+    } catch (error) {
+      console.error('Error simulating load:', error);
+      setApiError(`API Error: ${error.message}`);
+    } finally {
+      setIsSimulatingLoad(false);
+    }
+  };
+
+  const stopLoadSimulation = async () => {
+    await simulateLoad(0);
+  };
+
   // Update resource levels
   const updateResourceLevels = async (newLevels) => {
     try {
@@ -257,15 +290,19 @@ function App() {
             </div>
             
             {/* Resource Controls */}
-            <div className="lg:col-span-2">
-              <ResourceControls 
-                resourceLevels={resourceLevels}
-                onUpdate={updateResourceLevels}
-                systemInfo={systemInfo}
-                stressMode={stressMode}
-                onToggleStress={toggleStressMode}
-              />
-            </div>
+                        <div className="lg:col-span-2">
+                          <ResourceControls
+                            resourceLevels={resourceLevels}
+                            onUpdate={updateResourceLevels}
+                            systemInfo={systemInfo}
+                            stressMode={stressMode}
+                            onToggleStress={toggleStressMode}
+                            loadLevel={loadLevel}
+                            onSimulateLoad={simulateLoad}
+                            onStopLoad={stopLoadSimulation}
+                            isSimulatingLoad={isSimulatingLoad}
+                          />
+                        </div>
             
             {/* Metrics Display */}
             <div className="lg:col-span-3">

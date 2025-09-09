@@ -25,6 +25,8 @@ worker_tasks = []
 is_running = False
 stress_mode = False
 system_info = {}
+load_based_mode = False  # New: Load-based scaling mode
+current_load = 0  # New: Current external load level
 
 def get_system_info():
     """Get system resource information including Upsun limits"""
@@ -164,13 +166,18 @@ def cpu_intensive_task(level: int, stress_mode: bool = False):
 
 async def cpu_worker():
     """Background worker that runs CPU-intensive tasks"""
-    global is_running, stress_mode
+    global is_running, stress_mode, load_based_mode, current_load
     
     while True:
-        if current_cpu_level > 0 and is_running:
+        if is_running:
             # Run CPU task in a thread pool to avoid blocking
             loop = asyncio.get_event_loop()
-            await loop.run_in_executor(None, cpu_intensive_task, current_cpu_level, stress_mode)
+            if load_based_mode:
+                # Use external load level for horizontal scaling
+                await loop.run_in_executor(None, cpu_intensive_task, current_load, stress_mode)
+            else:
+                # Use manual level for demo purposes
+                await loop.run_in_executor(None, cpu_intensive_task, current_cpu_level, stress_mode)
         else:
             await asyncio.sleep(0.1)  # Small delay when not running
 
@@ -200,7 +207,12 @@ async def get_metrics():
         "current_level": current_cpu_level,
         "is_running": is_running,
         "stress_mode": stress_mode,
-        "system_info": system_info
+        "system_info": system_info,
+        "instance_id": os.getenv("PLATFORM_APPLICATION_NAME", "local"),
+        "upsun_cpu_limit": system_info.get("upsun_cpu_limit", 0.5),
+        "upsun_memory_limit_mb": system_info.get("upsun_memory_limit_mb", 256),
+        "container_profile": system_info.get("container_profile", "unknown"),
+        "instance_count": system_info.get("instance_count", 1)
     }
 
 @app.get("/system")
@@ -259,7 +271,42 @@ async def get_resources():
     """Get current resource levels"""
     return {
         "cpu": current_cpu_level,
-        "stress_mode": stress_mode
+        "stress_mode": stress_mode,
+        "load_based_mode": load_based_mode,
+        "current_load": current_load
+    }
+
+@app.post("/load")
+async def set_load(load_data: Dict[str, Any]):
+    """Set external load level for load-based scaling"""
+    global current_load, load_based_mode, is_running, worker_tasks
+    
+    if "load_level" in load_data:
+        current_load = max(0, min(100, int(load_data["load_level"])))
+        load_based_mode = current_load > 0
+        is_running = load_based_mode or current_cpu_level > 0
+        
+        # Start/stop worker based on load
+        if is_running and not worker_tasks:
+            task = asyncio.create_task(cpu_worker())
+            worker_tasks.append(task)
+        elif not is_running and worker_tasks:
+            for task in worker_tasks:
+                task.cancel()
+            worker_tasks.clear()
+    
+    return {
+        "message": "Load level updated",
+        "load_level": current_load,
+        "load_based_mode": load_based_mode
+    }
+
+@app.get("/load")
+async def get_load():
+    """Get current load level"""
+    return {
+        "load_level": current_load,
+        "load_based_mode": load_based_mode
     }
 
 if __name__ == "__main__":

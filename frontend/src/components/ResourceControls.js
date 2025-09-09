@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Cpu, Database, Network, Play, Pause, RotateCcw, Zap, AlertTriangle } from 'lucide-react';
 
-const ResourceControls = ({ resourceLevels, onUpdate, systemInfo, stressMode, onToggleStress }) => {
+const ResourceControls = ({ resourceLevels, onUpdate, systemInfo, stressMode, onToggleStress, loadLevel, onSimulateLoad, onStopLoad, isSimulatingLoad }) => {
   const [localLevels, setLocalLevels] = useState(resourceLevels);
   const [isRunning, setIsRunning] = useState(false);
 
@@ -54,6 +54,18 @@ const ResourceControls = ({ resourceLevels, onUpdate, systemInfo, stressMode, on
     setIsRunning(true);
     if (!stressMode && onToggleStress) {
       onToggleStress();
+    }
+  };
+
+  const handleSimulateLoad = (level) => {
+    if (onSimulateLoad) {
+      onSimulateLoad(level);
+    }
+  };
+
+  const handleStopLoad = () => {
+    if (onStopLoad) {
+      onStopLoad();
     }
   };
 
@@ -158,6 +170,59 @@ const ResourceControls = ({ resourceLevels, onUpdate, systemInfo, stressMode, on
         </div>
       </div>
 
+      {/* Load Simulation Controls */}
+      <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+        <h4 className="font-semibold text-yellow-900 dark:text-yellow-100 mb-3 flex items-center">
+          <Network className="w-5 h-5 mr-2" />
+          Load Simulation (Horizontal Scaling Demo)
+        </h4>
+        <div className="flex flex-wrap gap-2 mb-4">
+          <button
+            onClick={() => handleSimulateLoad(25)}
+            disabled={isSimulatingLoad}
+            className="bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400 text-white px-3 py-2 rounded-lg font-medium transition-colors text-sm"
+          >
+            Light Load (25%)
+          </button>
+          <button
+            onClick={() => handleSimulateLoad(50)}
+            disabled={isSimulatingLoad}
+            className="bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400 text-white px-3 py-2 rounded-lg font-medium transition-colors text-sm"
+          >
+            Medium Load (50%)
+          </button>
+          <button
+            onClick={() => handleSimulateLoad(75)}
+            disabled={isSimulatingLoad}
+            className="bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400 text-white px-3 py-2 rounded-lg font-medium transition-colors text-sm"
+          >
+            Heavy Load (75%)
+          </button>
+          <button
+            onClick={() => handleSimulateLoad(100)}
+            disabled={isSimulatingLoad}
+            className="bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400 text-white px-3 py-2 rounded-lg font-medium transition-colors text-sm"
+          >
+            Max Load (100%)
+          </button>
+          <button
+            onClick={handleStopLoad}
+            disabled={isSimulatingLoad}
+            className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg font-medium transition-colors text-sm"
+          >
+            Stop Load
+          </button>
+        </div>
+        <div className="text-sm text-yellow-700 dark:text-yellow-300">
+          <p><strong>Current Load:</strong> {loadLevel}%</p>
+          <p><strong>Status:</strong> {isSimulatingLoad ? 'Simulating...' : 'Ready'}</p>
+          <p className="mt-2 text-xs">
+            💡 <strong>Tip:</strong> This simulates external load that will trigger Upsun's horizontal scaling. 
+            Each worker instance will respond to the same load level, demonstrating how scaling works.
+          </p>
+        </div>
+      </div>
+
       <div className="space-y-8">
         {Object.entries(localLevels).map(([resource, level]) => (
           <div key={resource} className="space-y-4">
@@ -228,58 +293,6 @@ const ResourceControls = ({ resourceLevels, onUpdate, systemInfo, stressMode, on
         ))}
       </div>
 
-      {/* Dynamic System Information */}
-      {systemInfo && systemInfo.cpu_worker && (
-        <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-          <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-3 flex items-center">
-            <Cpu className="w-5 h-5 mr-2" />
-            Dynamic System Resources
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-blue-700 dark:text-blue-300 font-medium">CPU Cores (Upsun):</span>
-              <span className="ml-2 text-blue-900 dark:text-blue-100 font-mono">
-                {systemInfo.cpu_worker.upsun_cpu_limit} cores
-              </span>
-            </div>
-            <div>
-              <span className="text-blue-700 dark:text-blue-300 font-medium">Memory Limit (Upsun):</span>
-              <span className="ml-2 text-blue-900 dark:text-blue-100 font-mono">
-                {Math.round(systemInfo.cpu_worker.upsun_memory_limit_mb)} MB
-              </span>
-            </div>
-            <div>
-              <span className="text-blue-700 dark:text-blue-300 font-medium">Container Profile:</span>
-              <span className="ml-2 text-blue-900 dark:text-blue-100 font-mono">
-                {systemInfo.cpu_worker.container_profile}
-              </span>
-            </div>
-            <div>
-              <span className="text-blue-700 dark:text-blue-300 font-medium">Instances:</span>
-              <span className="ml-2 text-blue-900 dark:text-blue-100 font-mono">
-                {systemInfo.cpu_worker.instance_count}
-              </span>
-            </div>
-            <div>
-              <span className="text-blue-700 dark:text-blue-300 font-medium">Memory Used:</span>
-              <span className="ml-2 text-blue-900 dark:text-blue-100 font-mono">
-                {Math.round(systemInfo.cpu_worker.memory_used_mb)} MB ({Math.round(systemInfo.cpu_worker.memory_percent)}%)
-              </span>
-            </div>
-            <div>
-              <span className="text-blue-700 dark:text-blue-300 font-medium">Available Memory:</span>
-              <span className="ml-2 text-blue-900 dark:text-blue-100 font-mono">
-                {Math.round(systemInfo.cpu_worker.memory_available_mb)} MB
-              </span>
-            </div>
-          </div>
-          <div className="mt-3 p-2 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
-            <p className="text-xs text-green-700 dark:text-green-300">
-              ✅ <strong>Fully Dynamic:</strong> These values are pulled directly from Upsun's container environment in real-time
-            </p>
-          </div>
-        </div>
-      )}
 
       <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
         <h4 className="font-semibold text-gray-900 dark:text-white mb-2">

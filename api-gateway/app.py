@@ -193,6 +193,32 @@ async def get_stress_mode():
     except Exception as e:
         return {"error": str(e)}
 
+@app.post("/load")
+async def set_load(load_data: Dict[str, Any]):
+    """Set load level for CPU worker (for horizontal scaling demo)"""
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.post(f"{SERVICES['cpu_worker']}/load", json=load_data)
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return {"error": f"Failed to set load: {response.status_code}"}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/load")
+async def get_load():
+    """Get current load level for CPU worker"""
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get(f"{SERVICES['cpu_worker']}/load")
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return {"error": f"Failed to get load: {response.status_code}"}
+    except Exception as e:
+        return {"error": str(e)}
+
 if __name__ == "__main__":
     import uvicorn
     # Use port 8000 for Upsun deployment, 8004 for local development

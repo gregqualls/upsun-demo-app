@@ -44,6 +44,11 @@ const MetricsDisplay = ({ metrics }) => {
 
   const getCpuMetrics = () => {
     const cpuData = metrics.cpu_worker || {};
+    const upsunCpuLimit = cpuData.upsun_cpu_limit || 0.5;
+    const upsunMemoryLimit = cpuData.upsun_memory_limit_mb || 256;
+    const memoryUsed = cpuData.memory_used_mb || 0;
+    const memoryPercent = cpuData.memory_percent || 0;
+    
     return (
       <>
         <div className="flex justify-between items-center">
@@ -53,21 +58,39 @@ const MetricsDisplay = ({ metrics }) => {
           </span>
         </div>
         <div className="flex justify-between items-center">
+          <span className="text-sm text-gray-600 dark:text-gray-400">CPU Limit</span>
+          <span className="font-mono text-sm text-gray-500 dark:text-gray-400">
+            {upsunCpuLimit} cores
+          </span>
+        </div>
+        <div className="flex justify-between items-center">
           <span className="text-sm text-gray-600 dark:text-gray-400">Memory Usage</span>
           <span className="font-semibold text-gray-900 dark:text-white">
-            {formatPercentage(cpuData.memory_percent)}
+            {formatPercentage(memoryPercent)}
           </span>
         </div>
         <div className="flex justify-between items-center">
           <span className="text-sm text-gray-600 dark:text-gray-400">Memory Used</span>
           <span className="font-semibold text-gray-900 dark:text-white">
-            {formatBytes(cpuData.memory_used_mb * 1024 * 1024)}
+            {formatBytes(memoryUsed * 1024 * 1024)}
+          </span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-gray-600 dark:text-gray-400">Memory Limit</span>
+          <span className="font-mono text-sm text-gray-500 dark:text-gray-400">
+            {upsunMemoryLimit} MB
           </span>
         </div>
         <div className="flex justify-between items-center">
           <span className="text-sm text-gray-600 dark:text-gray-400">Current Level</span>
           <span className="font-semibold text-gray-900 dark:text-white">
             {cpuData.current_level || 0}%
+          </span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-gray-600 dark:text-gray-400">Instances</span>
+          <span className="font-mono text-sm text-gray-500 dark:text-gray-400">
+            {cpuData.instance_count || 1}
           </span>
         </div>
         <div className="flex justify-between items-center">
