@@ -79,6 +79,9 @@ applications:
         pwd
         ls -la
         ls -la public/
+        # Set environment variable for React build
+        export REACT_APP_API_URL=$(echo $PLATFORM_ROUTES | base64 --decode | jq -r 'to_entries[] | select(.value.upstream == "api-gateway") | .key')
+        echo "Setting REACT_APP_API_URL to: $REACT_APP_API_URL"
         npm ci
         npm run build
         ls -la build/
