@@ -6,6 +6,8 @@ import multiprocessing
 import os
 import json
 import math
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, Optional
 import psutil
 
@@ -27,6 +29,9 @@ stress_mode = False
 system_info = {}
 load_based_mode = False  # New: Load-based scaling mode
 current_load = 0  # New: Current external load level
+
+# Thread pool for CPU-intensive tasks
+thread_pool = ThreadPoolExecutor(max_workers=4)
 
 def get_system_info():
     """Get system resource information including Upsun limits"""
@@ -139,20 +144,29 @@ def cpu_intensive_task(level: int, stress_mode: bool = False):
     # Get available CPU cores
     available_cores = system_info.get("upsun_cpu_limit", psutil.cpu_count())
     
-    # Calculate work duration based on target CPU usage
-    # More realistic approach: run for a short burst, then sleep
-    work_duration = 0.1  # 100ms of work
-    sleep_duration = work_duration * (100 - target_cpu_percent) / target_cpu_percent if target_cpu_percent > 0 else 1.0
+    # For 100% CPU usage, we need to be much more aggressive
+    if target_cpu_percent >= 100:
+        # Run continuously with minimal sleep for 100%+ usage
+        work_duration = 0.01  # 10ms of work
+        sleep_duration = 0.001  # 1ms sleep (very minimal)
+    else:
+        # Calculate work/sleep ratio for partial usage
+        work_duration = 0.01  # 10ms of work
+        sleep_duration = work_duration * (100 - target_cpu_percent) / target_cpu_percent if target_cpu_percent > 0 else 0.1
     
     # Perform CPU-intensive calculations
     start_time = time.time()
     result = 0
     iteration = 0
     
-    while time.time() - start_time < work_duration:
-        # More CPU-intensive calculation
-        result += math.sqrt(iteration) * math.sin(iteration * 0.01)
-        iteration += 1
+    # Run for a longer period to ensure sustained CPU usage
+    total_duration = 0.1  # Run for 100ms total per cycle
+    
+    while time.time() - start_time < total_duration:
+        # Much more CPU-intensive calculation
+        for _ in range(1000):  # Inner loop for more CPU work
+            result += math.sqrt(iteration) * math.sin(iteration * 0.01) * math.cos(iteration * 0.02)
+            iteration += 1
         
         # Check for cancellation
         if not is_running:
@@ -164,20 +178,82 @@ def cpu_intensive_task(level: int, stress_mode: bool = False):
     
     return result
 
+def aggressive_cpu_task(level: int, stress_mode: bool = False):
+    """More aggressive CPU task that actually hits 100% utilization"""
+    if level == 0:
+        return
+    
+    target_cpu_percent = level
+    if stress_mode:
+        target_cpu_percent = min(level * 1.5, 200)
+    
+    # For 100% CPU, run continuously with minimal sleep
+    if target_cpu_percent >= 100:
+        # Run for 1 second with minimal sleep
+        end_time = time.time() + 1.0
+        result = 0
+        iteration = 0
+        
+        while time.time() < end_time:
+            # Very CPU-intensive calculation
+            for _ in range(10000):  # Large inner loop
+                result += math.sqrt(iteration) * math.sin(iteration * 0.001) * math.cos(iteration * 0.002)
+                iteration += 1
+                if iteration % 100000 == 0:  # Check every 100k iterations
+                    if not is_running:
+                        break
+        
+        # Minimal sleep
+        time.sleep(0.001)
+    else:
+        # For partial usage, use work/sleep ratio
+        work_time = 0.01  # 10ms work
+        sleep_time = work_time * (100 - target_cpu_percent) / target_cpu_percent if target_cpu_percent > 0 else 0.1
+        
+        end_time = time.time() + work_time
+        result = 0
+        iteration = 0
+        
+        while time.time() < end_time:
+            for _ in range(1000):
+                result += math.sqrt(iteration) * math.sin(iteration * 0.01)
+                iteration += 1
+                if not is_running:
+                    break
+        
+        if sleep_time > 0:
+            time.sleep(sleep_time)
+    
+    return result
+
 async def cpu_worker():
     """Background worker that runs CPU-intensive tasks"""
     global is_running, stress_mode, load_based_mode, current_load
     
     while True:
         if is_running:
-            # Run CPU task in a thread pool to avoid blocking
+            # Run multiple CPU tasks in parallel to hit 100% utilization
             loop = asyncio.get_event_loop()
-            if load_based_mode:
-                # Use external load level for horizontal scaling
-                await loop.run_in_executor(None, cpu_intensive_task, current_load, stress_mode)
+            
+            # Determine the level to use
+            level = current_load if load_based_mode else current_cpu_level
+            
+            # For 100% CPU, run multiple threads to saturate the CPU
+            if level >= 100:
+                # Run 4 parallel tasks to ensure we hit 100% CPU
+                tasks = []
+                for _ in range(4):
+                    task = loop.run_in_executor(thread_pool, aggressive_cpu_task, level, stress_mode)
+                    tasks.append(task)
+                
+                # Wait for all tasks to complete
+                await asyncio.gather(*tasks)
             else:
-                # Use manual level for demo purposes
-                await loop.run_in_executor(None, cpu_intensive_task, current_cpu_level, stress_mode)
+                # For partial usage, run single task
+                if load_based_mode:
+                    await loop.run_in_executor(thread_pool, aggressive_cpu_task, current_load, stress_mode)
+                else:
+                    await loop.run_in_executor(thread_pool, aggressive_cpu_task, current_cpu_level, stress_mode)
         else:
             await asyncio.sleep(0.1)  # Small delay when not running
 
