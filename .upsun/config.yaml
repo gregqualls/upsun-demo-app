@@ -79,13 +79,8 @@ applications:
         pwd
         ls -la
         ls -la public/
-        # Debug: Check available environment variables
-        echo "Available environment variables:"
-        env | grep -E "(PLATFORM|ROUTES)" || echo "No PLATFORM/ROUTES variables found"
-        echo "PLATFORM_ROUTES value: $PLATFORM_ROUTES"
-        # Set environment variable for React build
-        export REACT_APP_API_URL=$(echo $PLATFORM_ROUTES | base64 --decode | jq -r 'to_entries[] | select(.value.upstream == "api-gateway") | .key')
-        echo "Setting REACT_APP_API_URL to: $REACT_APP_API_URL"
+        # Don't set REACT_APP_API_URL during build - will be determined at runtime
+        echo "Building React app without hardcoded API URL"
         npm ci
         npm run build
         ls -la build/

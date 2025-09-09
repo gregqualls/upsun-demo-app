@@ -17,7 +17,25 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [apiError, setApiError] = useState(null);
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8004';
+  // Dynamically determine API URL at runtime
+  const getApiBaseUrl = () => {
+    // If we have an environment variable, use it
+    if (process.env.REACT_APP_API_URL) {
+      return process.env.REACT_APP_API_URL;
+    }
+    
+    // For production, construct the API URL from the current domain
+    if (window.location.hostname.includes('platformsh.site')) {
+      const currentHost = window.location.hostname;
+      const apiHost = currentHost.replace(/^/, 'api.');
+      return `https://${apiHost}`;
+    }
+    
+    // For local development
+    return 'http://localhost:8004';
+  };
+  
+  const API_BASE_URL = getApiBaseUrl();
 
   // Fetch services status
   const fetchServicesStatus = async () => {
