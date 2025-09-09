@@ -50,8 +50,12 @@ def get_system_info():
                     upsun_cpu_limit = 1.0  # 1 CPU core
                 else:
                     upsun_cpu_limit = 0.5  # 0.5 CPU cores
+            else:
+                # Default to 0.5 CPU for Upsun if no profile specified
+                upsun_cpu_limit = 0.5
         except:
-            pass
+            # Default to 0.5 CPU for Upsun if parsing fails
+            upsun_cpu_limit = 0.5
     
     # Fallback to detected CPU count if no Upsun limits
     if upsun_cpu_limit is None:
@@ -69,8 +73,12 @@ def get_system_info():
                     upsun_memory_limit = 512   # 512MB
                 else:
                     upsun_memory_limit = 256   # 256MB
+            else:
+                # Default to 256MB for Upsun if no profile specified
+                upsun_memory_limit = 256
         except:
-            pass
+            # Default to 256MB for Upsun if parsing fails
+            upsun_memory_limit = 256
     
     # Fallback to detected memory if no Upsun limits
     if upsun_memory_limit is None:

@@ -97,10 +97,17 @@ async def health_check():
 @app.get("/metrics")
 async def get_metrics():
     """Get network metrics"""
+    # Calculate success rate properly
+    success_rate = 0
+    if request_count > 0:
+        success_rate = ((request_count - error_count) / request_count) * 100
+    elif request_count == 0 and error_count == 0:
+        success_rate = 100  # No requests = 100% success rate
+    
     return {
         "request_count": request_count,
         "error_count": error_count,
-        "success_rate": ((request_count - error_count) / max(request_count, 1)) * 100,
+        "success_rate": success_rate,
         "current_level": current_network_level,
         "is_running": is_running,
         "target_requests_per_second": (current_network_level / 100) * 10

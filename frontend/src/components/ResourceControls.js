@@ -115,7 +115,7 @@ const ResourceControls = ({ resourceLevels, onUpdate, systemInfo, stressMode, on
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">
           Resource Controls
         </h2>
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={handleStartAll}
             className="btn-primary flex items-center space-x-2"
@@ -143,14 +143,14 @@ const ResourceControls = ({ resourceLevels, onUpdate, systemInfo, stressMode, on
               stressMode 
                 ? 'bg-orange-600 hover:bg-orange-700 text-white' 
                 : 'bg-gray-600 hover:bg-gray-700 text-white'
-            } px-4 py-2 rounded-lg font-medium transition-colors`}
+            } px-3 py-2 rounded-lg font-medium transition-colors text-sm`}
           >
             <Zap className="w-4 h-4" />
             <span>{stressMode ? 'Stress ON' : 'Stress OFF'}</span>
           </button>
           <button
             onClick={handleTurnItUpTo11}
-            className="bg-red-600 hover:bg-red-700 text-white flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors"
+            className="bg-red-600 hover:bg-red-700 text-white flex items-center space-x-2 px-3 py-2 rounded-lg font-medium transition-colors text-sm"
           >
             <AlertTriangle className="w-4 h-4" />
             <span>Turn it up to 11!</span>
