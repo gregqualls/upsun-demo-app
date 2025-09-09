@@ -1,0 +1,2 @@
+# Extract API URL from PLATFORM_ROUTES environment variable
+export REACT_APP_API_URL=$(echo $PLATFORM_ROUTES | base64 --decode | jq -r 'to_entries[] | select(.value.upstream == "api-gateway") | .key')
