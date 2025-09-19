@@ -13,6 +13,7 @@ function App() {
   const [apiError, setApiError] = useState(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [updatingApps, setUpdatingApps] = useState(new Set());
+  const [systemState, setSystemState] = useState('stopped'); // 'stopped', 'running', 'updating'
 
   // Dynamically determine API URL at runtime
   const getApiBaseUrl = () => {
@@ -148,18 +149,24 @@ function App() {
     }
   };
 
-  // Global start all apps
-  const startAllApps = async () => {
+  // Toggle system on/off
+  const toggleSystem = async () => {
+    if (isUpdating) return;
+    
     setIsUpdating(true);
+    setSystemState('updating');
+    
     try {
+      const isCurrentlyRunning = systemState === 'running';
       const allAppsLevels = {};
+      
       Object.keys(apps).forEach(appName => {
         allAppsLevels[appName] = {
-          processing: 50,
-          storage: 50,
-          traffic: 50,
-          orders: 50,
-          completions: 50
+          processing: isCurrentlyRunning ? 0 : 50,
+          storage: isCurrentlyRunning ? 0 : 50,
+          traffic: isCurrentlyRunning ? 0 : 50,
+          orders: isCurrentlyRunning ? 0 : 50,
+          completions: isCurrentlyRunning ? 0 : 50
         };
       });
 
@@ -181,76 +188,11 @@ function App() {
       
       // Refresh apps data
       await fetchAppsStatus();
+      setSystemState(isCurrentlyRunning ? 'stopped' : 'running');
       setApiError(null);
     } catch (error) {
-      console.error('Error starting all apps:', error);
-      setApiError(`API Error: ${error.message}`);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  // Global stop all apps
-  const stopAllApps = async () => {
-    setIsUpdating(true);
-    try {
-      const allAppsLevels = {};
-      Object.keys(apps).forEach(appName => {
-        allAppsLevels[appName] = {
-          processing: 0,
-          storage: 0,
-          traffic: 0,
-          orders: 0,
-          completions: 0
-        };
-      });
-
-      const response = await fetch(`${API_BASE_URL}/resources/all`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          levels: allAppsLevels
-        }),
-        mode: 'cors',
-        credentials: 'omit'
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      // Refresh apps data
-      await fetchAppsStatus();
-      setApiError(null);
-    } catch (error) {
-      console.error('Error stopping all apps:', error);
-      setApiError(`API Error: ${error.message}`);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  // Global reset all apps
-  const resetAllApps = async () => {
-    setIsUpdating(true);
-    try {
-      const promises = Object.keys(apps).map(appName => 
-        fetch(`${API_BASE_URL}/apps/${appName}/reset`, {
-          method: 'POST',
-          mode: 'cors',
-          credentials: 'omit'
-        })
-      );
-      
-      await Promise.all(promises);
-      
-      // Refresh apps data
-      await fetchAppsStatus();
-      setApiError(null);
-    } catch (error) {
-      console.error('Error resetting all apps:', error);
+      console.error('Error toggling system:', error);
+      setSystemState(systemState); // Keep current state on error
       setApiError(`API Error: ${error.message}`);
     } finally {
       setIsUpdating(false);
@@ -320,7 +262,11 @@ function App() {
   return (
     <ThemeProvider>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Header />
+        <Header 
+          systemState={systemState}
+          isUpdating={isUpdating}
+          onToggle={toggleSystem}
+        />
         
         <main className="container mx-auto px-4 py-8">
           {/* API Error Display */}
@@ -345,58 +291,15 @@ function App() {
             </div>
           )}
           
-          {/* Global Controls */}
+          {/* Business Applications Header */}
           <div className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Business Applications
-              </h2>
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={startAllApps}
-                  disabled={isUpdating}
-                  className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isUpdating ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  )}
-                  <span>Start All</span>
-                </button>
-                <button
-                  onClick={stopAllApps}
-                  disabled={isUpdating}
-                  className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isUpdating ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  )}
-                  <span>Stop All</span>
-                </button>
-                <button
-                  onClick={resetAllApps}
-                  disabled={isUpdating}
-                  className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isUpdating ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  )}
-                  <span>Reset All</span>
-                </button>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Business Applications
+            </h2>
+          </div>
+          
+          {/* App Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {Object.values(apps).map((app) => (
                 <AppCard
                   key={app.name}

@@ -1,8 +1,12 @@
 import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { Sun, Moon, Cpu, Database, Network, Server } from 'lucide-react';
+import { Sun, Moon, Server, Power } from 'lucide-react';
 
-const Header = () => {
+const Header = ({ 
+  systemState, 
+  isUpdating, 
+  onToggle 
+}) => {
   const { isDark, toggleTheme } = useTheme();
 
   return (
@@ -26,19 +30,45 @@ const Header = () => {
             </div>
           </div>
 
-          {/* Service Icons */}
-          <div className="hidden md:flex items-center space-x-6">
-            <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
-              <Cpu className="w-5 h-5" />
-              <span className="text-sm font-medium">CPU Worker</span>
-            </div>
-            <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
-              <Database className="w-5 h-5" />
-              <span className="text-sm font-medium">Memory Worker</span>
-            </div>
-            <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
-              <Network className="w-5 h-5" />
-              <span className="text-sm font-medium">Network Sim</span>
+          {/* System Toggle */}
+          <div className="flex items-center space-x-4">
+            {/* Toggle Switch */}
+            <div className="flex items-center space-x-3">
+              <span className={`text-sm font-medium transition-colors ${
+                systemState === 'running' 
+                  ? 'text-green-600 dark:text-green-400' 
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}>
+                {systemState === 'running' ? 'System Running' : 'System Stopped'}
+              </span>
+              
+              <button
+                onClick={onToggle}
+                disabled={isUpdating}
+                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                  systemState === 'running'
+                    ? 'bg-green-500'
+                    : 'bg-gray-300 dark:bg-gray-600'
+                } ${isUpdating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              >
+                <span
+                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-200 ${
+                    systemState === 'running' ? 'translate-x-7' : 'translate-x-1'
+                  }`}
+                >
+                  {isUpdating ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <Power className={`w-3 h-3 ${
+                        systemState === 'running' ? 'text-green-500' : 'text-gray-400'
+                      }`} />
+                    </div>
+                  )}
+                </span>
+              </button>
             </div>
           </div>
 
