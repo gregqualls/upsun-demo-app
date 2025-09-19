@@ -36,6 +36,62 @@ class ResourceManager:
         self.request_count = 0
         self.error_count = 0
         self._lock = threading.Lock()
+        self.instance_count = self._get_instance_count()
+        self._last_instance_check = time.time()
+        
+    def _get_instance_count(self):
+        """Get the actual number of instances for this app"""
+        try:
+            # In Upsun, check for PLATFORM_APPLICATION_NAME
+            app_name = os.getenv("PLATFORM_APPLICATION_NAME")
+            if app_name:
+                # This is running on Upsun - try to get instance count
+                # Method 1: Try to get from Upsun environment variables
+                instance_count_env = os.getenv("PLATFORM_INSTANCE_COUNT")
+                if instance_count_env:
+                    return int(instance_count_env)
+                
+                # Method 2: Try to detect from process count (if multiple instances)
+                # Count processes with the same app name
+                try:
+                    import subprocess
+                    result = subprocess.run(['ps', 'aux'], capture_output=True, text=True)
+                    if result.returncode == 0:
+                        # Count lines containing our app name
+                        lines = result.stdout.split('\n')
+                        app_processes = [line for line in lines if app_name in line and 'python' in line]
+                        if len(app_processes) > 0:
+                            return len(app_processes)
+                except:
+                    pass
+                
+                # Method 3: Use known configuration as fallback
+                instance_counts = {
+                    "user-management": 1,
+                    "payment-processing": 3,  # From your Upsun config
+                    "inventory-system": 1,
+                    "notification-center": 3,  # From your Upsun config
+                    "api-gateway": 1
+                }
+                
+                return instance_counts.get(app_name, 1)
+            else:
+                # Running locally - always 1 instance
+                return 1
+        except Exception as e:
+            print(f"Error getting instance count: {e}")
+            return 1
+    
+    def _refresh_instance_count(self):
+        """Refresh instance count if enough time has passed"""
+        current_time = time.time()
+        # Check every 30 seconds for instance count changes
+        if current_time - self._last_instance_check > 30:
+            new_count = self._get_instance_count()
+            if new_count != self.instance_count:
+                print(f"[{self.app_name}] Instance count changed from {self.instance_count} to {new_count}")
+                self.instance_count = new_count
+            self._last_instance_check = current_time
         
     def get_system_info(self):
         """Get system resource information"""
@@ -213,6 +269,9 @@ class ResourceManager:
     
     def get_metrics(self):
         """Get current resource metrics"""
+        # Refresh instance count periodically
+        self._refresh_instance_count()
+        
         with self._lock:
             is_running = self.is_running
             current_levels = self.current_levels.copy()
@@ -229,7 +288,7 @@ class ResourceManager:
                 "request_count": self.request_count,
                 "error_count": self.error_count,
                 "is_running": is_running,
-                "instance_count": 1
+                "instance_count": self.instance_count
             }
         
         # When running, show actual resource consumption
@@ -258,7 +317,7 @@ class ResourceManager:
             "request_count": self.request_count,
             "error_count": self.error_count,
             "is_running": is_running,
-            "instance_count": 1
+            "instance_count": self.instance_count
         }
     
     def get_health(self):
