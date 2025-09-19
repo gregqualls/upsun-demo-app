@@ -189,9 +189,6 @@ function App() {
     setSystemState(isCurrentlyRunning ? 'stopped' : 'running');
     setIsUpdating(false); // UI is updated, no need to show loading
     
-    // Refresh metrics to show updated resource usage
-    fetchMetrics();
-    
     // Send API call in background (don't wait for it)
     try {
       const response = await fetch(`${API_BASE_URL}/resources/all`, {
@@ -210,6 +207,10 @@ function App() {
         console.warn(`API call failed: ${response.status}`);
         // Don't revert UI on API failure - let user see the change
       }
+      
+      // Refresh apps status and metrics after API call
+      fetchAppsStatus();
+      fetchMetrics();
       
       setApiError(null);
     } catch (error) {
