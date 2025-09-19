@@ -38,6 +38,8 @@ class ResourceManager:
         self._lock = threading.Lock()
         self.instance_count = self._get_instance_count()
         self._last_instance_check = time.time()
+        self._last_running_change = time.time()
+        self._running_stability_threshold = 5  # seconds
         
     def _get_instance_count(self):
         """Get the actual number of instances for this app"""
@@ -88,13 +90,19 @@ class ResourceManager:
                     # Query the API Gateway for instance count
                     async def get_instance_count_from_gateway():
                         try:
-                            async with httpx.AsyncClient(timeout=5.0) as client:
+                            async with httpx.AsyncClient(timeout=3.0) as client:
                                 response = await client.get(f"{api_gateway_url}/instances/{app_name}")
                                 if response.status_code == 200:
                                     data = response.json()
                                     instances = data.get("instances", 1)
                                     print(f"[{app_name}] Got instance count from API Gateway: {instances}")
                                     return instances
+                                else:
+                                    print(f"[{app_name}] API Gateway returned status {response.status_code}")
+                                    return None
+                        except httpx.TimeoutException:
+                            print(f"[{app_name}] API Gateway query timeout")
+                            return None
                         except Exception as e:
                             print(f"[{app_name}] API Gateway query failed: {e}")
                             return None
@@ -133,13 +141,17 @@ class ResourceManager:
     def _refresh_instance_count(self):
         """Refresh instance count if enough time has passed"""
         current_time = time.time()
-        # Check every 30 seconds for instance count changes
-        if current_time - self._last_instance_check > 30:
-            new_count = self._get_instance_count()
-            if new_count != self.instance_count:
-                print(f"[{self.app_name}] Instance count changed from {self.instance_count} to {new_count}")
-                self.instance_count = new_count
-            self._last_instance_check = current_time
+        # Check every 60 seconds for instance count changes (less frequent to reduce instability)
+        if current_time - self._last_instance_check > 60:
+            try:
+                new_count = self._get_instance_count()
+                if new_count != self.instance_count:
+                    print(f"[{self.app_name}] Instance count changed from {self.instance_count} to {new_count}")
+                    self.instance_count = new_count
+                self._last_instance_check = current_time
+            except Exception as e:
+                print(f"[{self.app_name}] Error refreshing instance count: {e}")
+                # Don't update _last_instance_check on error to retry sooner
         
     def get_system_info(self):
         """Get system resource information"""
@@ -292,8 +304,21 @@ class ResourceManager:
             
             # Determine if app should be running based on any non-zero levels
             total_intensity = sum(self.current_levels.values())
-            self.is_running = total_intensity > 0
-            print(f"[{timestamp}] [{self.app_name}] total_intensity: {total_intensity}, is_running: {self.is_running}")
+            new_running_state = total_intensity > 0
+            
+            # Add stability check to prevent rapid state changes
+            current_time = time.time()
+            time_since_last_change = current_time - self._last_running_change
+            
+            if new_running_state != self.is_running:
+                if time_since_last_change >= self._running_stability_threshold:
+                    print(f"[{timestamp}] [{self.app_name}] State change: {self.is_running} -> {new_running_state} (total_intensity: {total_intensity})")
+                    self.is_running = new_running_state
+                    self._last_running_change = current_time
+                else:
+                    print(f"[{timestamp}] [{self.app_name}] State change blocked (too soon): {self.is_running} -> {new_running_state} (time_since_last_change: {time_since_last_change:.1f}s)")
+            else:
+                print(f"[{timestamp}] [{self.app_name}] total_intensity: {total_intensity}, is_running: {self.is_running} (stable)")
         
         # Create processing load
         if "processing" in levels:
