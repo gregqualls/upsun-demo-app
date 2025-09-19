@@ -13,10 +13,11 @@ import {
 const AppCard = ({ app, onUpdate, onReset, isUpdating }) => {
   const [localLevels, setLocalLevels] = useState(app.levels);
 
-  // Update local state when props change
+  // Only sync with server state on initial load or major changes (like system reset)
   React.useEffect(() => {
+    // Only update if this is a fresh app object (different reference)
     setLocalLevels(app.levels);
-  }, [app.levels]);
+  }, [app.name]); // Only when the app changes, not when levels change
 
   const handleSliderChange = (resource, value) => {
     const newLevels = { ...localLevels, [resource]: parseInt(value) };
