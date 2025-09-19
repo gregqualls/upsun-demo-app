@@ -5,7 +5,10 @@ import { Sun, Moon, Server, Power } from 'lucide-react';
 const Header = ({ 
   systemState, 
   isUpdating, 
-  onToggle 
+  onToggle,
+  batchMode,
+  onToggleBatchMode,
+  pendingChangesCount
 }) => {
   const { isDark, toggleTheme } = useTheme();
 
@@ -30,9 +33,41 @@ const Header = ({
             </div>
           </div>
 
-          {/* System Toggle */}
-          <div className="flex items-center space-x-4">
-            {/* Toggle Switch */}
+          {/* Controls */}
+          <div className="flex items-center space-x-6">
+            {/* Batch Mode Toggle */}
+            <div className="flex items-center space-x-3">
+              <span className={`text-sm font-medium transition-colors ${
+                batchMode 
+                  ? 'text-blue-600 dark:text-blue-400' 
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}>
+                Configure Mode
+              </span>
+              
+              <button
+                onClick={onToggleBatchMode}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                  batchMode
+                    ? 'bg-blue-500'
+                    : 'bg-gray-300 dark:bg-gray-600'
+                } cursor-pointer`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                    batchMode ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+              
+              {pendingChangesCount > 0 && (
+                <span className="text-xs bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 px-2 py-1 rounded-full">
+                  {pendingChangesCount} pending
+                </span>
+              )}
+            </div>
+
+            {/* System Toggle */}
             <div className="flex items-center space-x-3">
               <span className={`text-sm font-medium transition-colors ${
                 systemState === 'running' 

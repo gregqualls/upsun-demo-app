@@ -51,6 +51,15 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating }) => {
     }
   };
 
+  const getIntensityLabel = (value) => {
+    if (value === 0) return 'Off';
+    if (value <= 20) return 'Low';
+    if (value <= 40) return 'Light';
+    if (value <= 60) return 'Medium';
+    if (value <= 80) return 'High';
+    return 'Maximum';
+  };
+
   const resourceConfigs = [
     {
       key: 'processing',
@@ -158,7 +167,7 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating }) => {
                 </div>
               </div>
               <span className="text-sm font-bold text-gray-900 dark:text-white">
-                {localLevels[key] || 0}%
+                {getIntensityLabel(localLevels[key] || 0)}
               </span>
             </div>
             <div className="relative">
