@@ -223,24 +223,26 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics }) => {
               Live metrics from API (host system locally, containers in production)
             </div>
           )}
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600 dark:text-gray-400">CPU Usage</span>
-              <span className="font-semibold text-gray-900 dark:text-white">
-                {formatPercentage(metrics[app.name.toLowerCase().replace(/\s+/g, '_')].cpu_percent)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Memory</span>
-              <span className="font-semibold text-gray-900 dark:text-white">
-                {formatPercentage(metrics[app.name.toLowerCase().replace(/\s+/g, '_')].memory_percent)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Instances</span>
-              <span className="font-mono text-gray-500 dark:text-gray-400">
-                {metrics[app.name.toLowerCase().replace(/\s+/g, '_')].instance_count || 1}
-              </span>
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-1">
+                <span className="text-gray-600 dark:text-gray-400">CPU</span>
+                <span className="font-semibold text-gray-900 dark:text-white">
+                  {formatPercentage(metrics[app.name.toLowerCase().replace(/\s+/g, '_')].cpu_percent)}
+                </span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <span className="text-gray-600 dark:text-gray-400">Memory</span>
+                <span className="font-semibold text-gray-900 dark:text-white">
+                  {formatPercentage(metrics[app.name.toLowerCase().replace(/\s+/g, '_')].memory_percent)}
+                </span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <span className="text-gray-600 dark:text-gray-400">Instances</span>
+                <span className="font-mono text-gray-500 dark:text-gray-400">
+                  {metrics[app.name.toLowerCase().replace(/\s+/g, '_')].instance_count || 1}
+                </span>
+              </div>
             </div>
           </div>
         </div>
