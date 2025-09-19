@@ -45,27 +45,46 @@ class ResourceManager:
             # In Upsun, check for PLATFORM_APPLICATION_NAME
             app_name = os.getenv("PLATFORM_APPLICATION_NAME")
             if app_name:
-                # This is running on Upsun - try to get instance count
-                # Method 1: Try to get from Upsun environment variables
-                instance_count_env = os.getenv("PLATFORM_INSTANCE_COUNT")
-                if instance_count_env:
-                    return int(instance_count_env)
+                print(f"[{app_name}] Detecting instance count on Upsun...")
                 
-                # Method 2: Try to detect from process count (if multiple instances)
-                # Count processes with the same app name
+                # Method 1: Try to get from Upsun environment variables
+                # Check various possible environment variable names
+                possible_env_vars = [
+                    "PLATFORM_INSTANCE_COUNT",
+                    "PLATFORM_APP_INSTANCES", 
+                    "PLATFORM_CONTAINER_COUNT",
+                    "PLATFORM_SCALE_COUNT",
+                    "PLATFORM_REPLICAS"
+                ]
+                
+                for env_var in possible_env_vars:
+                    instance_count_env = os.getenv(env_var)
+                    if instance_count_env:
+                        print(f"[{app_name}] Found instance count in {env_var}: {instance_count_env}")
+                        return int(instance_count_env)
+                
+                # Method 2: Try to detect from process count
                 try:
                     import subprocess
                     result = subprocess.run(['ps', 'aux'], capture_output=True, text=True)
                     if result.returncode == 0:
-                        # Count lines containing our app name
                         lines = result.stdout.split('\n')
+                        # Look for processes with our app name and python
                         app_processes = [line for line in lines if app_name in line and 'python' in line]
                         if len(app_processes) > 0:
+                            print(f"[{app_name}] Detected {len(app_processes)} processes")
                             return len(app_processes)
+                except Exception as e:
+                    print(f"[{app_name}] Process counting failed: {e}")
+                
+                # Method 3: Try to query Upsun API (if available)
+                try:
+                    # This would require Upsun API access - for now just log
+                    print(f"[{app_name}] Upsun API query not implemented yet")
                 except:
                     pass
                 
-                # Method 3: Use known configuration as fallback
+                # Method 4: Use known configuration as fallback
                 instance_counts = {
                     "user-management": 1,
                     "payment-processing": 3,  # From your Upsun config
@@ -74,9 +93,12 @@ class ResourceManager:
                     "api-gateway": 1
                 }
                 
-                return instance_counts.get(app_name, 1)
+                fallback_count = instance_counts.get(app_name, 1)
+                print(f"[{app_name}] Using fallback instance count: {fallback_count}")
+                return fallback_count
             else:
                 # Running locally - always 1 instance
+                print(f"[{self.app_name}] Running locally - 1 instance")
                 return 1
         except Exception as e:
             print(f"Error getting instance count: {e}")
