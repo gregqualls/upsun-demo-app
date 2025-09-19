@@ -147,15 +147,27 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating }) => {
           </h3>
         </div>
         <div className="flex items-center space-x-2">
-          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-            app.status === 'healthy' 
-              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-              : app.status === 'unhealthy'
-              ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-              : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-          }`}>
-            {app.status}
-          </span>
+          <div className="relative group">
+            <span className={`px-3 py-1 rounded-full text-sm font-medium cursor-help ${
+              app.status === 'healthy' 
+                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                : app.status === 'unhealthy'
+                ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+            }`}>
+              {app.status}
+            </span>
+            {/* Tooltip */}
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+              {app.status === 'healthy' 
+                ? 'Service is running normally and responding to requests'
+                : app.status === 'unhealthy'
+                ? 'Service is not responding or has errors'
+                : 'Service status is unknown or starting up'
+              }
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -165,8 +177,15 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating }) => {
           <div key={key} className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className={`p-2 rounded-lg ${bgColor}`}>
-                  <Icon className={`w-4 h-4 ${color}`} />
+                <div className="relative group">
+                  <div className={`p-2 rounded-lg ${bgColor} cursor-help`}>
+                    <Icon className={`w-4 h-4 ${color}`} />
+                  </div>
+                  {/* Resource Tooltip */}
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                    {description}
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                  </div>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -199,31 +218,52 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating }) => {
       {/* Action Buttons */}
       <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
         <div className="flex space-x-2">
-          <button
-            onClick={handleStartAll}
-            disabled={isUpdating}
-            className="flex items-center space-x-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <Play className="w-4 h-4" />
-            <span>Start</span>
-          </button>
-          <button
-            onClick={handleStopAll}
-            disabled={isUpdating}
-            className="flex items-center space-x-1 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <Pause className="w-4 h-4" />
-            <span>Stop</span>
-          </button>
+          <div className="relative group">
+            <button
+              onClick={handleStartAll}
+              disabled={isUpdating}
+              className="flex items-center space-x-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Play className="w-4 h-4" />
+              <span>Start</span>
+            </button>
+            {/* Start Tooltip */}
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+              Start all resource processes at 50% level
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+            </div>
+          </div>
+          <div className="relative group">
+            <button
+              onClick={handleStopAll}
+              disabled={isUpdating}
+              className="flex items-center space-x-1 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Pause className="w-4 h-4" />
+              <span>Stop</span>
+            </button>
+            {/* Stop Tooltip */}
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+              Stop all resource processes (set to 0%)
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+            </div>
+          </div>
         </div>
-        <button
-          onClick={handleReset}
-          disabled={isUpdating}
-          className="flex items-center space-x-1 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          <RotateCcw className="w-4 h-4" />
-          <span>Reset</span>
-        </button>
+        <div className="relative group">
+          <button
+            onClick={handleReset}
+            disabled={isUpdating}
+            className="flex items-center space-x-1 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <RotateCcw className="w-4 h-4" />
+            <span>Reset</span>
+          </button>
+          {/* Reset Tooltip */}
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+            Reset all resource levels to 0%
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+          </div>
+        </div>
       </div>
     </div>
   );
