@@ -35,6 +35,7 @@ class ResourceManager:
         self.memory_data = []
         self.request_count = 0
         self.error_count = 0
+        self._lock = threading.Lock()
         
     def get_system_info(self):
         """Get system resource information"""
@@ -177,13 +178,18 @@ class ResourceManager:
     
     async def update_resources(self, levels: Dict[str, int], api_gateway_url: str = None):
         """Update all resource levels"""
-        print(f"[{self.app_name}] update_resources called with levels: {levels}")
-        self.current_levels.update(levels)
+        import time
+        timestamp = time.time()
+        print(f"[{timestamp}] [{self.app_name}] update_resources called with levels: {levels}")
         
-        # Determine if app should be running based on any non-zero levels
-        total_intensity = sum(self.current_levels.values())
-        self.is_running = total_intensity > 0
-        print(f"[{self.app_name}] total_intensity: {total_intensity}, is_running: {self.is_running}")
+        # Use lock to prevent race conditions
+        with self._lock:
+            self.current_levels.update(levels)
+            
+            # Determine if app should be running based on any non-zero levels
+            total_intensity = sum(self.current_levels.values())
+            self.is_running = total_intensity > 0
+            print(f"[{timestamp}] [{self.app_name}] total_intensity: {total_intensity}, is_running: {self.is_running}")
         
         # Create processing load
         if "processing" in levels:
@@ -207,7 +213,11 @@ class ResourceManager:
     
     def get_metrics(self):
         """Get current resource metrics"""
-        if not self.is_running:
+        with self._lock:
+            is_running = self.is_running
+            current_levels = self.current_levels.copy()
+        
+        if not is_running:
             # When not running, show minimal/zero usage
             return {
                 "app_name": self.app_name,
@@ -215,10 +225,10 @@ class ResourceManager:
                 "memory_percent": 0.0,
                 "memory_used_mb": 0,
                 "memory_total_mb": 0,
-                "current_levels": self.current_levels,
+                "current_levels": current_levels,
                 "request_count": self.request_count,
                 "error_count": self.error_count,
-                "is_running": self.is_running,
+                "is_running": is_running,
                 "instance_count": 1
             }
         
@@ -229,7 +239,7 @@ class ResourceManager:
         cpu_percent = psutil.cpu_percent(interval=0.1)
         
         # Calculate app-specific resource usage based on current levels
-        total_intensity = sum(self.current_levels.values())
+        total_intensity = sum(current_levels.values())
         if total_intensity > 0:
             # Scale system resources based on app intensity
             app_cpu_usage = (cpu_percent * total_intensity / 500)
@@ -244,10 +254,10 @@ class ResourceManager:
             "memory_percent": min(app_memory_usage, 100.0),  # Cap at 100%
             "memory_used_mb": int((memory_info.total - memory_info.available) * app_memory_usage / 100),
             "memory_total_mb": memory_info.total // (1024 * 1024),
-            "current_levels": self.current_levels,
+            "current_levels": current_levels,
             "request_count": self.request_count,
             "error_count": self.error_count,
-            "is_running": self.is_running,
+            "is_running": is_running,
             "instance_count": 1
         }
     
