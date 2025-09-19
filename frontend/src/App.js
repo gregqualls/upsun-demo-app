@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Header from './components/Header';
 import AppCard from './components/AppCard';
-import MetricsDisplay from './components/MetricsDisplay';
 import './index.css';
 
 function App() {
@@ -324,14 +323,11 @@ function App() {
                   onUpdate={updateAppResources}
                   onReset={resetAppResources}
                   isUpdating={updatingApps.has(app.name)}
+                  metrics={metrics}
                 />
               ))}
             </div>
           
-          {/* Metrics Display */}
-          <div className="mt-8">
-            <MetricsDisplay metrics={metrics} />
-          </div>
         </main>
       </div>
     </ThemeProvider>

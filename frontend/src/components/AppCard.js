@@ -10,7 +10,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 
-const AppCard = ({ app, onUpdate, onReset, isUpdating }) => {
+const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics }) => {
   const [localLevels, setLocalLevels] = useState(app.levels);
 
   // Only sync with server state on initial load or major changes (like system reset)
@@ -56,6 +56,10 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating }) => {
     if (value <= 60) return 'Medium';
     if (value <= 80) return 'High';
     return 'Maximum';
+  };
+
+  const formatPercentage = (value) => {
+    return typeof value === 'number' ? `${value.toFixed(1)}%` : 'N/A';
   };
 
   const resourceConfigs = [
@@ -186,6 +190,42 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating }) => {
           </div>
         ))}
       </div>
+
+      {/* Minimal Metrics */}
+      {metrics && metrics[app.name.toLowerCase().replace(/\s+/g, '_')] && (
+        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-600 dark:text-gray-400">CPU Usage</span>
+              <span className="font-semibold text-gray-900 dark:text-white">
+                {formatPercentage(metrics[app.name.toLowerCase().replace(/\s+/g, '_')].cpu_percent)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-600 dark:text-gray-400">Memory</span>
+              <span className="font-semibold text-gray-900 dark:text-white">
+                {formatPercentage(metrics[app.name.toLowerCase().replace(/\s+/g, '_')].memory_percent)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-600 dark:text-gray-400">Instances</span>
+              <span className="font-mono text-gray-500 dark:text-gray-400">
+                {metrics[app.name.toLowerCase().replace(/\s+/g, '_')].instance_count || 1}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-600 dark:text-gray-400">Status</span>
+              <span className={`font-semibold ${
+                metrics[app.name.toLowerCase().replace(/\s+/g, '_')].is_running 
+                  ? 'text-green-600 dark:text-green-400' 
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}>
+                {metrics[app.name.toLowerCase().replace(/\s+/g, '_')].is_running ? 'Active' : 'Idle'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
