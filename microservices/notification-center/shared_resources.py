@@ -52,17 +52,32 @@ class ResourceManager:
     def create_processing_load(self, level: int):
         """Create CPU-intensive processing load"""
         if level == 0:
+            # Stop any existing CPU simulation
+            if hasattr(self, 'cpu_thread') and self.cpu_thread and self.cpu_thread.is_alive():
+                self.cpu_thread = None
             return
             
         # Calculate iterations based on level (0-100)
         iterations = int((level / 100) * 1000000)
         
-        # CPU-intensive calculations
-        result = 0
-        for i in range(iterations):
-            result += math.sqrt(i * math.pi) * math.sin(i)
+        # Start CPU simulation in background thread
+        def cpu_worker():
+            while True:
+                result = 0
+                for i in range(iterations):
+                    result += math.sqrt(i * math.pi) * math.sin(i)
+                    # Add a small delay to prevent overwhelming the system
+                    if i % 10000 == 0:
+                        time.sleep(0.001)
+                time.sleep(0.1)  # Brief pause between cycles
         
-        return result
+        # Stop existing thread if running
+        if hasattr(self, 'cpu_thread') and self.cpu_thread and self.cpu_thread.is_alive():
+            self.cpu_thread = None
+        
+        # Start new thread
+        self.cpu_thread = threading.Thread(target=cpu_worker, daemon=True)
+        self.cpu_thread.start()
     
     def create_storage_load(self, level: int):
         """Create memory-intensive storage load"""
