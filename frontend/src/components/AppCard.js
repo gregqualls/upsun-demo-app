@@ -5,9 +5,6 @@ import {
   Network, 
   ShoppingCart, 
   CheckCircle, 
-  Play, 
-  Pause, 
-  RotateCcw, 
   Activity,
   AlertCircle,
   CheckCircle2
@@ -15,7 +12,6 @@ import {
 
 const AppCard = ({ app, onUpdate, onReset, isUpdating }) => {
   const [localLevels, setLocalLevels] = useState(app.levels);
-  const [isRunning, setIsRunning] = useState(false);
 
   // Update local state when props change
   React.useEffect(() => {
@@ -32,44 +28,20 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating }) => {
     onUpdate(app.name, newLevels);
   };
 
-  const handleStartAll = () => {
-    const newLevels = { 
-      processing: 50, 
-      storage: 50, 
-      traffic: 50, 
-      orders: 50, 
-      completions: 50 
-    };
-    setLocalLevels(newLevels);
-    onUpdate(app.name, newLevels);
-    setIsRunning(true);
-  };
+  // Debounced update to prevent bouncing
+  const debouncedUpdate = React.useCallback(
+    React.useMemo(() => {
+      let timeoutId;
+      return (appName, levels) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          onUpdate(appName, levels);
+        }, 300);
+      };
+    }, [onUpdate]),
+    [onUpdate]
+  );
 
-  const handleStopAll = () => {
-    const newLevels = { 
-      processing: 0, 
-      storage: 0, 
-      traffic: 0, 
-      orders: 0, 
-      completions: 0 
-    };
-    setLocalLevels(newLevels);
-    onUpdate(app.name, newLevels);
-    setIsRunning(false);
-  };
-
-  const handleReset = () => {
-    const newLevels = { 
-      processing: 0, 
-      storage: 0, 
-      traffic: 0, 
-      orders: 0, 
-      completions: 0 
-    };
-    setLocalLevels(newLevels);
-    onReset(app.name);
-    setIsRunning(false);
-  };
 
   const getStatusIcon = () => {
     switch (app.status) {
@@ -206,8 +178,8 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating }) => {
               max="100"
               value={localLevels[key] || 0}
               onChange={(e) => handleSliderChange(key, e.target.value)}
-              onMouseUp={(e) => handleSliderRelease(key, e.target.value)}
-              onTouchEnd={(e) => handleSliderRelease(key, e.target.value)}
+              onMouseUp={(e) => debouncedUpdate(app.name, { ...localLevels, [key]: parseInt(e.target.value) })}
+              onTouchEnd={(e) => debouncedUpdate(app.name, { ...localLevels, [key]: parseInt(e.target.value) })}
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider"
               disabled={isUpdating}
             />
@@ -215,56 +187,6 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating }) => {
         ))}
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex space-x-2">
-          <div className="relative group">
-            <button
-              onClick={handleStartAll}
-              disabled={isUpdating}
-              className="flex items-center space-x-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <Play className="w-4 h-4" />
-              <span>Start</span>
-            </button>
-            {/* Start Tooltip */}
-            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-              Start all resource processes at 50% level
-              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-            </div>
-          </div>
-          <div className="relative group">
-            <button
-              onClick={handleStopAll}
-              disabled={isUpdating}
-              className="flex items-center space-x-1 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <Pause className="w-4 h-4" />
-              <span>Stop</span>
-            </button>
-            {/* Stop Tooltip */}
-            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-              Stop all resource processes (set to 0%)
-              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-            </div>
-          </div>
-        </div>
-        <div className="relative group">
-          <button
-            onClick={handleReset}
-            disabled={isUpdating}
-            className="flex items-center space-x-1 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <RotateCcw className="w-4 h-4" />
-            <span>Reset</span>
-          </button>
-          {/* Reset Tooltip */}
-          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-            Reset all resource levels to 0%
-            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
