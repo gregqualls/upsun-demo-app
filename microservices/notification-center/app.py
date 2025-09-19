@@ -15,9 +15,9 @@ import sys
 sys.path.append('/app')
 from shared_resources import ResourceManager
 
-# App name will be injected during build process
-APP_NAME = "notification-center"
-APP_PORT = 8004
+# App name will be set via environment variable
+APP_NAME = os.getenv("PLATFORM_APPLICATION_NAME", "microservice")
+APP_PORT = int(os.getenv("PORT", 8000))
 
 app = FastAPI(title=f"{APP_NAME} Service", version="1.0.0")
 

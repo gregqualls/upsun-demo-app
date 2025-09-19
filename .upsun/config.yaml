@@ -34,8 +34,6 @@ applications:
     hooks:
       build: |
         set -ex
-        # Build microservices from config
-        python build_microservices.py
         pip install -r requirements.txt
     web:
       commands:
@@ -51,8 +49,6 @@ applications:
     hooks:
       build: |
         set -ex
-        # Build microservices from config
-        python build_microservices.py
         pip install -r requirements.txt
     web:
       commands:
@@ -68,8 +64,6 @@ applications:
     hooks:
       build: |
         set -ex
-        # Build microservices from config
-        python build_microservices.py
         pip install -r requirements.txt
     web:
       commands:
@@ -85,8 +79,6 @@ applications:
     hooks:
       build: |
         set -ex
-        # Build microservices from config
-        python build_microservices.py
         pip install -r requirements.txt
     web:
       commands:
