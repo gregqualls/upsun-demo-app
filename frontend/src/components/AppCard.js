@@ -21,10 +21,7 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating }) => {
   const handleSliderChange = (resource, value) => {
     const newLevels = { ...localLevels, [resource]: parseInt(value) };
     setLocalLevels(newLevels);
-  };
-
-  const handleSliderRelease = (resource, value) => {
-    const newLevels = { ...localLevels, [resource]: parseInt(value) };
+    // Immediately call onUpdate for real-time updates
     onUpdate(app.name, newLevels);
   };
 
@@ -177,12 +174,7 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating }) => {
                 max="100"
                 value={localLevels[key] || 0}
                 onChange={(e) => handleSliderChange(key, e.target.value)}
-                onMouseUp={(e) => handleSliderRelease(key, e.target.value)}
-                onTouchEnd={(e) => handleSliderRelease(key, e.target.value)}
-                className={`w-full h-2 bg-gray-200 rounded-lg appearance-none dark:bg-gray-700 slider ${
-                  isUpdating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-                }`}
-                disabled={isUpdating}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none dark:bg-gray-700 slider cursor-pointer"
               />
               {isUpdating && (
                 <div className="absolute inset-0 flex items-center justify-center">

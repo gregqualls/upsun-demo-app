@@ -1,22 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Header from './components/Header';
 import AppCard from './components/AppCard';
 import MetricsDisplay from './components/MetricsDisplay';
 import './index.css';
-
-// Debounce utility function
-const debounce = (func, wait) => {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-};
 
 function App() {
   const [apps, setApps] = useState({});
@@ -27,8 +14,6 @@ function App() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [updatingApps, setUpdatingApps] = useState(new Set());
   const [systemState, setSystemState] = useState('stopped'); // 'stopped', 'running', 'updating'
-  const [batchMode, setBatchMode] = useState(false); // Allow setting sliders without immediate API calls
-  const [pendingChanges, setPendingChanges] = useState({}); // Store pending slider changes
 
   // Dynamically determine API URL at runtime
   const getApiBaseUrl = () => {
@@ -100,61 +85,44 @@ function App() {
     }
   };
 
-  // Debounced update function
-  const debouncedUpdate = useCallback(
-    debounce(async (appName, levels) => {
-      // Add app to updating set
-      setUpdatingApps(prev => new Set(prev).add(appName));
-      
-      try {
-        const response = await fetch(`${API_BASE_URL}/resources`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            app_name: appName,
-            levels: levels
-          }),
-          mode: 'cors',
-          credentials: 'omit'
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        // Refresh apps data
-        await fetchAppsStatus();
-        setApiError(null);
-      } catch (error) {
-        console.error('Error updating app resources:', error);
-        setApiError(`API Error: ${error.message}`);
-      } finally {
-        // Remove app from updating set
-        setUpdatingApps(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(appName);
-          return newSet;
-        });
-      }
-    }, 300), // 300ms debounce
-    [API_BASE_URL, fetchAppsStatus]
-  );
-
-  // Update app resource levels (immediate or batched)
+  // Update app resource levels - optimistic updates
   const updateAppResources = async (appName, levels) => {
-    if (batchMode) {
-      // Store pending changes instead of sending API call
-      setPendingChanges(prev => ({
-        ...prev,
-        [appName]: levels
-      }));
-      return;
-    }
+    // Immediately update local state (optimistic update)
+    setApps(prev => ({
+      ...prev,
+      [appName]: {
+        ...prev[appName],
+        levels: levels
+      }
+    }));
     
-    // Immediate update with debouncing
-    debouncedUpdate(appName, levels);
+    // Send API call in background
+    try {
+      const response = await fetch(`${API_BASE_URL}/resources`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          app_name: appName,
+          levels: levels
+        }),
+        mode: 'cors',
+        credentials: 'omit'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      setApiError(null);
+    } catch (error) {
+      console.error('Error updating app resources:', error);
+      setApiError(`API Error: ${error.message}`);
+      
+      // Revert on error - refresh from server
+      await fetchAppsStatus();
+    }
   };
 
   // Reset app resources
@@ -193,32 +161,23 @@ function App() {
       const isCurrentlyRunning = systemState === 'running';
       const allAppsLevels = {};
       
-      // If turning on and we have pending changes, use those; otherwise use defaults
-      if (!isCurrentlyRunning && Object.keys(pendingChanges).length > 0) {
-        // Apply pending changes
-        Object.keys(apps).forEach(appName => {
-          allAppsLevels[appName] = pendingChanges[appName] || {
-            processing: 50,
-            storage: 50,
-            traffic: 50,
-            orders: 50,
-            completions: 50
-          };
-        });
-        // Clear pending changes
-        setPendingChanges({});
-      } else {
-        // Use default levels
-        Object.keys(apps).forEach(appName => {
-          allAppsLevels[appName] = {
-            processing: isCurrentlyRunning ? 0 : 50,
-            storage: isCurrentlyRunning ? 0 : 50,
-            traffic: isCurrentlyRunning ? 0 : 50,
-            orders: isCurrentlyRunning ? 0 : 50,
-            completions: isCurrentlyRunning ? 0 : 50
-          };
-        });
-      }
+      // Use current slider values or defaults
+      Object.keys(apps).forEach(appName => {
+        const currentLevels = apps[appName].levels;
+        allAppsLevels[appName] = isCurrentlyRunning ? {
+          processing: 0,
+          storage: 0,
+          traffic: 0,
+          orders: 0,
+          completions: 0
+        } : {
+          processing: currentLevels.processing || 50,
+          storage: currentLevels.storage || 50,
+          traffic: currentLevels.traffic || 50,
+          orders: currentLevels.orders || 50,
+          completions: currentLevels.completions || 50
+        };
+      });
 
       const response = await fetch(`${API_BASE_URL}/resources/all`, {
         method: 'POST',
@@ -236,8 +195,18 @@ function App() {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
-      // Refresh apps data
-      await fetchAppsStatus();
+      // Update local state immediately
+      setApps(prev => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach(appName => {
+          updated[appName] = {
+            ...updated[appName],
+            levels: allAppsLevels[appName]
+          };
+        });
+        return updated;
+      });
+      
       setSystemState(isCurrentlyRunning ? 'stopped' : 'running');
       setApiError(null);
     } catch (error) {
@@ -316,9 +285,6 @@ function App() {
           systemState={systemState}
           isUpdating={isUpdating}
           onToggle={toggleSystem}
-          batchMode={batchMode}
-          onToggleBatchMode={() => setBatchMode(!batchMode)}
-          pendingChangesCount={Object.keys(pendingChanges).length}
         />
         
         <main className="container mx-auto px-4 py-8">
