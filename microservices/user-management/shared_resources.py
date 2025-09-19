@@ -202,13 +202,20 @@ class ResourceManager:
             }
         
         # When running, show actual resource consumption
+        # In production (Upsun), this will read actual container metrics
+        # Locally, this reads host system resources (which is expected)
         memory_info = psutil.virtual_memory()
-        cpu_percent = psutil.cpu_percent(interval=0.1)  # Shorter interval for responsiveness
+        cpu_percent = psutil.cpu_percent(interval=0.1)
         
         # Calculate app-specific resource usage based on current levels
-        # This is a simplified calculation - in reality you'd track actual consumption
-        app_cpu_usage = (cpu_percent * sum(self.current_levels.values()) / 500) if sum(self.current_levels.values()) > 0 else 0
-        app_memory_usage = (memory_info.percent * sum(self.current_levels.values()) / 500) if sum(self.current_levels.values()) > 0 else 0
+        total_intensity = sum(self.current_levels.values())
+        if total_intensity > 0:
+            # Scale system resources based on app intensity
+            app_cpu_usage = (cpu_percent * total_intensity / 500)
+            app_memory_usage = (memory_info.percent * total_intensity / 500)
+        else:
+            app_cpu_usage = 0
+            app_memory_usage = 0
         
         return {
             "app_name": self.app_name,
