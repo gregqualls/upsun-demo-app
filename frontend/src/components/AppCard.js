@@ -7,11 +7,15 @@ import {
   CheckCircle, 
   Activity,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Settings
 } from 'lucide-react';
 
 const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics }) => {
   const [localLevels, setLocalLevels] = useState(app.levels);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Only sync with server state on initial load or major changes (like system reset)
   React.useEffect(() => {
@@ -167,52 +171,74 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics }) => {
         </div>
       </div>
 
-      {/* Resource Controls */}
-      <div className="space-y-4">
-        {resourceConfigs.map(({ key, label, icon: Icon, color, bgColor, description }) => (
-          <div key={key} className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <div className="relative group">
-                  <div className={`p-2 rounded-lg ${bgColor} cursor-help`}>
-                    <Icon className={`w-4 h-4 ${color}`} />
+      {/* Resource Controls Toggle */}
+      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg p-2 -m-2 transition-colors duration-200"
+        >
+          <div className="flex items-center space-x-2">
+            <Settings className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Resource Controls
+            </span>
+          </div>
+          {isExpanded ? (
+            <ChevronUp className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+          )}
+        </button>
+        
+        {/* Collapsible Resource Controls */}
+        {isExpanded && (
+          <div className="mt-4 space-y-4">
+            {resourceConfigs.map(({ key, label, icon: Icon, color, bgColor, description }) => (
+              <div key={key} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="relative group">
+                      <div className={`p-2 rounded-lg ${bgColor} cursor-help`}>
+                        <Icon className={`w-4 h-4 ${color}`} />
+                      </div>
+                      {/* Resource Tooltip */}
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                        {description}
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {label}
+                      </label>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {description}
+                      </p>
+                    </div>
                   </div>
-                  {/* Resource Tooltip */}
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-                    {description}
-                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                  </div>
+                  <span className="text-sm font-bold text-gray-900 dark:text-white">
+                    {getIntensityLabel(localLevels[key] || 0)}
+                  </span>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {label}
-                  </label>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {description}
-                  </p>
+                <div className="relative">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={localLevels[key] || 0}
+                    onChange={(e) => handleSliderChange(key, e.target.value)}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none dark:bg-gray-700 slider cursor-pointer"
+                  />
+                  {isUpdating && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  )}
                 </div>
               </div>
-              <span className="text-sm font-bold text-gray-900 dark:text-white">
-                {getIntensityLabel(localLevels[key] || 0)}
-              </span>
-            </div>
-            <div className="relative">
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={localLevels[key] || 0}
-                onChange={(e) => handleSliderChange(key, e.target.value)}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none dark:bg-gray-700 slider cursor-pointer"
-              />
-              {isUpdating && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                </div>
-              )}
-            </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
 
       {/* Minimal Metrics */}
