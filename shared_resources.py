@@ -164,6 +164,10 @@ class ResourceManager:
         """Update all resource levels"""
         self.current_levels.update(levels)
         
+        # Determine if app should be running based on any non-zero levels
+        total_intensity = sum(self.current_levels.values())
+        self.is_running = total_intensity > 0
+        
         # Create processing load
         if "processing" in levels:
             self.create_processing_load(levels["processing"])
