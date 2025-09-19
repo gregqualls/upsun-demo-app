@@ -39,6 +39,13 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics }) => {
   };
 
   const getStatusColor = () => {
+    // Check if app is running based on metrics
+    const isAppRunning = metrics && metrics[app.name.toLowerCase().replace(/\s+/g, '_')]?.is_running;
+    
+    if (!isAppRunning) {
+      return 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50';
+    }
+    
     switch (app.status) {
       case 'healthy':
         return 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20';
@@ -105,8 +112,12 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics }) => {
     }
   ];
 
+  const isAppRunning = metrics && metrics[app.name.toLowerCase().replace(/\s+/g, '_')]?.is_running;
+  
   return (
-    <div className={`rounded-xl border-2 p-6 transition-all duration-200 ${getStatusColor()}`}>
+    <div className={`rounded-xl border-2 p-6 transition-all duration-200 ${getStatusColor()} ${
+      !isAppRunning ? 'opacity-60' : ''
+    }`}>
       {/* App Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
@@ -120,25 +131,38 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics }) => {
         </div>
         <div className="flex items-center space-x-2">
           <div className="relative group">
-            <span className={`px-3 py-1 rounded-full text-sm font-medium cursor-help ${
-              app.status === 'healthy' 
-                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                : app.status === 'unhealthy'
-                ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-            }`}>
-              {app.status}
-            </span>
-            {/* Tooltip */}
-            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-              {app.status === 'healthy' 
-                ? 'Service is running normally and responding to requests'
-                : app.status === 'unhealthy'
-                ? 'Service is not responding or has errors'
-                : 'Service status is unknown or starting up'
-              }
-              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-            </div>
+            {(() => {
+              const isAppRunning = metrics && metrics[app.name.toLowerCase().replace(/\s+/g, '_')]?.is_running;
+              const displayStatus = isAppRunning ? app.status : 'inactive';
+              
+              return (
+                <>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium cursor-help ${
+                    displayStatus === 'healthy' 
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                      : displayStatus === 'unhealthy'
+                      ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                      : displayStatus === 'inactive'
+                      ? 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
+                      : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                  }`}>
+                    {displayStatus}
+                  </span>
+                  {/* Tooltip */}
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                    {displayStatus === 'healthy' 
+                      ? 'Service is running normally and responding to requests'
+                      : displayStatus === 'inactive'
+                      ? 'Service is stopped and not consuming resources'
+                      : displayStatus === 'unhealthy'
+                      ? 'Service is not responding or has errors'
+                      : 'Service status is unknown or starting up'
+                    }
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
       </div>
@@ -211,16 +235,6 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics }) => {
               <span className="text-gray-600 dark:text-gray-400">Instances</span>
               <span className="font-mono text-gray-500 dark:text-gray-400">
                 {metrics[app.name.toLowerCase().replace(/\s+/g, '_')].instance_count || 1}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Status</span>
-              <span className={`font-semibold ${
-                metrics[app.name.toLowerCase().replace(/\s+/g, '_')].is_running 
-                  ? 'text-green-600 dark:text-green-400' 
-                  : 'text-gray-500 dark:text-gray-400'
-              }`}>
-                {metrics[app.name.toLowerCase().replace(/\s+/g, '_')].is_running ? 'Active' : 'Idle'}
               </span>
             </div>
           </div>
