@@ -14,23 +14,28 @@ applications:
         /:
           passthru: true
     relationships:
-      cpu-worker:
-        service: "cpu-worker"
+      user-management:
+        service: "user-management"
         endpoint: "http"
-      memory-worker:
-        service: "memory-worker"
+      payment-processing:
+        service: "payment-processing"
         endpoint: "http"
-      network-simulator:
-        service: "network-simulator"
+      inventory-system:
+        service: "inventory-system"
+        endpoint: "http"
+      notification-center:
+        service: "notification-center"
         endpoint: "http"
 
-  cpu-worker:
+  user-management:
     type: python:3.11
     source:
-      root: cpu-worker
+      root: microservices/user-management
     hooks:
       build: |
         set -ex
+        # Build microservices from config
+        python build_microservices.py
         pip install -r requirements.txt
     web:
       commands:
@@ -39,13 +44,15 @@ applications:
         /:
           passthru: true
 
-  memory-worker:
+  payment-processing:
     type: python:3.11
     source:
-      root: memory-worker
+      root: microservices/payment-processing
     hooks:
       build: |
         set -ex
+        # Build microservices from config
+        python build_microservices.py
         pip install -r requirements.txt
     web:
       commands:
@@ -54,13 +61,32 @@ applications:
         /:
           passthru: true
 
-  network-simulator:
+  inventory-system:
     type: python:3.11
     source:
-      root: network-simulator
+      root: microservices/inventory-system
     hooks:
       build: |
         set -ex
+        # Build microservices from config
+        python build_microservices.py
+        pip install -r requirements.txt
+    web:
+      commands:
+        start: python app.py
+      locations:
+        /:
+          passthru: true
+
+  notification-center:
+    type: python:3.11
+    source:
+      root: microservices/notification-center
+    hooks:
+      build: |
+        set -ex
+        # Build microservices from config
+        python build_microservices.py
         pip install -r requirements.txt
     web:
       commands:

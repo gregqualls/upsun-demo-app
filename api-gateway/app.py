@@ -24,24 +24,51 @@ def get_service_urls():
     if os.getenv("PLATFORM_APPLICATION_NAME"):  # Running on Upsun
         # Use Upsun relationship environment variables
         return {
-            "cpu_worker": os.getenv("PLATFORM_RELATIONSHIPS_CPU_WORKER_0_URL", "http://cpu-worker.internal"),
-            "memory_worker": os.getenv("PLATFORM_RELATIONSHIPS_MEMORY_WORKER_0_URL", "http://memory-worker.internal"),
-            "network_simulator": os.getenv("PLATFORM_RELATIONSHIPS_NETWORK_SIMULATOR_0_URL", "http://network-simulator.internal"),
+            "user_management": os.getenv("PLATFORM_RELATIONSHIPS_USER_MANAGEMENT_0_URL", "http://user-management.internal"),
+            "payment_processing": os.getenv("PLATFORM_RELATIONSHIPS_PAYMENT_PROCESSING_0_URL", "http://payment-processing.internal"),
+            "inventory_system": os.getenv("PLATFORM_RELATIONSHIPS_INVENTORY_SYSTEM_0_URL", "http://inventory-system.internal"),
+            "notification_center": os.getenv("PLATFORM_RELATIONSHIPS_NOTIFICATION_CENTER_0_URL", "http://notification-center.internal"),
         }
     else:  # Local development
         return {
-            "cpu_worker": "http://localhost:8001",
-            "memory_worker": "http://localhost:8002", 
-            "network_simulator": "http://localhost:8003",
+            "user_management": "http://localhost:8001",
+            "payment_processing": "http://localhost:8002", 
+            "inventory_system": "http://localhost:8003",
+            "notification_center": "http://localhost:8004",
         }
 
 SERVICES = get_service_urls()
 
-# Global state for resource levels
+# Global state for resource levels - per app
 resource_levels = {
-    "cpu": 0,
-    "memory": 0,
-    "network": 0
+    "user_management": {
+        "processing": 0,
+        "storage": 0,
+        "traffic": 0,
+        "orders": 0,
+        "completions": 0
+    },
+    "payment_processing": {
+        "processing": 0,
+        "storage": 0,
+        "traffic": 0,
+        "orders": 0,
+        "completions": 0
+    },
+    "inventory_system": {
+        "processing": 0,
+        "storage": 0,
+        "traffic": 0,
+        "orders": 0,
+        "completions": 0
+    },
+    "notification_center": {
+        "processing": 0,
+        "storage": 0,
+        "traffic": 0,
+        "orders": 0,
+        "completions": 0
+    }
 }
 
 @app.get("/")
@@ -89,40 +116,74 @@ async def get_resource_levels():
     return resource_levels
 
 @app.post("/resources")
-async def update_resource_levels(levels: Dict[str, int]):
-    """Update resource levels for all services"""
+async def update_resource_levels(request_data: Dict[str, Any]):
+    """Update resource levels for a specific app"""
     global resource_levels
+    
+    app_name = request_data.get("app_name")
+    levels = request_data.get("levels", {})
+    
+    if not app_name or app_name not in resource_levels:
+        raise HTTPException(status_code=400, detail=f"Invalid app name: {app_name}")
     
     # Validate input
     for key, value in levels.items():
-        if key not in resource_levels:
+        if key not in resource_levels[app_name]:
             raise HTTPException(status_code=400, detail=f"Invalid resource type: {key}")
         if not isinstance(value, int) or value < 0 or value > 100:
             raise HTTPException(status_code=400, detail=f"Invalid value for {key}: must be 0-100")
     
     # Update local state
-    resource_levels.update(levels)
+    resource_levels[app_name].update(levels)
     
-    # Propagate to services
+    # Propagate to the specific service
+    service_url = SERVICES.get(app_name)
+    if service_url:
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                print(f"Sending {levels} to {app_name} at {service_url}")
+                response = await client.post(f"{service_url}/resources", json=levels)
+                if response.status_code != 200:
+                    print(f"Error updating {app_name}: {response.status_code}")
+        except Exception as e:
+            print(f"Error updating {app_name}: {e}")
+    
+    return {"message": f"Resource levels updated for {app_name}", "levels": resource_levels[app_name]}
+
+@app.post("/resources/all")
+async def update_all_resource_levels(request_data: Dict[str, Any]):
+    """Update resource levels for all apps"""
+    global resource_levels
+    
+    levels = request_data.get("levels", {})
+    
+    # Validate input
+    for app_name, app_levels in levels.items():
+        if app_name not in resource_levels:
+            continue
+        for key, value in app_levels.items():
+            if key not in resource_levels[app_name]:
+                continue
+            if not isinstance(value, int) or value < 0 or value > 100:
+                continue
+    
+    # Update local state
+    for app_name, app_levels in levels.items():
+        if app_name in resource_levels:
+            resource_levels[app_name].update(app_levels)
+    
+    # Propagate to all services
     async with httpx.AsyncClient(timeout=10.0) as client:
         tasks = []
-        for service_name, service_url in SERVICES.items():
-            # Send only relevant resource type to each service
-            service_resources = {}
-            if service_name == "cpu_worker" and "cpu" in levels:
-                service_resources["cpu"] = levels["cpu"]
-            elif service_name == "memory_worker" and "memory" in levels:
-                service_resources["memory"] = levels["memory"]
-            elif service_name == "network_simulator" and "network" in levels:
-                service_resources["network"] = levels["network"]
-            
-            if service_resources:
+        for app_name, app_levels in levels.items():
+            if app_name in SERVICES:
+                service_url = SERVICES[app_name]
                 try:
-                    print(f"Sending {service_resources} to {service_name} at {service_url}")
-                    task = client.post(f"{service_url}/resources", json=service_resources)
+                    print(f"Sending {app_levels} to {app_name} at {service_url}")
+                    task = client.post(f"{service_url}/resources", json=app_levels)
                     tasks.append(task)
                 except Exception as e:
-                    print(f"Error updating {service_name}: {e}")
+                    print(f"Error updating {app_name}: {e}")
         
         # Wait for all updates to complete
         if tasks:
@@ -133,7 +194,7 @@ async def update_resource_levels(levels: Dict[str, int]):
                 else:
                     print(f"Task {i} completed successfully")
     
-    return {"message": "Resource levels updated", "levels": resource_levels}
+    return {"message": "Resource levels updated for all apps", "levels": resource_levels}
 
 @app.get("/metrics")
 async def get_metrics():
@@ -167,57 +228,58 @@ async def get_system_info():
     
     return system_info
 
-@app.post("/stress")
-async def toggle_stress_mode():
-    """Toggle stress mode for CPU worker"""
-    try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.post(f"{SERVICES['cpu_worker']}/stress")
-            if response.status_code == 200:
-                return response.json()
-            else:
-                return {"error": f"Failed to toggle stress mode: {response.status_code}"}
-    except Exception as e:
-        return {"error": str(e)}
+@app.post("/apps/{app_name}/reset")
+async def reset_app_resources(app_name: str):
+    """Reset all resource levels for a specific app"""
+    if app_name not in resource_levels:
+        raise HTTPException(status_code=400, detail=f"Invalid app name: {app_name}")
+    
+    # Reset local state
+    resource_levels[app_name] = {
+        "processing": 0,
+        "storage": 0,
+        "traffic": 0,
+        "orders": 0,
+        "completions": 0
+    }
+    
+    # Reset on the service
+    service_url = SERVICES.get(app_name)
+    if service_url:
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                response = await client.post(f"{service_url}/resources/reset")
+                if response.status_code != 200:
+                    print(f"Error resetting {app_name}: {response.status_code}")
+        except Exception as e:
+            print(f"Error resetting {app_name}: {e}")
+    
+    return {"message": f"Resources reset for {app_name}", "levels": resource_levels[app_name]}
 
-@app.get("/stress")
-async def get_stress_mode():
-    """Get stress mode status for CPU worker"""
-    try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get(f"{SERVICES['cpu_worker']}/stress")
-            if response.status_code == 200:
-                return response.json()
-            else:
-                return {"error": f"Failed to get stress mode: {response.status_code}"}
-    except Exception as e:
-        return {"error": str(e)}
-
-@app.post("/load")
-async def set_load(load_data: Dict[str, Any]):
-    """Set load level for CPU worker (for horizontal scaling demo)"""
-    try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.post(f"{SERVICES['cpu_worker']}/load", json=load_data)
-            if response.status_code == 200:
-                return response.json()
-            else:
-                return {"error": f"Failed to set load: {response.status_code}"}
-    except Exception as e:
-        return {"error": str(e)}
-
-@app.get("/load")
-async def get_load():
-    """Get current load level for CPU worker"""
-    try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get(f"{SERVICES['cpu_worker']}/load")
-            if response.status_code == 200:
-                return response.json()
-            else:
-                return {"error": f"Failed to get load: {response.status_code}"}
-    except Exception as e:
-        return {"error": str(e)}
+@app.get("/apps")
+async def get_apps():
+    """Get list of all apps and their current status"""
+    apps = {}
+    for app_name in resource_levels.keys():
+        apps[app_name] = {
+            "name": app_name.replace("_", " ").title(),
+            "levels": resource_levels[app_name],
+            "status": "unknown"
+        }
+    
+    # Get status from services
+    for app_name, service_url in SERVICES.items():
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                response = await client.get(f"{service_url}/health")
+                if response.status_code == 200:
+                    apps[app_name]["status"] = "healthy"
+                else:
+                    apps[app_name]["status"] = "unhealthy"
+        except Exception as e:
+            apps[app_name]["status"] = "unhealthy"
+    
+    return apps
 
 if __name__ == "__main__":
     import uvicorn

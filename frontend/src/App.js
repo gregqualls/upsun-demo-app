@@ -1,25 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Header from './components/Header';
-import ServiceStatus from './components/ServiceStatus';
-import ResourceControls from './components/ResourceControls';
+import AppCard from './components/AppCard';
 import MetricsDisplay from './components/MetricsDisplay';
 import './index.css';
 
 function App() {
-  const [services, setServices] = useState({});
+  const [apps, setApps] = useState({});
   const [metrics, setMetrics] = useState({});
   const [systemInfo, setSystemInfo] = useState({});
-  const [stressMode, setStressMode] = useState(false);
-  const [loadLevel, setLoadLevel] = useState(0);
-  const [isSimulatingLoad, setIsSimulatingLoad] = useState(false);
-  const [resourceLevels, setResourceLevels] = useState({
-    cpu: 0,
-    memory: 0,
-    network: 0
-  });
   const [isLoading, setIsLoading] = useState(true);
   const [apiError, setApiError] = useState(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Dynamically determine API URL at runtime
   const getApiBaseUrl = () => {
@@ -41,10 +33,10 @@ function App() {
   
   const API_BASE_URL = getApiBaseUrl();
 
-  // Fetch services status
-  const fetchServicesStatus = async () => {
+  // Fetch apps status
+  const fetchAppsStatus = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/services/status`, {
+      const response = await fetch(`${API_BASE_URL}/apps`, {
         mode: 'cors',
         credentials: 'omit'
       });
@@ -52,10 +44,22 @@ function App() {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       const data = await response.json();
-      setServices(data);
+      
+      // Transform data for display
+      const transformedApps = {};
+      Object.keys(data).forEach(key => {
+        transformedApps[key] = {
+          name: key,
+          displayName: data[key].name,
+          status: data[key].status,
+          levels: data[key].levels
+        };
+      });
+      
+      setApps(transformedApps);
       setApiError(null);
     } catch (error) {
-      console.error('Error fetching services status:', error);
+      console.error('Error fetching apps status:', error);
       setApiError(`API Error: ${error.message}`);
     }
   };
@@ -79,22 +83,60 @@ function App() {
     }
   };
 
-  // Fetch resource levels
-  const fetchResourceLevels = async () => {
+  // Update app resource levels
+  const updateAppResources = async (appName, levels) => {
+    setIsUpdating(true);
     try {
       const response = await fetch(`${API_BASE_URL}/resources`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          app_name: appName,
+          levels: levels
+        }),
         mode: 'cors',
         credentials: 'omit'
       });
+      
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      const data = await response.json();
-      setResourceLevels(data);
+      
+      // Refresh apps data
+      await fetchAppsStatus();
       setApiError(null);
     } catch (error) {
-      console.error('Error fetching resource levels:', error);
+      console.error('Error updating app resources:', error);
       setApiError(`API Error: ${error.message}`);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Reset app resources
+  const resetAppResources = async (appName) => {
+    setIsUpdating(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/apps/${appName}/reset`, {
+        method: 'POST',
+        mode: 'cors',
+        credentials: 'omit'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      // Refresh apps data
+      await fetchAppsStatus();
+      setApiError(null);
+    } catch (error) {
+      console.error('Error resetting app resources:', error);
+      setApiError(`API Error: ${error.message}`);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -117,113 +159,17 @@ function App() {
     }
   };
 
-  // Fetch stress mode status
-  const fetchStressMode = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/stress`, {
-        mode: 'cors',
-        credentials: 'omit'
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      const data = await response.json();
-      setStressMode(data.stress_mode || false);
-      setApiError(null);
-    } catch (error) {
-      console.error('Error fetching stress mode:', error);
-      setApiError(`API Error: ${error.message}`);
-    }
-  };
 
-  // Toggle stress mode
-  const toggleStressMode = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/stress`, {
-        method: 'POST',
-        mode: 'cors',
-        credentials: 'omit'
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      const data = await response.json();
-      setStressMode(data.stress_mode || false);
-      setApiError(null);
-    } catch (error) {
-      console.error('Error toggling stress mode:', error);
-      setApiError(`API Error: ${error.message}`);
-    }
-  };
 
-  const simulateLoad = async (level) => {
-    try {
-      setIsSimulatingLoad(true);
-      const response = await fetch(`${API_BASE_URL}/load`, {
-        method: 'POST',
-        mode: 'cors',
-        credentials: 'omit',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ load_level: level }),
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      const data = await response.json();
-      setLoadLevel(data.load_level);
-      setApiError(null);
-      console.log(`Load simulation set to ${level}%`);
-    } catch (error) {
-      console.error('Error simulating load:', error);
-      setApiError(`API Error: ${error.message}`);
-    } finally {
-      setIsSimulatingLoad(false);
-    }
-  };
 
-  const stopLoadSimulation = async () => {
-    await simulateLoad(0);
-  };
-
-  // Update resource levels
-  const updateResourceLevels = async (newLevels) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/resources`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newLevels),
-        mode: 'cors',
-        credentials: 'omit'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setResourceLevels(data.levels);
-        setApiError(null);
-        // Refresh metrics after successful update
-        fetchMetrics();
-      } else {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-    } catch (error) {
-      console.error('Error updating resource levels:', error);
-      setApiError(`API Error: ${error.message}`);
-    }
-  };
 
   // Initial load
   useEffect(() => {
     const loadData = async () => {
       await Promise.all([
-        fetchServicesStatus(),
-        fetchResourceLevels(),
+        fetchAppsStatus(),
         fetchMetrics(),
-        fetchSystemInfo(),
-        fetchStressMode()
+        fetchSystemInfo()
       ]);
       setIsLoading(false);
     };
@@ -234,9 +180,8 @@ function App() {
   // Periodic updates
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchServicesStatus();
+      fetchAppsStatus();
       fetchMetrics();
-      fetchStressMode();
     }, 2000); // Update every 2 seconds
 
     return () => clearInterval(interval);
@@ -283,31 +228,27 @@ function App() {
             </div>
           )}
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Service Status */}
-            <div className="lg:col-span-1">
-              <ServiceStatus services={services} />
+          {/* Apps Grid */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+              Business Applications
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {Object.values(apps).map((app) => (
+                <AppCard
+                  key={app.name}
+                  app={app}
+                  onUpdate={updateAppResources}
+                  onReset={resetAppResources}
+                  isUpdating={isUpdating}
+                />
+              ))}
             </div>
-            
-            {/* Resource Controls */}
-                        <div className="lg:col-span-2">
-                          <ResourceControls
-                            resourceLevels={resourceLevels}
-                            onUpdate={updateResourceLevels}
-                            systemInfo={systemInfo}
-                            stressMode={stressMode}
-                            onToggleStress={toggleStressMode}
-                            loadLevel={loadLevel}
-                            onSimulateLoad={simulateLoad}
-                            onStopLoad={stopLoadSimulation}
-                            isSimulatingLoad={isSimulatingLoad}
-                          />
-                        </div>
-            
-            {/* Metrics Display */}
-            <div className="lg:col-span-3">
-              <MetricsDisplay metrics={metrics} />
-            </div>
+          </div>
+          
+          {/* Metrics Display */}
+          <div className="mt-8">
+            <MetricsDisplay metrics={metrics} />
           </div>
         </main>
       </div>
