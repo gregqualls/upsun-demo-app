@@ -77,12 +77,59 @@ class ResourceManager:
                 except Exception as e:
                     print(f"[{app_name}] Process counting failed: {e}")
                 
-                # Method 3: Try to query Upsun API (if available)
+                # Method 3: Query Upsun CLI for actual instance counts
                 try:
-                    # This would require Upsun API access - for now just log
-                    print(f"[{app_name}] Upsun API query not implemented yet")
-                except:
-                    pass
+                    import subprocess
+                    import json
+                    
+                    # Try to get instance count for specific app
+                    result = subprocess.run(
+                        ['upsun', 'resources:get', app_name, '--format=json'], 
+                        capture_output=True, 
+                        text=True,
+                        timeout=10
+                    )
+                    
+                    # If specific app fails, try getting all resources
+                    if result.returncode != 0:
+                        result = subprocess.run(
+                            ['upsun', 'resources:get', '--format=json'], 
+                            capture_output=True, 
+                            text=True,
+                            timeout=10
+                        )
+                    
+                    if result.returncode == 0:
+                        resources_data = json.loads(result.stdout)
+                        print(f"[{app_name}] Upsun resources data: {resources_data}")
+                        
+                        # Handle different response formats
+                        resources = []
+                        if isinstance(resources_data, list):
+                            resources = resources_data
+                        elif isinstance(resources_data, dict):
+                            resources = resources_data.get('resources', [])
+                            # If it's a single resource, wrap it in a list
+                            if 'name' in resources_data and 'instances' in resources_data:
+                                resources = [resources_data]
+                        
+                        # Look for our app in the resources
+                        for resource in resources:
+                            if resource.get('name') == app_name:
+                                instances = resource.get('instances', 1)
+                                print(f"[{app_name}] Found {instances} instances from Upsun CLI")
+                                return instances
+                        
+                        print(f"[{app_name}] App not found in Upsun resources, using fallback")
+                    else:
+                        print(f"[{app_name}] Upsun CLI failed: {result.stderr}")
+                        
+                except subprocess.TimeoutExpired:
+                    print(f"[{app_name}] Upsun CLI timeout")
+                except json.JSONDecodeError as e:
+                    print(f"[{app_name}] Failed to parse Upsun CLI output: {e}")
+                except Exception as e:
+                    print(f"[{app_name}] Upsun CLI error: {e}")
                 
                 # Method 4: Use known configuration as fallback
                 instance_counts = {
