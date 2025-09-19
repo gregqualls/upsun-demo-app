@@ -77,59 +77,38 @@ class ResourceManager:
                 except Exception as e:
                     print(f"[{app_name}] Process counting failed: {e}")
                 
-                # Method 3: Query Upsun CLI for actual instance counts
+                # Method 3: Query API Gateway for instance count
                 try:
-                    import subprocess
-                    import json
+                    import httpx
+                    import asyncio
                     
-                    # Try to get instance count for specific app
-                    result = subprocess.run(
-                        ['upsun', 'resources:get', app_name, '--format=json'], 
-                        capture_output=True, 
-                        text=True,
-                        timeout=10
-                    )
+                    # Get API Gateway URL from environment or use default
+                    api_gateway_url = os.getenv("PLATFORM_RELATIONSHIPS_API_GATEWAY_URL", "http://api-gateway:8000")
                     
-                    # If specific app fails, try getting all resources
-                    if result.returncode != 0:
-                        result = subprocess.run(
-                            ['upsun', 'resources:get', '--format=json'], 
-                            capture_output=True, 
-                            text=True,
-                            timeout=10
-                        )
+                    # Query the API Gateway for instance count
+                    async def get_instance_count_from_gateway():
+                        try:
+                            async with httpx.AsyncClient(timeout=5.0) as client:
+                                response = await client.get(f"{api_gateway_url}/instances/{app_name}")
+                                if response.status_code == 200:
+                                    data = response.json()
+                                    instances = data.get("instances", 1)
+                                    print(f"[{app_name}] Got instance count from API Gateway: {instances}")
+                                    return instances
+                        except Exception as e:
+                            print(f"[{app_name}] API Gateway query failed: {e}")
+                            return None
                     
-                    if result.returncode == 0:
-                        resources_data = json.loads(result.stdout)
-                        print(f"[{app_name}] Upsun resources data: {resources_data}")
-                        
-                        # Handle different response formats
-                        resources = []
-                        if isinstance(resources_data, list):
-                            resources = resources_data
-                        elif isinstance(resources_data, dict):
-                            resources = resources_data.get('resources', [])
-                            # If it's a single resource, wrap it in a list
-                            if 'name' in resources_data and 'instances' in resources_data:
-                                resources = [resources_data]
-                        
-                        # Look for our app in the resources
-                        for resource in resources:
-                            if resource.get('name') == app_name:
-                                instances = resource.get('instances', 1)
-                                print(f"[{app_name}] Found {instances} instances from Upsun CLI")
-                                return instances
-                        
-                        print(f"[{app_name}] App not found in Upsun resources, using fallback")
-                    else:
-                        print(f"[{app_name}] Upsun CLI failed: {result.stderr}")
-                        
-                except subprocess.TimeoutExpired:
-                    print(f"[{app_name}] Upsun CLI timeout")
-                except json.JSONDecodeError as e:
-                    print(f"[{app_name}] Failed to parse Upsun CLI output: {e}")
+                    # Run the async function
+                    try:
+                        instances = asyncio.run(get_instance_count_from_gateway())
+                        if instances is not None:
+                            return instances
+                    except Exception as e:
+                        print(f"[{app_name}] Async execution failed: {e}")
+                    
                 except Exception as e:
-                    print(f"[{app_name}] Upsun CLI error: {e}")
+                    print(f"[{app_name}] API Gateway query error: {e}")
                 
                 # Method 4: Use known configuration as fallback
                 instance_counts = {

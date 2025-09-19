@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 import httpx
 import asyncio
 import os
+import subprocess
 from typing import Dict, Any
 import json
 
@@ -277,6 +278,83 @@ async def get_apps():
             apps[app_name]["status"] = "unhealthy"
     
     return apps
+
+@app.get("/instances/{app_name}")
+async def get_instance_count(app_name: str):
+    """Get instance count for a specific app from Upsun"""
+    try:
+        # Check if we're running on Upsun
+        if not os.getenv("PLATFORM_APPLICATION_NAME"):
+            # Running locally - return 1 instance
+            return {"instances": 1, "source": "local"}
+        
+        # Running on Upsun - try to get instance count
+        try:
+            # Try to get instance count for specific app
+            result = subprocess.run(
+                ['upsun', 'resources:get', app_name, '--format=json'], 
+                capture_output=True, 
+                text=True,
+                timeout=10
+            )
+            
+            # If specific app fails, try getting all resources
+            if result.returncode != 0:
+                result = subprocess.run(
+                    ['upsun', 'resources:get', '--format=json'], 
+                    capture_output=True, 
+                    text=True,
+                    timeout=10
+                )
+            
+            if result.returncode == 0:
+                resources_data = json.loads(result.stdout)
+                print(f"Upsun resources data for {app_name}: {resources_data}")
+                
+                # Handle different response formats
+                resources = []
+                if isinstance(resources_data, list):
+                    resources = resources_data
+                elif isinstance(resources_data, dict):
+                    resources = resources_data.get('resources', [])
+                    # If it's a single resource, wrap it in a list
+                    if 'name' in resources_data and 'instances' in resources_data:
+                        resources = [resources_data]
+                
+                # Look for our app in the resources
+                for resource in resources:
+                    if resource.get('name') == app_name:
+                        instances = resource.get('instances', 1)
+                        print(f"Found {instances} instances for {app_name} from Upsun CLI")
+                        return {"instances": instances, "source": "upsun_cli"}
+                
+                print(f"App {app_name} not found in Upsun resources")
+            else:
+                print(f"Upsun CLI failed: {result.stderr}")
+                
+        except subprocess.TimeoutExpired:
+            print(f"Upsun CLI timeout for {app_name}")
+        except json.JSONDecodeError as e:
+            print(f"Failed to parse Upsun CLI output for {app_name}: {e}")
+        except Exception as e:
+            print(f"Upsun CLI error for {app_name}: {e}")
+        
+        # Fallback to known configuration
+        instance_counts = {
+            "user-management": 1,
+            "payment-processing": 3,
+            "inventory-system": 1,
+            "notification-center": 3,
+            "api-gateway": 1
+        }
+        
+        instances = instance_counts.get(app_name, 1)
+        print(f"Using fallback instance count for {app_name}: {instances}")
+        return {"instances": instances, "source": "fallback"}
+        
+    except Exception as e:
+        print(f"Error getting instance count for {app_name}: {e}")
+        return {"instances": 1, "source": "error"}
 
 if __name__ == "__main__":
     import uvicorn
