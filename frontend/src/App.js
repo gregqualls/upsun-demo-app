@@ -310,7 +310,6 @@ function App() {
                 />
               ))}
             </div>
-          </div>
           
           {/* Metrics Display */}
           <div className="mt-8">
