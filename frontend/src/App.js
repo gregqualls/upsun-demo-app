@@ -154,31 +154,44 @@ function App() {
   const toggleSystem = async () => {
     if (isUpdating) return;
     
-    setIsUpdating(true);
-    setSystemState('updating');
+    const isCurrentlyRunning = systemState === 'running';
+    const allAppsLevels = {};
     
-    try {
-      const isCurrentlyRunning = systemState === 'running';
-      const allAppsLevels = {};
-      
-      // Use current slider values or defaults
-      Object.keys(apps).forEach(appName => {
-        const currentLevels = apps[appName].levels;
-        allAppsLevels[appName] = isCurrentlyRunning ? {
-          processing: 0,
-          storage: 0,
-          traffic: 0,
-          orders: 0,
-          completions: 0
-        } : {
-          processing: currentLevels.processing || 50,
-          storage: currentLevels.storage || 50,
-          traffic: currentLevels.traffic || 50,
-          orders: currentLevels.orders || 50,
-          completions: currentLevels.completions || 50
+    // Use current slider values or defaults
+    Object.keys(apps).forEach(appName => {
+      const currentLevels = apps[appName].levels;
+      allAppsLevels[appName] = isCurrentlyRunning ? {
+        processing: 0,
+        storage: 0,
+        traffic: 0,
+        orders: 0,
+        completions: 0
+      } : {
+        processing: currentLevels.processing || 50,
+        storage: currentLevels.storage || 50,
+        traffic: currentLevels.traffic || 50,
+        orders: currentLevels.orders || 50,
+        completions: currentLevels.completions || 50
+      };
+    });
+
+    // Update UI immediately (optimistic update)
+    setApps(prev => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach(appName => {
+        updated[appName] = {
+          ...updated[appName],
+          levels: allAppsLevels[appName]
         };
       });
-
+      return updated;
+    });
+    
+    setSystemState(isCurrentlyRunning ? 'stopped' : 'running');
+    setIsUpdating(false); // UI is updated, no need to show loading
+    
+    // Send API call in background (don't wait for it)
+    try {
       const response = await fetch(`${API_BASE_URL}/resources/all`, {
         method: 'POST',
         headers: {
@@ -192,29 +205,14 @@ function App() {
       });
       
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        console.warn(`API call failed: ${response.status}`);
+        // Don't revert UI on API failure - let user see the change
       }
       
-      // Update local state immediately
-      setApps(prev => {
-        const updated = { ...prev };
-        Object.keys(updated).forEach(appName => {
-          updated[appName] = {
-            ...updated[appName],
-            levels: allAppsLevels[appName]
-          };
-        });
-        return updated;
-      });
-      
-      setSystemState(isCurrentlyRunning ? 'stopped' : 'running');
       setApiError(null);
     } catch (error) {
-      console.error('Error toggling system:', error);
-      setSystemState(systemState); // Keep current state on error
-      setApiError(`API Error: ${error.message}`);
-    } finally {
-      setIsUpdating(false);
+      console.error('Background API call failed:', error);
+      // Don't revert UI on API failure - let user see the change
     }
   };
 

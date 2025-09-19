@@ -172,27 +172,24 @@ async def update_all_resource_levels(request_data: Dict[str, Any]):
         if app_name in resource_levels:
             resource_levels[app_name].update(app_levels)
     
-    # Propagate to all services
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        tasks = []
-        for app_name, app_levels in levels.items():
-            if app_name in SERVICES:
-                service_url = SERVICES[app_name]
-                try:
-                    print(f"Sending {app_levels} to {app_name} at {service_url}")
-                    task = client.post(f"{service_url}/resources", json=app_levels)
-                    tasks.append(task)
-                except Exception as e:
-                    print(f"Error updating {app_name}: {e}")
-        
-        # Wait for all updates to complete
-        if tasks:
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-            for i, result in enumerate(results):
-                if isinstance(result, Exception):
-                    print(f"Task {i} failed: {result}")
-                else:
-                    print(f"Task {i} completed successfully")
+    # Propagate to all services in parallel (don't wait)
+    async def update_service(app_name, app_levels):
+        if app_name not in SERVICES:
+            return
+        service_url = SERVICES[app_name]
+        try:
+            print(f"Sending {app_levels} to {app_name} at {service_url}")
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                response = await client.post(f"{service_url}/resources", json=app_levels)
+                print(f"{app_name} updated successfully: {response.status_code}")
+        except Exception as e:
+            print(f"Error updating {app_name}: {e}")
+    
+    # Start all updates in background (don't wait)
+    tasks = []
+    for app_name, app_levels in levels.items():
+        task = asyncio.create_task(update_service(app_name, app_levels))
+        tasks.append(task)
     
     return {"message": "Resource levels updated for all apps", "levels": resource_levels}
 
