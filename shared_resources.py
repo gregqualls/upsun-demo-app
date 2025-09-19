@@ -79,44 +79,30 @@ class ResourceManager:
                 except Exception as e:
                     print(f"[{app_name}] Process counting failed: {e}")
                 
-                # Method 3: Query API Gateway for instance count
-                try:
-                    import httpx
-                    import asyncio
-                    
-                    # Get API Gateway URL from environment or use default
-                    api_gateway_url = os.getenv("PLATFORM_RELATIONSHIPS_API_GATEWAY_URL", "http://api-gateway:8000")
-                    
-                    # Query the API Gateway for instance count
-                    async def get_instance_count_from_gateway():
-                        try:
-                            async with httpx.AsyncClient(timeout=3.0) as client:
-                                response = await client.get(f"{api_gateway_url}/instances/{app_name}")
-                                if response.status_code == 200:
-                                    data = response.json()
-                                    instances = data.get("instances", 1)
-                                    print(f"[{app_name}] Got instance count from API Gateway: {instances}")
-                                    return instances
-                                else:
-                                    print(f"[{app_name}] API Gateway returned status {response.status_code}")
-                                    return None
-                        except httpx.TimeoutException:
-                            print(f"[{app_name}] API Gateway query timeout")
-                            return None
-                        except Exception as e:
-                            print(f"[{app_name}] API Gateway query failed: {e}")
-                            return None
-                    
-                    # Run the async function
-                    try:
-                        instances = asyncio.run(get_instance_count_from_gateway())
-                        if instances is not None:
-                            return instances
-                    except Exception as e:
-                        print(f"[{app_name}] Async execution failed: {e}")
-                    
-                except Exception as e:
-                    print(f"[{app_name}] API Gateway query error: {e}")
+                   # Method 3: Query API Gateway for instance count (synchronous)
+                   try:
+                       import requests
+                       
+                       # Get API Gateway URL from environment or use default
+                       api_gateway_url = os.getenv("PLATFORM_RELATIONSHIPS_API_GATEWAY_URL", "http://api-gateway:8000")
+                       
+                       # Query the API Gateway for instance count synchronously
+                       try:
+                           response = requests.get(f"{api_gateway_url}/instances/{app_name}", timeout=3.0)
+                           if response.status_code == 200:
+                               data = response.json()
+                               instances = data.get("instances", 1)
+                               print(f"[{app_name}] Got instance count from API Gateway: {instances}")
+                               return instances
+                           else:
+                               print(f"[{app_name}] API Gateway returned status {response.status_code}")
+                       except requests.exceptions.Timeout:
+                           print(f"[{app_name}] API Gateway query timeout")
+                       except Exception as e:
+                           print(f"[{app_name}] API Gateway query failed: {e}")
+                       
+                   except Exception as e:
+                       print(f"[{app_name}] API Gateway query error: {e}")
                 
                 # Method 4: Use known configuration as fallback
                 instance_counts = {

@@ -1,0 +1,133 @@
+# Upsun CLI Commands Reference
+
+When working with Upsun deployments, you have access to the following CLI commands:
+
+## Global Options
+- `--help`, `-h` - Display help message
+- `--verbose`, `-v|vv|vvv` - Increase verbosity
+- `--version`, `-V` - Display version
+- `--yes`, `-y` - Answer "yes" to confirmations
+- `--no-interaction` - No interactive questions
+- `--ansi` / `--no-ansi` - Force/disable ANSI output
+- `--no`, `-n` - Answer "no" to confirmations
+- `--quiet`, `-q` - No output messages
+
+## Key Commands for This Project
+
+### Environment Management
+- `environment:list` - List environments
+- `environment:info` - Read/set environment properties
+- `environment:logs` - Read environment logs
+- `environment:redeploy` - Redeploy environment
+- `environment:relationships` - Show environment relationships
+- `environment:url` - Get public URLs
+
+### Resources & Apps
+- `resources:get` - View resources of apps and services
+- `resources:set` - Set resources of apps and services
+- `app:list` - List apps in project
+- `app:config-get` - View app configuration
+
+### Metrics & Monitoring
+- `metrics:all` - Show CPU, disk, memory metrics
+- `metrics:cpu` - Show CPU usage
+- `metrics:memory` - Show memory usage
+- `metrics:disk-usage` - Show disk usage
+
+### Project Management
+- `project:info` - Read/set project properties
+- `project:list` - List projects
+- `project:set-remote` - Set remote project
+
+### Authentication
+- `auth:login` - Log in via browser
+- `auth:logout` - Log out
+- `auth:info` - Display account info
+
+### Activities & Operations
+- `activity:list` - List activities
+- `activity:get` - View activity details
+- `activity:log` - Display activity logs
+- `operation:list` - List runtime operations
+- `operation:run` - Run operation
+
+### Services & Databases
+- `service:list` - List services
+- `db:dump` - Create database dump
+- `db:sql` - Run SQL on database
+
+### Variables & Configuration
+- `variable:list` - List variables
+- `variable:create` - Create variable
+- `variable:update` - Update variable
+- `variable:delete` - Delete variable
+
+## Usage Examples for This Project
+
+### Check Instance Counts
+```bash
+upsun resources:get --format=json
+upsun resources:get payment-processing --format=json
+```
+
+### View Metrics
+```bash
+upsun metrics:all
+upsun metrics:cpu
+upsun metrics:memory
+```
+
+### Check Environment Status
+```bash
+upsun environment:list
+upsun environment:info
+upsun environment:relationships
+```
+
+### Get URLs for Testing
+```bash
+# Get all environment URLs
+upsun environment:url
+
+# Get specific app URLs
+upsun environment:url --app=api-gateway
+upsun environment:url --app=payment-processing
+```
+
+### View Logs
+```bash
+upsun environment:logs
+upsun activity:list
+upsun activity:log [activity-id]
+```
+
+### Redeploy
+```bash
+upsun environment:redeploy
+```
+
+### Debugging Workflow
+```bash
+# 1. Get URLs to test the system
+upsun environment:url
+
+# 2. Check if apps are running
+upsun resources:get --format=json
+
+# 3. Monitor metrics
+upsun metrics:all
+
+# 4. Check logs if issues
+upsun environment:logs
+
+# 5. Test specific endpoints
+curl $(upsun environment:url --app=api-gateway --pipe)/apps
+curl $(upsun environment:url --app=api-gateway --pipe)/metrics
+```
+
+## Important Notes
+- Always use `--format=json` for programmatic access
+- Use `--yes` for non-interactive operations
+- Check `environment:relationships` for service URLs
+- Use `resources:get` to verify instance counts
+- Monitor with `metrics:*` commands for performance
