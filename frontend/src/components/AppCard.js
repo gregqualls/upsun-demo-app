@@ -28,20 +28,6 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating }) => {
     onUpdate(app.name, newLevels);
   };
 
-  // Debounced update to prevent bouncing
-  const debouncedUpdate = React.useCallback(
-    React.useMemo(() => {
-      let timeoutId;
-      return (appName, levels) => {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-          onUpdate(appName, levels);
-        }, 300);
-      };
-    }, [onUpdate]),
-    [onUpdate]
-  );
-
 
   const getStatusIcon = () => {
     switch (app.status) {
@@ -178,10 +164,9 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating }) => {
               max="100"
               value={localLevels[key] || 0}
               onChange={(e) => handleSliderChange(key, e.target.value)}
-              onMouseUp={(e) => debouncedUpdate(app.name, { ...localLevels, [key]: parseInt(e.target.value) })}
-              onTouchEnd={(e) => debouncedUpdate(app.name, { ...localLevels, [key]: parseInt(e.target.value) })}
+              onMouseUp={(e) => handleSliderRelease(key, e.target.value)}
+              onTouchEnd={(e) => handleSliderRelease(key, e.target.value)}
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider"
-              disabled={isUpdating}
             />
           </div>
         ))}

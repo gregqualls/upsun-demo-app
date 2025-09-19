@@ -28,7 +28,7 @@ function App() {
     }
     
     // For local development
-    return 'http://localhost:8004';
+    return 'http://localhost:8000';
   };
   
   const API_BASE_URL = getApiBaseUrl();
@@ -85,7 +85,6 @@ function App() {
 
   // Update app resource levels
   const updateAppResources = async (appName, levels) => {
-    setIsUpdating(true);
     try {
       const response = await fetch(`${API_BASE_URL}/resources`, {
         method: 'POST',
@@ -110,8 +109,6 @@ function App() {
     } catch (error) {
       console.error('Error updating app resources:', error);
       setApiError(`API Error: ${error.message}`);
-    } finally {
-      setIsUpdating(false);
     }
   };
 
@@ -383,7 +380,7 @@ function App() {
                   app={app}
                   onUpdate={updateAppResources}
                   onReset={resetAppResources}
-                  isUpdating={isUpdating}
+                  isUpdating={false}
                 />
               ))}
             </div>
