@@ -12,6 +12,7 @@ import uvicorn
 
 # Import the shared resource manager
 import sys
+import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from shared_resources import ResourceManager
 
@@ -76,7 +77,9 @@ async def update_resources(resource_data: Dict[str, Any]):
         }
         
         api_gateway_url = get_api_gateway_url()
+        print(f"[{APP_NAME}] Calling resource_manager.update_resources with levels: {levels}")
         await resource_manager.update_resources(levels, api_gateway_url)
+        print(f"[{APP_NAME}] resource_manager.update_resources completed")
         
         return {
             "status": "success",
