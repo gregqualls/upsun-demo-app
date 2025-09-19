@@ -186,19 +186,41 @@ class ResourceManager:
     
     def get_metrics(self):
         """Get current resource metrics"""
+        if not self.is_running:
+            # When not running, show minimal/zero usage
+            return {
+                "app_name": self.app_name,
+                "cpu_percent": 0.0,
+                "memory_percent": 0.0,
+                "memory_used_mb": 0,
+                "memory_total_mb": 0,
+                "current_levels": self.current_levels,
+                "request_count": self.request_count,
+                "error_count": self.error_count,
+                "is_running": self.is_running,
+                "instance_count": 1
+            }
+        
+        # When running, show actual resource consumption
         memory_info = psutil.virtual_memory()
-        cpu_percent = psutil.cpu_percent(interval=1)
+        cpu_percent = psutil.cpu_percent(interval=0.1)  # Shorter interval for responsiveness
+        
+        # Calculate app-specific resource usage based on current levels
+        # This is a simplified calculation - in reality you'd track actual consumption
+        app_cpu_usage = (cpu_percent * sum(self.current_levels.values()) / 500) if sum(self.current_levels.values()) > 0 else 0
+        app_memory_usage = (memory_info.percent * sum(self.current_levels.values()) / 500) if sum(self.current_levels.values()) > 0 else 0
         
         return {
             "app_name": self.app_name,
-            "cpu_percent": cpu_percent,
-            "memory_percent": memory_info.percent,
-            "memory_used_mb": (memory_info.total - memory_info.available) // (1024 * 1024),
+            "cpu_percent": min(app_cpu_usage, 100.0),  # Cap at 100%
+            "memory_percent": min(app_memory_usage, 100.0),  # Cap at 100%
+            "memory_used_mb": int((memory_info.total - memory_info.available) * app_memory_usage / 100),
             "memory_total_mb": memory_info.total // (1024 * 1024),
             "current_levels": self.current_levels,
             "request_count": self.request_count,
             "error_count": self.error_count,
-            "is_running": self.is_running
+            "is_running": self.is_running,
+            "instance_count": 1
         }
     
     def get_health(self):
