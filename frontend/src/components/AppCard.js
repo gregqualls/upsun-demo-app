@@ -218,6 +218,9 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics }) => {
       {/* Minimal Metrics */}
       {metrics && metrics[app.name.toLowerCase().replace(/\s+/g, '_')] && (
         <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+          <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+            Live metrics from API
+          </div>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-gray-600 dark:text-gray-400">CPU Usage</span>

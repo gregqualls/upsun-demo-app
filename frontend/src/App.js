@@ -189,6 +189,9 @@ function App() {
     setSystemState(isCurrentlyRunning ? 'stopped' : 'running');
     setIsUpdating(false); // UI is updated, no need to show loading
     
+    // Refresh metrics to show updated resource usage
+    fetchMetrics();
+    
     // Send API call in background (don't wait for it)
     try {
       const response = await fetch(`${API_BASE_URL}/resources/all`, {
