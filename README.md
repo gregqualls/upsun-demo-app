@@ -1,32 +1,48 @@
-# Upsun Demo Application
+# Upsun Demo Application v1
 
-A multi-service application that simulates resource utilization to demonstrate Upsun's auto-scaling and monitoring capabilities. Perfect for showcasing Upsun's platform features in demos and presentations.
+A realistic microservices ecosystem that simulates business applications with individual resource controls to demonstrate Upsun's auto-scaling and monitoring capabilities. Perfect for showcasing real-world microservices patterns and Upsun's platform features in demos and presentations.
 
 [![GitHub](https://img.shields.io/github/license/gregqualls/upsun-demo-app)](https://github.com/gregqualls/upsun-demo-app)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![React](https://img.shields.io/badge/react-18.2.0-blue.svg)](https://reactjs.org/)
 [![FastAPI](https://img.shields.io/badge/fastapi-0.104.1-green.svg)](https://fastapi.tiangolo.com/)
 [![Tailwind CSS](https://img.shields.io/badge/tailwindcss-3.3.0-blue.svg)](https://tailwindcss.com/)
+[![Upsun](https://img.shields.io/badge/deployed%20on-upsun-00d4aa.svg)](https://upsun.com)
 
 ## 🎬 Demo
 
-The application features a modern, responsive UI with real-time resource controls and monitoring:
+The application features a modern, responsive UI with per-application resource controls and monitoring:
 
-- **Resource Control Sliders**: Adjust CPU, memory, and network usage in real-time
-- **Service Status Dashboard**: Live health checks and status indicators
+- **Per-App Resource Controls**: Individual sliders for each business application
+- **Business-Focused Metrics**: Processing, Storage, Traffic, Orders, and Completions
+- **Real-time Status Dashboard**: Live health checks and status indicators for each app
 - **Real-time Metrics**: Live updates of resource consumption and performance
 - **Dark Mode Toggle**: Switch between light and dark themes
-- **Demo-Optimized UI**: Large, clear elements perfect for screen recording
+- **Demo-Optimized UI**: Large, clear elements perfect for screen recording and presentations
+- **Realistic Microservices**: Each app behaves like a real business service
 
 ## 🏗️ Architecture
 
-- **Frontend**: React + Tailwind CSS with dark mode
-- **API Gateway**: FastAPI service for resource control and orchestration
-- **CPU Worker**: Python service for CPU-intensive tasks
-- **Memory Worker**: Python service for memory-intensive tasks
-- **Network Simulator**: Service for inter-service communication
+### v1 - Business Microservices Architecture
 
-**Service Communication**: All services communicate via HTTP using Upsun's internal relationships (`http://service-name.internal`), eliminating the need for external dependencies like Redis.
+- **Frontend**: React + Tailwind CSS with per-app resource controls
+- **API Gateway**: FastAPI service for orchestration and resource management
+- **Business Applications** (4 configurable microservices):
+  - **User Management**: User account and authentication services
+  - **Payment Processing**: Financial transaction handling
+  - **Inventory System**: Product and stock management
+  - **Notification Center**: Communication and alerting
+
+### Resource Management
+
+Each business application includes:
+- **Processing**: CPU-intensive tasks and calculations
+- **Storage**: Memory-intensive operations and data structures
+- **Traffic**: Network communication and API calls
+- **Orders**: Business process simulation and workflow
+- **Completions**: Work completion tracking and metrics
+
+**Service Communication**: All services communicate via HTTP using Upsun's internal relationships (`http://service-name.internal`), with centralized resource management through a shared library.
 
 ## 🚀 Quick Start
 
@@ -64,65 +80,85 @@ The application features a modern, responsive UI with real-time resource control
    ```
 
 3. **Access your deployed application**:
-   - Frontend: `https://upsun-demo-app-{project}.upsunapp.com`
-   - API Gateway: `https://api.upsun-demo-app-{project}.upsunapp.com`
+   - Frontend: `https://rearchitect-ljoo54q-ckxfak37732ke.ch-1.platformsh.site/`
+   - API Gateway: `https://api.rearchitect-ljoo54q-ckxfak37732ke.ch-1.platformsh.site/`
 
 **Note**: The application uses Upsun's internal relationships for service communication. Services communicate via `http://service-name.internal` URLs, which are automatically configured by Upsun based on the relationships defined in `.upsun/config.yaml`.
 
 ## 🎯 Demo Features
 
-### Resource Control
-- **CPU Usage**: Adjustable sliders to control CPU-intensive calculations
-- **Memory Usage**: Control memory consumption with data structures
-- **Network Traffic**: Simulate inter-service API calls
-- **Bulk Controls**: Start/Stop/Reset all services at once
+### Per-Application Resource Control
+- **Individual App Controls**: Each business application has its own resource sliders
+- **Business Metrics**: Processing, Storage, Traffic, Orders, and Completions
+- **Real-time Adjustments**: Modify resource usage for each app independently
+- **App-Specific Actions**: Start/Stop/Reset individual applications
+- **Bulk Operations**: Control all apps simultaneously
 
 ### Real-time Monitoring
-- **Service Status**: Live health checks for all services
-- **Resource Metrics**: CPU, memory, and network usage in real-time
+- **App Status Dashboard**: Live health checks for each business application
+- **Resource Metrics**: Real-time CPU, memory, and network usage per app
 - **Performance Data**: Request counts, error rates, and response times
-- **System Overview**: Aggregated metrics across all services
+- **System Overview**: Aggregated metrics across all applications
+- **Visual Indicators**: Color-coded status and resource levels
 
 ### UI/UX Features
+- **Modern Card Layout**: Clean, organized display for each application
 - **Dark Mode**: Toggle between light and dark themes
 - **Demo-Optimized**: Large, clear UI elements perfect for screen recording
 - **Responsive Design**: Works on desktop, tablet, and mobile
 - **Real-time Updates**: Live data refresh every 2 seconds
+- **Accessibility**: Color-blind friendly and accessible design
 
 ## 🔧 Service Details
 
 ### API Gateway (`api-gateway/`)
-- **Port**: 8004
+- **Port**: 8004 (local) / 8000 (Upsun)
 - **Framework**: FastAPI
-- **Purpose**: Central orchestration and resource management
+- **Purpose**: Central orchestration and per-app resource management
 - **Endpoints**:
-  - `GET /services/status` - Service health checks
-  - `POST /resources` - Update resource levels
-  - `GET /metrics` - Aggregated metrics
+  - `GET /apps` - List all business applications and their status
+  - `POST /resources` - Update resource levels for specific app
+  - `POST /resources/all` - Update resource levels for all apps
+  - `POST /apps/{app_name}/reset` - Reset specific app resources
+  - `GET /metrics` - Aggregated metrics from all apps
 
-### CPU Worker (`cpu-worker/`)
-- **Port**: 8001
-- **Framework**: FastAPI
-- **Purpose**: CPU-intensive calculations and processing
-- **Features**: Configurable load levels, real-time CPU monitoring
+### Business Applications (`microservices/`)
+Each business application is a configurable microservice:
 
-### Memory Worker (`memory-worker/`)
-- **Port**: 8002
-- **Framework**: FastAPI
-- **Purpose**: Memory-intensive data structures and caching
-- **Features**: Dynamic memory allocation, process monitoring
+#### User Management (`user-management/`)
+- **Port**: 8001 (local) / Dynamic (Upsun)
+- **Framework**: FastAPI + Shared Resource Manager
+- **Purpose**: User account and authentication services
+- **Resource Types**: Processing, Storage, Traffic, Orders, Completions
 
-### Network Simulator (`network-simulator/`)
-- **Port**: 8003
-- **Framework**: FastAPI
-- **Purpose**: Inter-service communication simulation
-- **Features**: Configurable request rates, error simulation
+#### Payment Processing (`payment-processing/`)
+- **Port**: 8002 (local) / Dynamic (Upsun)
+- **Framework**: FastAPI + Shared Resource Manager
+- **Purpose**: Financial transaction handling
+- **Resource Types**: Processing, Storage, Traffic, Orders, Completions
+
+#### Inventory System (`inventory-system/`)
+- **Port**: 8003 (local) / Dynamic (Upsun)
+- **Framework**: FastAPI + Shared Resource Manager
+- **Purpose**: Product and stock management
+- **Resource Types**: Processing, Storage, Traffic, Orders, Completions
+
+#### Notification Center (`notification-center/`)
+- **Port**: 8004 (local) / Dynamic (Upsun)
+- **Framework**: FastAPI + Shared Resource Manager
+- **Purpose**: Communication and alerting
+- **Resource Types**: Processing, Storage, Traffic, Orders, Completions
 
 ### Frontend (`frontend/`)
 - **Port**: 3000
 - **Framework**: React + Tailwind CSS
-- **Purpose**: User interface for resource control and monitoring
-- **Features**: Dark mode, real-time updates, responsive design
+- **Purpose**: Per-app resource control and monitoring interface
+- **Features**: 
+  - Individual app cards with resource sliders
+  - Real-time status indicators
+  - Dark mode toggle
+  - Responsive design
+  - Accessibility features
 
 ## 📊 Upsun Integration
 
@@ -148,30 +184,58 @@ This application is designed to showcase Upsun's key features:
 - Environment-specific configuration
 - Easy deployment and rollback
 
+## 🆕 What's New in v1
+
+### Major Architecture Changes
+- **Replaced** separate CPU/Memory/Network services with **4 business applications**
+- **Added** centralized resource management library (`shared_resources.py`)
+- **Created** configurable microservice template system
+- **Updated** frontend with per-app resource controls
+- **Implemented** business-focused metrics (Processing, Storage, Traffic, Orders, Completions)
+
+### Key Improvements
+- **Realistic Microservices**: Each app behaves like a real business service
+- **Individual Control**: Per-app resource management instead of global controls
+- **Better Demo Experience**: More engaging and realistic for presentations
+- **Centralized Resources**: Easy to modify resource simulation logic
+- **Scalable Architecture**: Easy to add more business applications
+
 ## 🛠️ Development
 
 ### Project Structure
 ```
-├── api-gateway/          # API Gateway service
-├── cpu-worker/           # CPU Worker service
-├── memory-worker/        # Memory Worker service
-├── network-simulator/    # Network Simulator service
-├── frontend/             # React frontend
-├── deploy.sh             # Upsun deployment instructions
-├── start-local.sh        # Local development script
-└── README.md             # This file
+├── api-gateway/              # API Gateway service
+├── microservices/            # Business applications
+│   ├── user-management/      # User Management app
+│   ├── payment-processing/   # Payment Processing app
+│   ├── inventory-system/     # Inventory System app
+│   ├── notification-center/  # Notification Center app
+│   └── shared_resources.py   # Centralized resource management
+├── frontend/                 # React frontend with per-app controls
+├── shared_resources.py       # Resource management library
+├── microservice_template.py  # Template for new microservices
+├── build_microservices.py    # Build script for microservices
+├── start-local.sh           # Local development script
+└── README.md                # This file
 ```
 
-### Adding New Services
-1. Create a new directory with your service code
-2. Update the API Gateway service URLs
-3. Add the service to deployment instructions
+### Adding New Business Applications
+1. Add the new app to `.upsun/config.yaml` in the `applications` section
+2. Run `python build_microservices.py` to generate the microservice
+3. The new app will automatically appear in the frontend
+4. No need to modify API Gateway or frontend code
 
 ### Customizing Resource Simulation
-- Modify the worker functions in each service
-- Adjust the resource calculation algorithms
-- Add new resource types or metrics
-- Customize the UI components
+- Modify `shared_resources.py` to change resource simulation logic
+- Add new resource types by updating the `ResourceManager` class
+- Customize business metrics in the `current_levels` dictionary
+- Update the frontend `AppCard.js` to display new metrics
+
+### Extending the Architecture
+- **Add More Apps**: Simply add to the Upsun config and rebuild
+- **Custom Resource Types**: Extend the `ResourceManager` class
+- **New Business Logic**: Modify individual microservice templates
+- **UI Customization**: Update React components in `frontend/src/components/`
 
 ## 🎬 Demo Script
 
@@ -181,35 +245,104 @@ This application is designed to showcase Upsun's key features:
 3. Open the application frontend in another tab
 
 ### Demo Flow (5-10 minutes)
-1. **Introduction**: Show the clean, modern UI and service status
-2. **Resource Control**: Demonstrate the sliders and bulk controls
-3. **Auto-Scaling**: Increase CPU usage and show Upsun scaling
-4. **Monitoring**: Show real-time metrics and service health
-5. **Network Simulation**: Demonstrate inter-service communication
-6. **Dark Mode**: Toggle themes to show UI flexibility
+1. **Introduction**: Show the modern UI with business application cards
+2. **Per-App Controls**: Demonstrate individual resource sliders for each app
+3. **Business Metrics**: Explain Processing, Storage, Traffic, Orders, Completions
+4. **Real-time Updates**: Show live status indicators and metrics
+5. **Auto-Scaling**: Increase resource usage and show Upsun scaling
+6. **Monitoring**: Show real-time metrics and app health
+7. **Dark Mode**: Toggle themes to show UI flexibility
 
 ### Key Talking Points
-- **Multi-Service Architecture**: Show how services work together
-- **Real-time Control**: Demonstrate immediate resource changes
+- **Realistic Microservices**: Each app behaves like a real business service
+- **Individual Control**: Per-app resource management vs global controls
+- **Business Focus**: Metrics that make sense to business stakeholders
 - **Upsun Features**: Highlight auto-scaling, monitoring, and management
 - **Developer Experience**: Show easy deployment and configuration
+- **Scalability**: Easy to add more business applications
+
+## 📸 Screenshots
+
+### Main Dashboard
+The application features a clean, modern interface with individual cards for each business application:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  🌙 Upsun Demo - Multi-Service Resource Simulation    [🌙] │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  Business Applications                                       │
+│  ┌─────────────────┐  ┌─────────────────┐                  │
+│  │ User Management │  │ Payment Process │                  │
+│  │ ● Healthy       │  │ ● Healthy       │                  │
+│  │                 │  │                 │                  │
+│  │ Processing  ████│  │ Processing  ████│                  │
+│  │ Storage     ████│  │ Storage     ████│                  │
+│  │ Traffic     ████│  │ Traffic     ████│                  │
+│  │ Orders      ████│  │ Orders      ████│                  │
+│  │ Completions ████│  │ Completions ████│                  │
+│  │                 │  │                 │                  │
+│  │ [▶ Start] [⏸ Stop] [🔄 Reset]      │  │ [▶ Start] [⏸ Stop] [🔄 Reset]      │
+│  └─────────────────┘  └─────────────────┘                  │
+│                                                             │
+│  ┌─────────────────┐  ┌─────────────────┐                  │
+│  │ Inventory System│  │ Notification Ctr│                  │
+│  │ ● Healthy       │  │ ● Healthy       │                  │
+│  │                 │  │                 │                  │
+│  │ Processing  ████│  │ Processing  ████│                  │
+│  │ Storage     ████│  │ Storage     ████│                  │
+│  │ Traffic     ████│  │ Traffic     ████│                  │
+│  │ Orders      ████│  │ Orders      ████│                  │
+│  │ Completions ████│  │ Completions ████│                  │
+│  │                 │  │                 │                  │
+│  │ [▶ Start] [⏸ Stop] [🔄 Reset]      │  │ [▶ Start] [⏸ Stop] [🔄 Reset]      │
+│  └─────────────────┘  └─────────────────┘                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Live Demo URLs
+- **Frontend**: https://rearchitect-ljoo54q-ckxfak37732ke.ch-1.platformsh.site/
+- **API Gateway**: https://api.rearchitect-ljoo54q-ckxfak37732ke.ch-1.platformsh.site/
 
 ## 🔍 Troubleshooting
 
 ### Local Development
-- Ensure all ports (3000, 8000-8003) are available
+- Ensure all ports (3000, 8004) are available
 - Check Python and Node.js versions
 - Verify all dependencies are installed
+- Make sure microservices are built: `python build_microservices.py`
 
 ### Upsun Deployment
 - Check Upsun CLI is installed and authenticated
-- Verify organization ID in deployment script
-- Check service URLs and relationships
+- Verify the `rearchitect` branch is active
+- Check service URLs and relationships in config
 
 ### Common Issues
 - **CORS errors**: Check API Gateway CORS configuration
-- **Service communication**: Verify environment variables
+- **Service communication**: Verify environment variables and relationships
 - **Build failures**: Check Python/Node.js versions and dependencies
+- **Missing apps**: Ensure microservices are built and deployed
+- **Resource updates not working**: Check API Gateway endpoints and app status
+
+## 🎯 Why v1 is Better
+
+### For Demos
+- **More Realistic**: Business applications that stakeholders can relate to
+- **Better Engagement**: Individual app controls are more interactive
+- **Clearer Value**: Business metrics make the benefits obvious
+- **Professional Look**: Modern UI that impresses audiences
+
+### For Development
+- **Easier to Extend**: Add new apps by just updating the config
+- **Centralized Logic**: Resource simulation in one place
+- **Better Architecture**: Follows microservices best practices
+- **Maintainable**: Clear separation of concerns
+
+### For Upsun Showcase
+- **Real Auto-Scaling**: Each app scales independently
+- **Better Monitoring**: Per-app metrics and status
+- **Realistic Load**: Business processes create realistic load patterns
+- **Professional Deployment**: Production-ready architecture
 
 ## 📝 License
 
@@ -218,5 +351,7 @@ This project is created for demonstration purposes. Feel free to use and modify 
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit issues, feature requests, or pull requests to improve the demo application.
-# Force rebuild Tue Sep  9 14:45:38 BST 2025
-# Force rebuild for environment variables Tue Sep  9 14:49:57 BST 2025
+
+---
+
+**v1.0.0** - Rearchitected for realistic microservices demonstration
