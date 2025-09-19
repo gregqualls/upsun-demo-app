@@ -12,7 +12,8 @@ import uvicorn
 
 # Import the shared resource manager
 import sys
-sys.path.append('/app')
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from shared_resources import ResourceManager
 
 # App name will be set via environment variable

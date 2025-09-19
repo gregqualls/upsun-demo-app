@@ -162,11 +162,13 @@ class ResourceManager:
     
     async def update_resources(self, levels: Dict[str, int], api_gateway_url: str = None):
         """Update all resource levels"""
+        print(f"[{self.app_name}] update_resources called with levels: {levels}")
         self.current_levels.update(levels)
         
         # Determine if app should be running based on any non-zero levels
         total_intensity = sum(self.current_levels.values())
         self.is_running = total_intensity > 0
+        print(f"[{self.app_name}] total_intensity: {total_intensity}, is_running: {self.is_running}")
         
         # Create processing load
         if "processing" in levels:
