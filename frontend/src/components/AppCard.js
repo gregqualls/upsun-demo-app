@@ -103,6 +103,9 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating }) => {
           <h3 className="text-xl font-bold text-gray-900 dark:text-white">
             {app.displayName}
           </h3>
+          {isUpdating && (
+            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          )}
         </div>
         <div className="flex items-center space-x-2">
           <div className="relative group">
@@ -158,16 +161,26 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating }) => {
                 {localLevels[key] || 0}%
               </span>
             </div>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={localLevels[key] || 0}
-              onChange={(e) => handleSliderChange(key, e.target.value)}
-              onMouseUp={(e) => handleSliderRelease(key, e.target.value)}
-              onTouchEnd={(e) => handleSliderRelease(key, e.target.value)}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider"
-            />
+            <div className="relative">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={localLevels[key] || 0}
+                onChange={(e) => handleSliderChange(key, e.target.value)}
+                onMouseUp={(e) => handleSliderRelease(key, e.target.value)}
+                onTouchEnd={(e) => handleSliderRelease(key, e.target.value)}
+                className={`w-full h-2 bg-gray-200 rounded-lg appearance-none dark:bg-gray-700 slider ${
+                  isUpdating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                }`}
+                disabled={isUpdating}
+              />
+              {isUpdating && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              )}
+            </div>
           </div>
         ))}
       </div>
