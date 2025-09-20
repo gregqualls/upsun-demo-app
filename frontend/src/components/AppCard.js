@@ -252,7 +252,7 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState }) =
                 <span className="text-gray-600 dark:text-gray-400">Instances</span>
                 <div className="flex space-x-1">
                   {Array.from({ length: metrics[app.name.toLowerCase().replace(/\s+/g, '_')].instance_count || 1 }).map((_, index) => (
-                    <Box key={index} className="w-3 h-3 text-purple-500" />
+                    <Box key={index} className="w-4 h-4 text-purple-500" />
                   ))}
                 </div>
               </div>
