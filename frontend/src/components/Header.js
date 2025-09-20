@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { Sun, Moon, Server, Power } from 'lucide-react';
+import { Sun, Moon, Power } from 'lucide-react';
 
 const Header = ({ 
   systemState, 

@@ -11,7 +11,8 @@ import {
   ChevronDown,
   ChevronUp,
   Settings,
-  Box
+  Box,
+  RotateCcw
 } from 'lucide-react';
 
 const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState, isExpanded, onToggleExpansion }) => {
@@ -149,7 +150,7 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState, isE
           >
             <Settings className="w-4 h-4 text-purple-600 dark:text-purple-400" />
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Resource Controls
+              All Controls
             </span>
             {isExpanded ? (
               <ChevronUp className="w-4 h-4 text-gray-500 dark:text-gray-400" />
@@ -158,14 +159,17 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState, isE
             )}
           </button>
           
-          {/* Reset Button */}
-          <button
-            onClick={() => onReset(app.name)}
-            disabled={isUpdating}
-            className="px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 rounded-md hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Reset to Medium
-          </button>
+          {/* Reset Button - Only show when expanded */}
+          {isExpanded && (
+            <button
+              onClick={() => onReset(app.name)}
+              disabled={isUpdating}
+              className="p-2 text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 rounded-md hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Reset to Medium"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          )}
         </div>
         
         {/* Collapsible Resource Controls */}
@@ -205,7 +209,7 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState, isE
                     max="100"
                     value={localLevels[key] || 0}
                     onChange={(e) => handleSliderChange(key, e.target.value)}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none dark:bg-gray-700 slider cursor-pointer"
+                    className="slider"
                   />
                   {isUpdating && (
                     <div className="absolute inset-0 flex items-center justify-center">
