@@ -113,7 +113,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
                   color: config.color,
                   timestamp: now,
                   delay: i * 300, // Stagger packets
-                  speed: 2000 + Math.random() * 1000 // 2-3 seconds
+                  speed: 3000 + Math.random() * 2000 // 3-5 seconds (slower for smoother animation)
                 });
                 
                 // Incoming packets (from API Gateway) - with slight delay
@@ -123,8 +123,8 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
                   to: config.position,
                   color: 'purple', // API Gateway color for packets going out from API Gateway
                   timestamp: now,
-                  delay: (i * 300) + 1000, // Stagger and delay return packets
-                  speed: 2000 + Math.random() * 1000 // 2-3 seconds
+                  delay: (i * 300) + 1500, // Stagger and delay return packets
+                  speed: 3000 + Math.random() * 2000 // 3-5 seconds (slower for smoother animation)
                 });
               }
             }
@@ -143,7 +143,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
     }
 
     generatePackets();
-    const interval = setInterval(generatePackets, 3000); // Generate new packets every 3 seconds (reduced frequency)
+    const interval = setInterval(generatePackets, 4000); // Generate new packets every 4 seconds (even less frequent)
     
     return () => clearInterval(interval);
   }, [systemState, generatePackets]);
@@ -152,8 +152,8 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
   useEffect(() => {
     const cleanup = setInterval(() => {
       const now = Date.now();
-      setDataPackets(prev => prev.filter(packet => now - packet.timestamp < 6000)); // Keep packets for 6 seconds (reduced)
-    }, 2000); // Clean up every 2 seconds instead of every 1 second
+      setDataPackets(prev => prev.filter(packet => now - packet.timestamp < 8000)); // Keep packets for 8 seconds
+    }, 3000); // Clean up every 3 seconds (less frequent)
     
     return () => clearInterval(cleanup);
   }, []);
@@ -327,37 +327,38 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
           ))}
         </svg>
 
-        {/* Animated Data Packets */}
-        <svg className="absolute inset-0 w-full h-full z-20">
-          {dataPackets.map((packet) => {
-            const progress = Math.min((Date.now() - packet.timestamp - packet.delay) / packet.speed, 1);
-            
-            // Ensure progress is between 0 and 1
-            if (progress < 0 || progress >= 1) return null;
-            
-            // Calculate position along the line
-            const x = packet.from.x + (packet.to.x - packet.from.x) * progress;
-            const y = packet.from.y + (packet.to.y - packet.from.y) * progress;
-            
-            // Ensure packets stay within bounds
-            if (x < 0 || x > 100 || y < 0 || y > 100) return null;
-            
-            return (
-              <circle
-                key={packet.id}
-                cx={`${x}%`}
-                cy={`${y}%`}
-                r="2"
-                fill="currentColor"
-                className={`${getNodeColor(packet.color)} drop-shadow-lg`}
-                style={{
-                  filter: `drop-shadow(0 0 6px currentColor)`,
-                  animation: 'pulse 1s ease-in-out infinite'
-                }}
-              />
-            );
-          })}
-        </svg>
+               {/* Animated Data Packets */}
+               <svg className="absolute inset-0 w-full h-full z-20">
+                 {dataPackets.map((packet) => {
+                   const progress = Math.min((Date.now() - packet.timestamp - packet.delay) / packet.speed, 1);
+                   
+                   // Ensure progress is between 0 and 1
+                   if (progress < 0 || progress >= 1) return null;
+                   
+                   // Calculate position along the line
+                   const x = packet.from.x + (packet.to.x - packet.from.x) * progress;
+                   const y = packet.from.y + (packet.to.y - packet.from.y) * progress;
+                   
+                   // Ensure packets stay within bounds
+                   if (x < 0 || x > 100 || y < 0 || y > 100) return null;
+                   
+                   return (
+                     <circle
+                       key={packet.id}
+                       cx={`${x}%`}
+                       cy={`${y}%`}
+                       r="2"
+                       fill="currentColor"
+                       className={`${getNodeColor(packet.color)} drop-shadow-lg packet-animation`}
+                       style={{
+                         filter: `drop-shadow(0 0 6px currentColor)`,
+                         willChange: 'transform', // Optimize for animation
+                         transform: 'translateZ(0)' // Force hardware acceleration
+                       }}
+                     />
+                   );
+                 })}
+               </svg>
 
         {/* Service Nodes */}
         {Object.entries(serviceConfig).map(([appName, config]) => {
@@ -424,13 +425,32 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
         </div>
       </div>
 
-      {/* CSS for animations */}
-      <style jsx>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-      `}</style>
+             {/* CSS for animations */}
+             <style jsx>{`
+               @keyframes pulse {
+                 0%, 100% { opacity: 1; }
+                 50% { opacity: 0.5; }
+               }
+               
+               .packet-animation {
+                 animation: pulse 2s ease-in-out infinite;
+                 will-change: transform, opacity;
+                 transform: translateZ(0);
+               }
+               
+               /* Optimize SVG rendering */
+               svg {
+                 shape-rendering: optimizeSpeed;
+                 text-rendering: optimizeSpeed;
+               }
+               
+               /* Reduce repaints */
+               .packet-animation circle {
+                 will-change: transform, opacity;
+                 backface-visibility: hidden;
+                 perspective: 1000px;
+               }
+             `}</style>
     </div>
   );
 };
