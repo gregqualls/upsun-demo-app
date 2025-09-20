@@ -25,6 +25,13 @@ const MetricsSourceIndicator = ({ source }) => {
           color: 'text-purple-400',
           description: 'Direct Upsun platform metrics'
         };
+      case 'cli_not_available':
+        return {
+          icon: <Activity className="w-4 h-4" />,
+          text: 'Simulation Only',
+          color: 'text-yellow-400',
+          description: 'Upsun CLI not available in container'
+        };
       default:
         return {
           icon: <Activity className="w-4 h-4" />,

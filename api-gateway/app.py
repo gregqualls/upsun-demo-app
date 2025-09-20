@@ -394,13 +394,23 @@ async def get_upsun_metrics(app_name: str):
                 "source": "local"
             }
         
-        # Get metrics from Upsun CLI
-        result = subprocess.run([
-            'upsun', 'metrics:all', 
-            '--service', app_name,
-            '--latest',
-            '--format', 'json'
-        ], capture_output=True, text=True, timeout=10)
+        # Get metrics from Upsun CLI (if available)
+        try:
+            result = subprocess.run([
+                'upsun', 'metrics:all', 
+                '--service', app_name,
+                '--latest',
+                '--format', 'json'
+            ], capture_output=True, text=True, timeout=10)
+        except FileNotFoundError:
+            # Upsun CLI not available in container
+            return {
+                "cpu_percent": 0,
+                "memory_percent": 0,
+                "memory_used_mb": 0,
+                "instance_count": "unknown",
+                "source": "cli_not_available"
+            }
         
         if result.returncode == 0:
             metrics_data = json.loads(result.stdout)
@@ -427,12 +437,16 @@ async def get_upsun_instances(app_name: str):
         if not os.getenv("PLATFORM_APPLICATION_NAME"):
             return {"instances": 1, "source": "local"}
         
-        # Get resources from Upsun CLI
-        result = subprocess.run([
-            'upsun', 'resources:get',
-            '--service', app_name,
-            '--format', 'json'
-        ], capture_output=True, text=True, timeout=10)
+        # Get resources from Upsun CLI (if available)
+        try:
+            result = subprocess.run([
+                'upsun', 'resources:get',
+                '--service', app_name,
+                '--format', 'json'
+            ], capture_output=True, text=True, timeout=10)
+        except FileNotFoundError:
+            # Upsun CLI not available in container
+            return {"instances": "unknown", "source": "cli_not_available"}
         
         if result.returncode == 0:
             resources_data = json.loads(result.stdout)
@@ -456,12 +470,16 @@ async def get_upsun_activities():
         if not os.getenv("PLATFORM_APPLICATION_NAME"):
             return {"activities": [], "source": "local"}
         
-        # Get recent activities
-        result = subprocess.run([
-            'upsun', 'activity:list',
-            '--limit', '10',
-            '--format', 'json'
-        ], capture_output=True, text=True, timeout=10)
+        # Get recent activities (if CLI available)
+        try:
+            result = subprocess.run([
+                'upsun', 'activity:list',
+                '--limit', '10',
+                '--format', 'json'
+            ], capture_output=True, text=True, timeout=10)
+        except FileNotFoundError:
+            # Upsun CLI not available in container
+            return {"activities": [], "source": "cli_not_available"}
         
         if result.returncode == 0:
             activities_data = json.loads(result.stdout)
