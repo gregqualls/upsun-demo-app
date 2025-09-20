@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Header from './components/Header';
 import AppCard from './components/AppCard';
+import ActivityFeed from './components/ActivityFeed';
 import './index.css';
 
 function App() {
@@ -387,6 +388,13 @@ function App() {
               </div>
             </div>
           )}
+          
+          {/* Live Activity Feed */}
+          <ActivityFeed 
+            apps={apps} 
+            metrics={metrics} 
+            systemState={systemState} 
+          />
           
           {/* Applications Header with Controls */}
           <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
