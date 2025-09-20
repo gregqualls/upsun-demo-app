@@ -61,7 +61,7 @@ const Header = ({
   return (
     <header className="bg-white dark:bg-gray-800 shadow-lg border-b border-gray-200 dark:border-gray-700">
       <div className="container mx-auto px-4 py-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           {/* System Toggle as Logo */}
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-3">
@@ -104,11 +104,10 @@ const Header = ({
           </div>
 
           {/* Right side controls */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             {/* Simple Countdown Timer */}
-            <div className="flex items-center space-x-2 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
-              <Clock className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-              <span className="text-sm text-gray-600 dark:text-gray-400">Runtime:</span>
+            <div className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
+              <Clock className="w-4 h-4 text-gray-600 dark:text-gray-400 flex-shrink-0" />
               <span className="font-mono text-sm font-medium text-gray-900 dark:text-gray-100">
                 {displayTime || `${runtimeTimeout}:00`}
               </span>
@@ -119,7 +118,7 @@ const Header = ({
               <button
                 onClick={() => setShowSettings(!showSettings)}
                 className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                aria-label="Idle timeout settings"
+                aria-label="Runtime timeout settings"
               >
                 <Settings className="w-4 h-4 text-gray-600 dark:text-gray-400" />
               </button>
