@@ -381,6 +381,101 @@ async def get_instance_count(app_name: str):
         print(f"Error getting instance count for {app_name}: {e}")
         return {"instances": "unknown", "source": "error"}
 
+@app.get("/upsun-metrics/{app_name}")
+async def get_upsun_metrics(app_name: str):
+    """Get real-time metrics from Upsun platform"""
+    try:
+        if not os.getenv("PLATFORM_APPLICATION_NAME"):
+            return {
+                "cpu_percent": 0,
+                "memory_percent": 0,
+                "memory_used_mb": 0,
+                "instance_count": 1,
+                "source": "local"
+            }
+        
+        # Get metrics from Upsun CLI
+        result = subprocess.run([
+            'upsun', 'metrics:all', 
+            '--service', app_name,
+            '--latest',
+            '--format', 'json'
+        ], capture_output=True, text=True, timeout=10)
+        
+        if result.returncode == 0:
+            metrics_data = json.loads(result.stdout)
+            if metrics_data and len(metrics_data) > 0:
+                latest = metrics_data[0]
+                return {
+                    "cpu_percent": latest.get('cpu_percent', 0),
+                    "memory_percent": latest.get('mem_percent', 0),
+                    "memory_used_mb": latest.get('mem_used', 0) // (1024 * 1024),
+                    "instance_count": latest.get('instance_count', 'unknown'),
+                    "source": "upsun_cli"
+                }
+        
+        return {"error": "No metrics available", "source": "upsun_cli"}
+        
+    except Exception as e:
+        print(f"Error getting Upsun metrics for {app_name}: {e}")
+        return {"error": str(e), "source": "error"}
+
+@app.get("/upsun-instances/{app_name}")
+async def get_upsun_instances(app_name: str):
+    """Get instance count from Upsun resources API"""
+    try:
+        if not os.getenv("PLATFORM_APPLICATION_NAME"):
+            return {"instances": 1, "source": "local"}
+        
+        # Get resources from Upsun CLI
+        result = subprocess.run([
+            'upsun', 'resources:get',
+            '--service', app_name,
+            '--format', 'json'
+        ], capture_output=True, text=True, timeout=10)
+        
+        if result.returncode == 0:
+            resources_data = json.loads(result.stdout)
+            if resources_data and len(resources_data) > 0:
+                latest = resources_data[0]
+                return {
+                    "instances": latest.get('instance_count', 'unknown'),
+                    "source": "upsun_cli"
+                }
+        
+        return {"instances": "unknown", "source": "upsun_cli"}
+        
+    except Exception as e:
+        print(f"Error getting Upsun instances for {app_name}: {e}")
+        return {"instances": "unknown", "source": "error"}
+
+@app.get("/upsun-activities")
+async def get_upsun_activities():
+    """Get recent activities from Upsun platform"""
+    try:
+        if not os.getenv("PLATFORM_APPLICATION_NAME"):
+            return {"activities": [], "source": "local"}
+        
+        # Get recent activities
+        result = subprocess.run([
+            'upsun', 'activity:list',
+            '--limit', '10',
+            '--format', 'json'
+        ], capture_output=True, text=True, timeout=10)
+        
+        if result.returncode == 0:
+            activities_data = json.loads(result.stdout)
+            return {
+                "activities": activities_data,
+                "source": "upsun_cli"
+            }
+        
+        return {"activities": [], "source": "upsun_cli"}
+        
+    except Exception as e:
+        print(f"Error getting Upsun activities: {e}")
+        return {"activities": [], "source": "error"}
+
 if __name__ == "__main__":
     import uvicorn
     # Use port 8000 for Upsun deployment, 8004 for local development

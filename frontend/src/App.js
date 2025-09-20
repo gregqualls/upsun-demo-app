@@ -5,6 +5,7 @@ import Header from './components/Header';
 import AppCard from './components/AppCard';
 import ActivityFeed from './components/ActivityFeed';
 import SystemArchitecture from './components/SystemArchitecture';
+import MetricsSourceIndicator from './components/MetricsSourceIndicator';
 import './index.css';
 
 function App() {
@@ -18,6 +19,8 @@ function App() {
   const [systemState, setSystemState] = useState('stopped'); // 'stopped', 'running', 'updating'
   const [expandedCards, setExpandedCards] = useState(new Set());
   const [addActivity, setAddActivity] = useState(null);
+  const [upsunActivities, setUpsunActivities] = useState([]);
+  const [metricsSource, setMetricsSource] = useState('simulation');
 
   // Dynamically determine API URL at runtime
   const getApiBaseUrl = () => {
@@ -317,6 +320,17 @@ function App() {
     } catch (error) {
       console.error('Error fetching system info:', error);
       setApiError(`API Error: ${error.message}`);
+    }
+  };
+
+  // Fetch Upsun activities
+  const fetchUpsunActivities = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/upsun-activities`);
+      const data = await response.json();
+      setUpsunActivities(data.activities || []);
+    } catch (error) {
+      console.error('Error fetching Upsun activities:', error);
     }
   };
 
@@ -667,6 +681,37 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
+  // Monitor for scaling events
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchUpsunActivities();
+    }, 10000); // Check every 10 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Detect autoscaling events
+  useEffect(() => {
+    const scalingEvents = upsunActivities.filter(activity => 
+      activity.type && activity.type.includes('scale')
+    );
+    
+    if (scalingEvents.length > 0) {
+      // Refresh metrics when scaling events occur
+      fetchMetrics();
+    }
+  }, [upsunActivities]);
+
+  // Update metrics source indicator
+  useEffect(() => {
+    if (Object.keys(metrics).length > 0) {
+      const firstApp = Object.values(metrics)[0];
+      if (firstApp.source) {
+        setMetricsSource(firstApp.source);
+      }
+    }
+  }, [metrics]);
+
   // Real-time instance count updates (more frequent for autoscaling detection)
   useEffect(() => {
     const instanceInterval = setInterval(() => {
@@ -753,6 +798,11 @@ function App() {
             metrics={metrics} 
             systemState={systemState}
           />
+          
+          {/* Metrics Source Indicator */}
+          <div className="mb-4 flex justify-center">
+            <MetricsSourceIndicator source={metricsSource} />
+          </div>
           
           {/* Applications Header with Controls */}
           <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

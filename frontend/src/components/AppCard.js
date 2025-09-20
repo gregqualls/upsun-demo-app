@@ -19,6 +19,7 @@ import {
   Package,
   Bell
 } from 'lucide-react';
+import MetricsSourceIndicator from './MetricsSourceIndicator';
 
 const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState, isExpanded, onToggleExpansion }) => {
   const [localLevels, setLocalLevels] = useState(app.levels);

@@ -16,378 +16,169 @@ import psutil
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, Optional
 import httpx
+import requests
 
-class ResourceManager:
-    """Centralized resource management for microservices"""
+class UpsunMetricsManager:
+    """Hybrid metrics manager - real-time simulation + Upsun metrics"""
     
     def __init__(self, app_name: str):
         self.app_name = app_name
-        self.current_levels = {
-            "processing": 0,    # CPU-intensive tasks
-            "storage": 0,       # Memory-intensive tasks  
-            "traffic": 0,       # Network-intensive tasks
-            "orders": 0,        # Business process simulation
-            "completions": 0    # Work completion simulation
-        }
         self.is_running = False
-        self.worker_tasks = []
-        self.thread_pool = ThreadPoolExecutor(max_workers=4)
-        self.memory_data = []
+        self.resource_levels = {
+            'processing': 0,
+            'storage': 0,
+            'traffic': 0,
+            'orders': 0,
+            'completions': 0
+        }
+        self._last_upsun_metrics = {}
+        self._last_upsun_check = 0
+        self._instance_count = "unknown"
+        self._last_instance_check = 0
+        self._cpu_thread = None
+        self._cpu_thread_lock = threading.Lock()
+        self._lock = threading.Lock()
         self.request_count = 0
         self.error_count = 0
-        self._lock = threading.Lock()
-        self.instance_count = self._get_instance_count()
-        self._last_instance_check = time.time()
-        self._last_running_change = time.time()
-        self._running_stability_threshold = 5  # seconds
+        self.memory_data = []
         
-    def _get_instance_count(self):
-        """Get the actual number of instances for this app"""
+    def update_resources(self, levels: Dict[str, int]):
+        """Update resource levels and determine if app should be running"""
+        with self._lock:
+            self.resource_levels = levels
+            total_intensity = sum(levels.values())
+            self.is_running = total_intensity > 0
+            
+        # Start/stop CPU thread based on processing level
+        with self._cpu_thread_lock:
+            if self.resource_levels.get('processing', 0) > 0 and not self._cpu_thread:
+                self._start_cpu_thread()
+            elif self.resource_levels.get('processing', 0) == 0 and self._cpu_thread:
+                self._stop_cpu_thread()
+    
+    def get_metrics(self) -> Dict[str, Any]:
+        """Get hybrid metrics - real-time simulation + Upsun background"""
+        current_time = time.time()
+        
+        # Refresh Upsun metrics every 60 seconds (matches console)
+        if current_time - self._last_upsun_check > 60:
+            self._refresh_upsun_metrics()
+            self._last_upsun_check = current_time
+            
+        # Refresh instance count every 30 seconds
+        if current_time - self._last_instance_check > 30:
+            self._refresh_instance_count()
+            self._last_instance_check = current_time
+            
+        # Get real-time simulation metrics
+        sim_metrics = self._get_simulation_metrics()
+        
+        # Blend with Upsun metrics if available
+        if self._last_upsun_metrics:
+            return self._blend_metrics(sim_metrics, self._last_upsun_metrics)
+        
+        return sim_metrics
+    
+    def _get_simulation_metrics(self) -> Dict[str, Any]:
+        """Get real-time simulation metrics based on current levels"""
+        if not self.is_running:
+            return {
+                'cpu_percent': 0,
+                'memory_percent': 0,
+                'memory_used_mb': 0,
+                'instance_count': self._instance_count,
+                'is_running': False,
+                'source': 'simulation'
+            }
+            
+        processing_level = self.resource_levels.get('processing', 0)
+        storage_level = self.resource_levels.get('storage', 0)
+        
+        # Add some dynamism to make it look alive
+        cpu_variation = random.uniform(0.9, 1.1)
+        memory_variation = random.uniform(0.95, 1.05)
+        
+        return {
+            'cpu_percent': min(processing_level * 0.8 * cpu_variation, 100),
+            'memory_percent': min(storage_level * 0.6 * memory_variation, 100),
+            'memory_used_mb': int(storage_level * 3.52 * memory_variation),  # 352MB max
+            'instance_count': self._instance_count,
+            'is_running': True,
+            'source': 'simulation'
+        }
+    
+    def _blend_metrics(self, sim_metrics: Dict, upsun_metrics: Dict) -> Dict[str, Any]:
+        """Blend simulation metrics with Upsun metrics"""
+        # Use Upsun for instance count and base values
+        # Use simulation for real-time responsiveness
+        return {
+            'cpu_percent': sim_metrics['cpu_percent'],
+            'memory_percent': sim_metrics['memory_percent'],
+            'memory_used_mb': sim_metrics['memory_used_mb'],
+            'instance_count': upsun_metrics.get('instance_count', sim_metrics['instance_count']),
+            'is_running': sim_metrics['is_running'],
+            'source': 'hybrid',
+            'upsun_cpu': upsun_metrics.get('cpu_percent', 0),
+            'upsun_memory': upsun_metrics.get('memory_percent', 0),
+            'last_upsun_update': upsun_metrics.get('timestamp', 'unknown')
+        }
+    
+    def _refresh_upsun_metrics(self):
+        """Get real metrics from Upsun platform"""
+        if not os.getenv("PLATFORM_APPLICATION_NAME"):
+            return
+            
         try:
-            # In Upsun, check for PLATFORM_APPLICATION_NAME
-            app_name = os.getenv("PLATFORM_APPLICATION_NAME")
-            if app_name:
-                print(f"[{app_name}] Detecting instance count on Upsun...")
-                
-                # Method 1: Try to get from Upsun environment variables
-                # Check various possible environment variable names
-                possible_env_vars = [
-                    "PLATFORM_INSTANCE_COUNT",
-                    "PLATFORM_APP_INSTANCES", 
-                    "PLATFORM_CONTAINER_COUNT",
-                    "PLATFORM_SCALE_COUNT",
-                    "PLATFORM_REPLICAS"
-                ]
-                
-                for env_var in possible_env_vars:
-                    instance_count_env = os.getenv(env_var)
-                    if instance_count_env:
-                        print(f"[{app_name}] Found instance count in {env_var}: {instance_count_env}")
-                        return int(instance_count_env)
-                
-                # Method 2: Try to detect from process count
-                try:
-                    import subprocess
-                    result = subprocess.run(['ps', 'aux'], capture_output=True, text=True)
-                    if result.returncode == 0:
-                        lines = result.stdout.split('\n')
-                        # Look for processes with our app name and python
-                        app_processes = [line for line in lines if app_name in line and 'python' in line]
-                        if len(app_processes) > 0:
-                            print(f"[{app_name}] Detected {len(app_processes)} processes")
-                            return len(app_processes)
-                except Exception as e:
-                    print(f"[{app_name}] Process counting failed: {e}")
-                
-                # Method 3: Query API Gateway for instance count (synchronous)
-                try:
-                    import requests
-                    
-                    # Get API Gateway URL from environment or use default
-                    api_gateway_url = os.getenv("PLATFORM_RELATIONSHIPS_API_GATEWAY_URL", "http://api-gateway:8000")
-                    
-                    # Query the API Gateway for instance count synchronously
-                    try:
-                        response = requests.get(f"{api_gateway_url}/instances/{app_name}", timeout=3.0)
-                        if response.status_code == 200:
-                            data = response.json()
-                            instances = data.get("instances", 1)
-                            print(f"[{app_name}] Got instance count from API Gateway: {instances}")
-                            return instances
-                        else:
-                            print(f"[{app_name}] API Gateway returned status {response.status_code}")
-                    except requests.exceptions.Timeout:
-                        print(f"[{app_name}] API Gateway query timeout")
-                    except Exception as e:
-                        print(f"[{app_name}] API Gateway query failed: {e}")
-                    
-                except Exception as e:
-                    print(f"[{app_name}] API Gateway query error: {e}")
-                
-                # Method 4: Can't determine instance count - return unknown
-                print(f"[{app_name}] Could not determine instance count from any method")
-                return "unknown"
-            else:
-                # Running locally - always 1 instance
-                print(f"[{self.app_name}] Running locally - 1 instance")
-                return 1
+            api_gateway_url = os.getenv("PLATFORM_RELATIONSHIPS_api_gateway_URL")
+            if api_gateway_url:
+                response = requests.get(f"{api_gateway_url}/upsun-metrics/{self.app_name}", timeout=5)
+                if response.status_code == 200:
+                    data = response.json()
+                    self._last_upsun_metrics = {
+                        'cpu_percent': data.get('cpu_percent', 0),
+                        'memory_percent': data.get('memory_percent', 0),
+                        'memory_used_mb': data.get('memory_used_mb', 0),
+                        'instance_count': data.get('instance_count', 'unknown'),
+                        'timestamp': time.time()
+                    }
+                    print(f"[{self.app_name}] Updated Upsun metrics: {self._last_upsun_metrics}")
         except Exception as e:
-            print(f"Error getting instance count: {e}")
-            return 1
+            print(f"[{self.app_name}] Error getting Upsun metrics: {e}")
     
     def _refresh_instance_count(self):
-        """Refresh instance count if enough time has passed"""
-        current_time = time.time()
-        # Check every 30 seconds for instance count changes (more frequent for autoscaling detection)
-        if current_time - self._last_instance_check > 30:
-            try:
-                print(f"[{self.app_name}] Refreshing instance count (current: {self.instance_count})...")
-                new_count = self._get_instance_count()
-                if new_count != self.instance_count:
-                    print(f"[{self.app_name}] Instance count changed from {self.instance_count} to {new_count}")
-                    self.instance_count = new_count
-                else:
-                    print(f"[{self.app_name}] Instance count unchanged: {self.instance_count}")
-                self._last_instance_check = current_time
-            except Exception as e:
-                print(f"[{self.app_name}] Error refreshing instance count: {e}")
-        else:
-            print(f"[{self.app_name}] Skipping instance count refresh (too soon, current: {self.instance_count})")
-            # Don't update _last_instance_check on error to retry sooner
-        
-    def get_system_info(self):
-        """Get system resource information"""
-        cpu_count = psutil.cpu_count()
-        memory_info = psutil.virtual_memory()
-        
-        return {
-            "cpu_count": cpu_count,
-            "memory_total": memory_info.total,
-            "memory_available": memory_info.available,
-            "memory_percent": memory_info.percent,
-            "app_name": self.app_name
-        }
-    
-    def create_processing_load(self, level: int):
-        """Create CPU-intensive processing load"""
-        # Always add baseline activity when system is on (level > 0)
-        # This ensures there's always some CPU activity visible
-        if level == 0:
-            # Stop any existing CPU simulation
-            if hasattr(self, 'cpu_thread') and self.cpu_thread and self.cpu_thread.is_alive():
-                self.cpu_thread = None
+        """Get instance count from Upsun resources API"""
+        if not os.getenv("PLATFORM_APPLICATION_NAME"):
+            self._instance_count = 1
             return
             
-        # Calculate iterations based on level (0-100)
-        # Add baseline activity + level-based activity
-        baseline_iterations = 50000  # Always some baseline activity
-        level_iterations = int((level / 100) * 1000000)
-        total_iterations = baseline_iterations + level_iterations
-        
-        # Start CPU simulation in background thread
-        def cpu_worker():
-            while True:
-                result = 0
-                for i in range(total_iterations):
-                    result += math.sqrt(i * math.pi) * math.sin(i)
-                    # Add a small delay to prevent overwhelming the system
-                    if i % 10000 == 0:
-                        time.sleep(0.001)
-                time.sleep(0.1)  # Brief pause between cycles
-        
-        # Stop existing thread if running
-        if hasattr(self, 'cpu_thread') and self.cpu_thread and self.cpu_thread.is_alive():
-            self.cpu_thread = None
-        
-        # Start new thread
-        self.cpu_thread = threading.Thread(target=cpu_worker, daemon=True)
-        self.cpu_thread.start()
-    
-    def create_storage_load(self, level: int):
-        """Create memory-intensive storage load"""
-        if level == 0:
-            self.memory_data.clear()
-            return
-            
-        # Calculate memory usage based on level (0-100)
-        # Target: 0% = 0MB, 100% = 200MB per app
-        target_mb = int((level / 100) * 200)
-        
-        # Clear existing data
-        self.memory_data.clear()
-        
-        # Create data structures to consume memory
-        elements_needed = target_mb * 1024  # 1KB per element
-        
-        # Create lists of strings to consume memory
-        chunk_size = 10000
-        for i in range(0, elements_needed, chunk_size):
-            chunk = [f"storage_data_{self.app_name}_{i+j}_{'x'*100}" 
-                    for j in range(min(chunk_size, elements_needed - i))]
-            self.memory_data.extend(chunk)
-            
-            # Small delay to prevent blocking
-            if i % (chunk_size * 10) == 0:
-                time.sleep(0.001)
-    
-    async def create_traffic_load(self, level: int, api_gateway_url: str):
-        """Create network-intensive traffic load"""
-        if level == 0:
-            return
-            
-        # Calculate request frequency based on level
-        requests_per_second = int((level / 100) * 10)  # Max 10 requests/second
-        
-        if requests_per_second == 0:
-            return
-            
-        # Make requests to API gateway
         try:
-            async with httpx.AsyncClient(timeout=2.0) as client:
-                endpoints = ["/", "/health", "/metrics"]
-                endpoint = random.choice(endpoints)
-                
-                response = await client.get(f"{api_gateway_url}{endpoint}")
-                self.request_count += 1
-                
-                if response.status_code >= 400:
-                    self.error_count += 1
-                    
+            api_gateway_url = os.getenv("PLATFORM_RELATIONSHIPS_api_gateway_URL")
+            if api_gateway_url:
+                response = requests.get(f"{api_gateway_url}/upsun-instances/{self.app_name}", timeout=5)
+                if response.status_code == 200:
+                    data = response.json()
+                    self._instance_count = data.get('instances', 'unknown')
+                    print(f"[{self.app_name}] Updated instance count: {self._instance_count}")
         except Exception as e:
-            self.error_count += 1
+            print(f"[{self.app_name}] Error getting instance count: {e}")
     
-    def create_orders_load(self, level: int):
-        """Create business process simulation (orders processing)"""
-        if level == 0:
-            return
-            
-        # Simulate order processing workload
-        orders_to_process = int((level / 100) * 1000)
+    def _start_cpu_thread(self):
+        """Start CPU-intensive thread for realistic simulation"""
+        def cpu_worker():
+            while self._cpu_thread and self.resource_levels.get('processing', 0) > 0:
+                # CPU-intensive work
+                sum(range(1000000))
+                time.sleep(0.01)  # Small delay to prevent 100% CPU
         
-        # Simulate order processing logic
-        for i in range(orders_to_process):
-            # Simulate order validation
-            order_id = f"ORD-{self.app_name}-{i}"
-            order_data = {
-                "id": order_id,
-                "items": random.randint(1, 10),
-                "total": random.uniform(10.0, 1000.0),
-                "status": "processing"
-            }
-            
-            # Simulate some processing time
-            if i % 100 == 0:
-                time.sleep(0.001)
+        self._cpu_thread = threading.Thread(target=cpu_worker, daemon=True)
+        self._cpu_thread.start()
+        print(f"[{self.app_name}] Started CPU thread")
     
-    def create_completions_load(self, level: int):
-        """Create work completion simulation"""
-        if level == 0:
-            return
-            
-        # Simulate work completion tracking
-        completions = int((level / 100) * 500)
-        
-        for i in range(completions):
-            completion = {
-                "id": f"COMP-{self.app_name}-{i}",
-                "timestamp": time.time(),
-                "status": "completed",
-                "duration": random.uniform(0.1, 5.0)
-            }
-            
-            # Simulate some processing
-            if i % 50 == 0:
-                time.sleep(0.001)
-    
-    async def update_resources(self, levels: Dict[str, int], api_gateway_url: str = None):
-        """Update all resource levels"""
-        import time
-        timestamp = time.time()
-        print(f"[{timestamp}] [{self.app_name}] update_resources called with levels: {levels}")
-        
-        # Use lock to prevent race conditions
-        with self._lock:
-            self.current_levels.update(levels)
-            
-            # Determine if app should be running based on any non-zero levels
-            total_intensity = sum(self.current_levels.values())
-            new_running_state = total_intensity > 0
-            
-            # Add stability check to prevent rapid state changes
-            current_time = time.time()
-            time_since_last_change = current_time - self._last_running_change
-            
-            if new_running_state != self.is_running:
-                if time_since_last_change >= self._running_stability_threshold:
-                    print(f"[{timestamp}] [{self.app_name}] State change: {self.is_running} -> {new_running_state} (total_intensity: {total_intensity})")
-                    self.is_running = new_running_state
-                    self._last_running_change = current_time
-                else:
-                    print(f"[{timestamp}] [{self.app_name}] State change blocked (too soon): {self.is_running} -> {new_running_state} (time_since_last_change: {time_since_last_change:.1f}s)")
-            else:
-                print(f"[{timestamp}] [{self.app_name}] total_intensity: {total_intensity}, is_running: {self.is_running} (stable)")
-        
-        # Create processing load
-        if "processing" in levels:
-            self.create_processing_load(levels["processing"])
-        
-        # Create storage load  
-        if "storage" in levels:
-            self.create_storage_load(levels["storage"])
-        
-        # Create traffic load
-        if "traffic" in levels and api_gateway_url:
-            await self.create_traffic_load(levels["traffic"], api_gateway_url)
-        
-        # Create orders load
-        if "orders" in levels:
-            self.create_orders_load(levels["orders"])
-        
-        # Create completions load
-        if "completions" in levels:
-            self.create_completions_load(levels["completions"])
-    
-    def get_metrics(self):
-        """Get current resource metrics"""
-        # Refresh instance count periodically
-        self._refresh_instance_count()
-        
-        with self._lock:
-            is_running = self.is_running
-            current_levels = self.current_levels.copy()
-        
-        if not is_running:
-            # When not running, show minimal/zero usage
-            return {
-                "app_name": self.app_name,
-                "cpu_percent": 0.0,
-                "memory_percent": 0.0,
-                "memory_used_mb": 0,
-                "memory_total_mb": 0,
-                "current_levels": current_levels,
-                "request_count": self.request_count,
-                "error_count": self.error_count,
-                "is_running": is_running,
-                "instance_count": self.instance_count
-            }
-        
-        # Simulate app-specific resource usage based on slider levels
-        # This creates realistic CPU/memory usage that responds to slider changes
-        processing_level = current_levels.get("processing", 0)
-        storage_level = current_levels.get("storage", 0)
-        
-        # CPU usage based on processing slider (0-100%)
-        app_cpu_usage = processing_level
-        
-        # Memory usage based on storage slider (0-100%)
-        # Simulate memory usage as percentage of allocated container memory
-        app_memory_usage = storage_level
-        
-        # Add some realistic variation (±5%) to make it look more dynamic
-        import random
-        cpu_variation = random.uniform(-2, 2)
-        memory_variation = random.uniform(-2, 2)
-        
-        app_cpu_usage = max(0, min(100, app_cpu_usage + cpu_variation))
-        app_memory_usage = max(0, min(100, app_memory_usage + memory_variation))
-        
-        # Calculate realistic memory usage for container
-        # Upsun BALANCED profile: 0.1 CPU, 352MB RAM
-        container_memory_mb = 352  # Upsun BALANCED profile
-        memory_used_mb = int((container_memory_mb * app_memory_usage) / 100)
-        
-        return {
-            "app_name": self.app_name,
-            "cpu_percent": app_cpu_usage,
-            "memory_percent": app_memory_usage,
-            "memory_used_mb": memory_used_mb,
-            "memory_total_mb": container_memory_mb,
-            "current_levels": current_levels,
-            "request_count": self.request_count,
-            "error_count": self.error_count,
-            "is_running": is_running,
-            "instance_count": self.instance_count
-        }
+    def _stop_cpu_thread(self):
+        """Stop CPU thread"""
+        if self._cpu_thread:
+            self._cpu_thread = None
+            print(f"[{self.app_name}] Stopped CPU thread")
     
     def get_health(self):
         """Get service health status"""
@@ -405,3 +196,6 @@ class ResourceManager:
                 "app_name": self.app_name,
                 "error": str(e)
             }
+
+# Backward compatibility
+ResourceManager = UpsunMetricsManager
