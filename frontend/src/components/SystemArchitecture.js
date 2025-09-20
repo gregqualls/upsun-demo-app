@@ -13,7 +13,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
   const [dataPackets, setDataPackets] = useState([]);
   const [connections, setConnections] = useState([]);
 
-  // Define service positions and connections - 3 top, 3 bottom all on same level
+  // Define service positions and connections - Dashboard top middle, 2 top, 3 bottom
   const serviceConfig = {
     'api_gateway': {
       name: 'API Gateway',
@@ -21,6 +21,13 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
       position: { x: 50, y: 80 },
       color: 'purple',
       connections: ['user_management', 'payment_processing', 'inventory_system', 'notification_center', 'dashboard']
+    },
+    'dashboard': {
+      name: 'Dashboard',
+      icon: Activity,
+      position: { x: 50, y: 20 },
+      color: 'indigo',
+      connections: ['api_gateway']
     },
     'user_management': {
       name: 'User Management',
@@ -32,29 +39,22 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
     'payment_processing': {
       name: 'Payment Processing',
       icon: CreditCard,
-      position: { x: 50, y: 20 },
+      position: { x: 80, y: 20 },
       color: 'green',
       connections: ['api_gateway']
     },
     'inventory_system': {
       name: 'Inventory System',
       icon: Package,
-      position: { x: 80, y: 20 },
+      position: { x: 20, y: 80 },
       color: 'orange',
       connections: ['api_gateway']
     },
     'notification_center': {
       name: 'Notification Center',
       icon: Bell,
-      position: { x: 20, y: 80 },
-      color: 'pink',
-      connections: ['api_gateway']
-    },
-    'dashboard': {
-      name: 'Dashboard',
-      icon: Activity,
       position: { x: 80, y: 80 },
-      color: 'indigo',
+      color: 'pink',
       connections: ['api_gateway']
     }
   };
@@ -91,13 +91,17 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
     Object.keys(apps).forEach(appName => {
       const appMetrics = metrics[appName];
       
-      if (appMetrics && appMetrics.is_running && appName !== 'dashboard') {
+      if (appMetrics && appMetrics.is_running) {
         const config = serviceConfig[appName];
         if (config) {
           // Create packets to API Gateway
           config.connections.forEach(targetName => {
             if (targetName === 'api_gateway') {
-              const intensity = Math.min(appMetrics.cpu_percent / 50, 1);
+              // For Dashboard, use a lower intensity since it's a frontend
+              const intensity = appName === 'dashboard' 
+                ? Math.min(appMetrics.cpu_percent / 100, 0.5) // Lower intensity for dashboard
+                : Math.min(appMetrics.cpu_percent / 50, 1);
+              
               const packetCount = Math.floor(intensity * 2) + 1; // 1-3 packets based on intensity
               
               for (let i = 0; i < packetCount; i++) {
