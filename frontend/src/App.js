@@ -696,7 +696,7 @@ function App() {
     const interval = setInterval(() => {
       fetchAppsStatus();
       fetchMetrics();
-    }, 2000); // Update every 2 seconds
+    }, 10000); // Update every 10 seconds (reduced frequency)
 
     return () => clearInterval(interval);
   }, []);
@@ -705,7 +705,7 @@ function App() {
   useEffect(() => {
     const interval = setInterval(() => {
       fetchUpsunActivities();
-    }, 10000); // Check every 10 seconds
+    }, 30000); // Check every 30 seconds (reduced frequency)
 
     return () => clearInterval(interval);
   }, []);
@@ -737,7 +737,7 @@ function App() {
     const instanceInterval = setInterval(() => {
       // Force refresh metrics to get updated instance counts
       fetchMetrics();
-    }, 5000); // Update every 5 seconds for instance counts
+    }, 15000); // Update every 15 seconds for instance counts (reduced frequency)
 
     return () => clearInterval(instanceInterval);
   }, []);
@@ -840,7 +840,7 @@ function App() {
 
     console.log('Setting up display time interval');
     updateDisplayTime();
-    const interval = setInterval(updateDisplayTime, 1000);
+    const interval = setInterval(updateDisplayTime, 2000); // Update every 2 seconds instead of every 1 second
     return () => {
       console.log('Clearing display time interval');
       clearInterval(interval);
