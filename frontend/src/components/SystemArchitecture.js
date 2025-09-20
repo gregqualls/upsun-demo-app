@@ -121,7 +121,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
                   id: `${appName}-${targetName}-in-${now}-${i}`,
                   from: serviceConfig[targetName].position,
                   to: config.position,
-                  color: 'purple', // API Gateway color for return packets
+                  color: config.color, // Use the same color as the service for return packets
                   timestamp: now,
                   delay: (i * 300) + 1000, // Stagger and delay return packets
                   speed: 2000 + Math.random() * 1000 // 2-3 seconds
@@ -179,6 +179,18 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
       'indigo': 'shadow-indigo-500/50'
     };
     return colorMap[color] || 'shadow-gray-500/50';
+  };
+
+  const getNodeColor = (color) => {
+    const colorMap = {
+      'purple': 'text-purple-400',
+      'blue': 'text-blue-400',
+      'green': 'text-green-400',
+      'orange': 'text-orange-400',
+      'pink': 'text-pink-400',
+      'indigo': 'text-indigo-400'
+    };
+    return colorMap[color] || 'text-gray-400';
   };
 
   return (
@@ -337,7 +349,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
                 cy={`${y}%`}
                 r="2"
                 fill="currentColor"
-                className={`text-${packet.color}-400 drop-shadow-lg`}
+                className={`${getNodeColor(packet.color)} drop-shadow-lg`}
                 style={{
                   filter: `drop-shadow(0 0 6px currentColor)`,
                   animation: 'pulse 1s ease-in-out infinite'
@@ -378,7 +390,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
                 `}></div>
                 
                 {/* Service Icon */}
-                <Icon className={`w-6 h-6 ${isActive ? `text-${config.color}-400` : 'text-gray-500'}`} />
+                <Icon className={`w-6 h-6 ${isActive ? getNodeColor(config.color) : 'text-gray-500'}`} />
               </div>
             </div>
           );
