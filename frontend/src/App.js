@@ -25,6 +25,7 @@ function App() {
   const [runtimeTimeout, setRuntimeTimeout] = useState(10); // Minutes before auto-shutdown
   const [timeRemaining, setTimeRemaining] = useState(null); // Seconds remaining
   const [systemStartTime, setSystemStartTime] = useState(null); // When system was turned on
+  const [isCountdownActive, setIsCountdownActive] = useState(false); // Track if countdown is running
 
   // Dynamically determine API URL at runtime
   const getApiBaseUrl = () => {
@@ -756,11 +757,13 @@ function App() {
       // Set new runtime timer
       runtimeTimer = setTimeout(() => {
         // Start countdown when runtime timeout is reached
+        setIsCountdownActive(true);
         setTimeRemaining(60); // 1 minute countdown
         countdownTimer = setInterval(() => {
           setTimeRemaining(prev => {
             if (prev <= 1) {
               // Time's up - turn off system switch
+              setIsCountdownActive(false);
               toggleSystem();
               setTimeRemaining(null);
               setSystemStartTime(null);
@@ -775,14 +778,15 @@ function App() {
     const stopRuntimeTimer = () => {
       setSystemStartTime(null);
       setTimeRemaining(null);
+      setIsCountdownActive(false);
       if (runtimeTimer) clearTimeout(runtimeTimer);
       if (countdownTimer) clearInterval(countdownTimer);
     };
 
-    // Start timer when system turns on
-    if (systemState === 'running') {
+    // Start timer when system turns on, but don't reset if countdown is active
+    if (systemState === 'running' && !isCountdownActive) {
       startRuntimeTimer();
-    } else {
+    } else if (systemState === 'stopped' && !isCountdownActive) {
       stopRuntimeTimer();
     }
 
@@ -791,7 +795,7 @@ function App() {
       if (runtimeTimer) clearTimeout(runtimeTimer);
       if (countdownTimer) clearInterval(countdownTimer);
     };
-  }, [systemState, runtimeTimeout, toggleSystem]); // Re-run when system state or timeout setting changes
+  }, [systemState, runtimeTimeout, toggleSystem, isCountdownActive]); // Re-run when system state or timeout setting changes
 
   if (isLoading) {
     return (
