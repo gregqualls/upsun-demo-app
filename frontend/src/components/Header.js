@@ -13,14 +13,38 @@ const Header = ({
     <header className="bg-white dark:bg-gray-800 shadow-lg border-b border-gray-200 dark:border-gray-700">
       <div className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between">
-          {/* Logo and Title */}
+          {/* System Toggle as Logo */}
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
-                <Server className="w-6 h-6 text-white" />
-              </div>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={onToggle}
+                disabled={isUpdating}
+                className={`relative inline-flex h-12 w-20 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 ${
+                  systemState === 'running'
+                    ? 'bg-gradient-to-r from-purple-600 to-blue-600'
+                    : 'bg-gray-300 dark:bg-gray-600'
+                } ${isUpdating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              >
+                <span
+                  className={`inline-block h-10 w-10 transform rounded-full bg-white transition-transform duration-200 ${
+                    systemState === 'running' ? 'translate-x-9' : 'translate-x-1'
+                  }`}
+                >
+                  {isUpdating ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <Power className={`w-4 h-4 ${
+                        systemState === 'running' ? 'text-purple-600' : 'text-gray-400'
+                      }`} />
+                    </div>
+                  )}
+                </span>
+              </button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                   Upsun Demo
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -30,57 +54,16 @@ const Header = ({
             </div>
           </div>
 
-          {/* System Toggle */}
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-3">
-              <span className={`text-sm font-medium transition-colors ${
-                systemState === 'running' 
-                  ? 'text-green-600 dark:text-green-400' 
-                  : 'text-gray-500 dark:text-gray-400'
-              }`}>
-                {systemState === 'running' ? 'System Running' : 'System Stopped'}
-              </span>
-              
-              <button
-                onClick={onToggle}
-                disabled={isUpdating}
-                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-                  systemState === 'running'
-                    ? 'bg-green-500'
-                    : 'bg-gray-300 dark:bg-gray-600'
-                } ${isUpdating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-              >
-                <span
-                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-200 ${
-                    systemState === 'running' ? 'translate-x-7' : 'translate-x-1'
-                  }`}
-                >
-                  {isUpdating ? (
-                    <div className="flex items-center justify-center h-full">
-                      <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center h-full">
-                      <Power className={`w-3 h-3 ${
-                        systemState === 'running' ? 'text-green-500' : 'text-gray-400'
-                      }`} />
-                    </div>
-                  )}
-                </span>
-              </button>
-            </div>
-          </div>
-
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
             aria-label="Toggle theme"
           >
             {isDark ? (
-              <Sun className="w-5 h-5 text-yellow-500" />
+              <Sun className="w-5 h-5 text-purple-600" />
             ) : (
-              <Moon className="w-5 h-5 text-gray-600" />
+              <Moon className="w-5 h-5 text-purple-600" />
             )}
           </button>
         </div>

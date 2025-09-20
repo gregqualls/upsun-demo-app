@@ -51,8 +51,8 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState }) =
       return 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50';
     }
     
-    // Normal colors when system is on
-    return 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800';
+    // Upsun brand colors when system is on
+    return 'border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50 dark:border-purple-700 dark:from-purple-900/20 dark:to-blue-900/20';
   };
 
   const getIntensityLabel = (value) => {
@@ -70,40 +70,40 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState }) =
       key: 'processing',
       label: 'Processing',
       icon: Cpu,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-100 dark:bg-purple-900/30',
       description: 'CPU-intensive tasks'
     },
     {
       key: 'storage',
       label: 'Storage',
       icon: Database,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100 dark:bg-purple-900/30',
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100 dark:bg-blue-900/30',
       description: 'Memory-intensive operations'
     },
     {
       key: 'traffic',
       label: 'Traffic',
       icon: Network,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100 dark:bg-green-900/30',
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-100 dark:bg-purple-900/30',
       description: 'Network communication'
     },
     {
       key: 'orders',
       label: 'Orders',
       icon: ShoppingCart,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-100 dark:bg-orange-900/30',
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100 dark:bg-blue-900/30',
       description: 'Order processing'
     },
     {
       key: 'completions',
       label: 'Completions',
       icon: CheckCircle,
-      color: 'text-indigo-600',
-      bgColor: 'bg-indigo-100 dark:bg-indigo-900/30',
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-100 dark:bg-purple-900/30',
       description: 'Work completion tracking'
     }
   ];
@@ -132,7 +132,7 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState }) =
               systemState === 'stopped' 
                 ? 'bg-gray-300 border-gray-400' // Grey when system off
                 : app.status === 'healthy'
-                ? 'bg-green-500 border-green-600' // Green when healthy
+                ? 'bg-gradient-to-r from-purple-500 to-blue-500 border-purple-600' // Upsun gradient when healthy
                 : app.status === 'unhealthy'
                 ? 'bg-red-500 border-red-600' // Red when unhealthy
                 : 'bg-yellow-500 border-yellow-600' // Yellow for unknown/starting
@@ -145,10 +145,10 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState }) =
       <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg p-2 -m-2 transition-colors duration-200"
+          className="flex items-center justify-between w-full text-left hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded-lg p-2 -m-2 transition-colors duration-200"
         >
           <div className="flex items-center space-x-2">
-            <Settings className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+            <Settings className="w-4 h-4 text-purple-600 dark:text-purple-400" />
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Resource Controls
             </span>
@@ -230,7 +230,7 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState }) =
                 <span className="text-gray-600 dark:text-gray-400">CPU</span>
                 <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
                   <div 
-                    className="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
+                    className="bg-gradient-to-r from-purple-500 to-blue-500 h-1.5 rounded-full transition-all duration-300"
                     style={{ width: `${Math.min(metrics[app.name.toLowerCase().replace(/\s+/g, '_')].cpu_percent, 100)}%` }}
                   ></div>
                 </div>
@@ -241,7 +241,7 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState }) =
                 <span className="text-gray-600 dark:text-gray-400">Memory</span>
                 <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
                   <div 
-                    className="bg-green-500 h-1.5 rounded-full transition-all duration-300"
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 h-1.5 rounded-full transition-all duration-300"
                     style={{ width: `${Math.min(metrics[app.name.toLowerCase().replace(/\s+/g, '_')].memory_percent, 100)}%` }}
                   ></div>
                 </div>
@@ -252,7 +252,7 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState }) =
                 <span className="text-gray-600 dark:text-gray-400">Instances</span>
                 <div className="flex space-x-1">
                   {Array.from({ length: metrics[app.name.toLowerCase().replace(/\s+/g, '_')].instance_count || 1 }).map((_, index) => (
-                    <Box key={index} className="w-3 h-3 text-blue-500" />
+                    <Box key={index} className="w-3 h-3 text-purple-500" />
                   ))}
                 </div>
               </div>
