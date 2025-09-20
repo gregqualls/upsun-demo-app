@@ -17,6 +17,7 @@ import {
 
 const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState, isExpanded, onToggleExpansion }) => {
   const [localLevels, setLocalLevels] = useState(app.levels);
+  const hasControls = app.has_controls !== false; // Default to true for backward compatibility
 
   // Sync with server state when app changes or levels change (like reset)
   React.useEffect(() => {
@@ -140,87 +141,89 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState, isE
         </div>
       </div>
 
-      {/* Resource Controls Toggle */}
-      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={onToggleExpansion}
-            className="flex items-center space-x-2 text-left hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded-lg p-2 -m-2 transition-colors duration-200"
-          >
-            <Settings className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              All Controls
-            </span>
-            {isExpanded ? (
-              <ChevronUp className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-            ) : (
-              <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-            )}
-          </button>
-          
-          {/* Reset Button - Only show when expanded */}
-          {isExpanded && (
-            <button
-              onClick={() => onReset(app.name)}
-              disabled={isUpdating}
-              className="p-2 text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 rounded-md hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Reset to Medium"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-        
-        {/* Collapsible Resource Controls */}
-        {isExpanded && (
-          <div className="mt-4 space-y-4">
-            {resourceConfigs.map(({ key, label, icon: Icon, color, bgColor, description }) => (
-              <div key={key} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <div className="relative group">
-                      <div className={`p-2 rounded-lg ${bgColor} cursor-help`}>
-                        <Icon className={`w-4 h-4 ${color}`} />
+        {/* Resource Controls Toggle - Only show for apps with controls */}
+        {hasControls && (
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={onToggleExpansion}
+                className="flex items-center space-x-2 text-left hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded-lg p-2 -m-2 transition-colors duration-200"
+              >
+                <Settings className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  All Controls
+                </span>
+                {isExpanded ? (
+                  <ChevronUp className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                )}
+              </button>
+              
+              {/* Reset Button - Only show when expanded */}
+              {isExpanded && (
+                <button
+                  onClick={() => onReset(app.name)}
+                  disabled={isUpdating}
+                  className="p-2 text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 rounded-md hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Reset to Medium"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            
+            {/* Collapsible Resource Controls */}
+            {isExpanded && (
+              <div className="mt-4 space-y-4">
+                {resourceConfigs.map(({ key, label, icon: Icon, color, bgColor, description }) => (
+                  <div key={key} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className="relative group">
+                          <div className={`p-2 rounded-lg ${bgColor} cursor-help`}>
+                            <Icon className={`w-4 h-4 ${color}`} />
+                          </div>
+                          {/* Resource Tooltip */}
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                            {description}
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {label}
+                          </label>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {description}
+                          </p>
+                        </div>
                       </div>
-                      {/* Resource Tooltip */}
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-                        {description}
-                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                      </div>
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">
+                        {getIntensityLabel(localLevels[key] || 0)}
+                      </span>
                     </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {label}
-                      </label>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {description}
-                      </p>
+                    <div className="relative">
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={localLevels[key] || 0}
+                        onChange={(e) => handleSliderChange(key, e.target.value)}
+                        className="slider"
+                      />
+                      {isUpdating && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <span className="text-sm font-bold text-gray-900 dark:text-white">
-                    {getIntensityLabel(localLevels[key] || 0)}
-                  </span>
-                </div>
-                <div className="relative">
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={localLevels[key] || 0}
-                    onChange={(e) => handleSliderChange(key, e.target.value)}
-                    className="slider"
-                  />
-                  {isUpdating && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                    </div>
-                  )}
-                </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         )}
-      </div>
 
       {/* Minimal Metrics */}
       {metrics && metrics[app.name.toLowerCase().replace(/\s+/g, '_')] && (

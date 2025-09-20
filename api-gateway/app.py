@@ -258,12 +258,31 @@ async def reset_app_resources(app_name: str):
 async def get_apps():
     """Get list of all apps and their current status"""
     apps = {}
+    
+    # Add business microservices with resource controls
     for app_name in resource_levels.keys():
         apps[app_name] = {
             "name": app_name.replace("_", " ").title(),
             "levels": resource_levels[app_name],
-            "status": "unknown"
+            "status": "unknown",
+            "has_controls": True
         }
+    
+    # Add API Gateway (no controls)
+    apps["api_gateway"] = {
+        "name": "API Gateway",
+        "levels": {"processing": 0, "storage": 0, "traffic": 0, "orders": 0, "completions": 0},
+        "status": "healthy",
+        "has_controls": False
+    }
+    
+    # Add Dashboard (no controls)
+    apps["dashboard"] = {
+        "name": "Dashboard",
+        "levels": {"processing": 0, "storage": 0, "traffic": 0, "orders": 0, "completions": 0},
+        "status": "healthy",
+        "has_controls": False
+    }
     
     # Get status from services
     for app_name, service_url in SERVICES.items():

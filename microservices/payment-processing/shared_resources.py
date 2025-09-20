@@ -360,30 +360,37 @@ class ResourceManager:
                 "instance_count": self.instance_count
             }
         
-        # When running, show actual resource consumption
-        # In production (Upsun), this will read actual container metrics
-        # Locally, this reads host system resources (which is expected)
-        memory_info = psutil.virtual_memory()
-        cpu_percent = psutil.cpu_percent(interval=0.1)
+        # Simulate app-specific resource usage based on slider levels
+        # This creates realistic CPU/memory usage that responds to slider changes
+        processing_level = current_levels.get("processing", 0)
+        storage_level = current_levels.get("storage", 0)
         
-        # Calculate app-specific resource usage based on current levels
-        total_intensity = sum(current_levels.values())
-        if total_intensity > 0:
-            # Scale system resources based on app intensity
-            # Note: Upsun apps are allocated 0.1 CPU and 0.352 GB (352MB) RAM (BALANCED profile)
-            # This scaling simulates realistic usage within those constraints
-            app_cpu_usage = (cpu_percent * total_intensity / 500)
-            app_memory_usage = (memory_info.percent * total_intensity / 500)
-        else:
-            app_cpu_usage = 0
-            app_memory_usage = 0
+        # CPU usage based on processing slider (0-100%)
+        app_cpu_usage = processing_level
+        
+        # Memory usage based on storage slider (0-100%)
+        # Simulate memory usage as percentage of allocated container memory
+        app_memory_usage = storage_level
+        
+        # Add some realistic variation (±5%) to make it look more dynamic
+        import random
+        cpu_variation = random.uniform(-2, 2)
+        memory_variation = random.uniform(-2, 2)
+        
+        app_cpu_usage = max(0, min(100, app_cpu_usage + cpu_variation))
+        app_memory_usage = max(0, min(100, app_memory_usage + memory_variation))
+        
+        # Calculate realistic memory usage for container
+        # Upsun BALANCED profile: 0.1 CPU, 352MB RAM
+        container_memory_mb = 352  # Upsun BALANCED profile
+        memory_used_mb = int((container_memory_mb * app_memory_usage) / 100)
         
         return {
             "app_name": self.app_name,
-            "cpu_percent": min(app_cpu_usage, 100.0),  # Cap at 100%
-            "memory_percent": min(app_memory_usage, 100.0),  # Cap at 100%
-            "memory_used_mb": int((memory_info.total - memory_info.available) * app_memory_usage / 100),
-            "memory_total_mb": memory_info.total // (1024 * 1024),
+            "cpu_percent": app_cpu_usage,
+            "memory_percent": app_memory_usage,
+            "memory_used_mb": memory_used_mb,
+            "memory_total_mb": container_memory_mb,
             "current_levels": current_levels,
             "request_count": self.request_count,
             "error_count": self.error_count,
