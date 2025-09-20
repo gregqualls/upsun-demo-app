@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Activity } from 'lucide-react';
+import { Zap, Activity, ChevronDown, ChevronUp } from 'lucide-react';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Header from './components/Header';
 import AppCard from './components/AppCard';
@@ -18,6 +18,7 @@ function App() {
   const [updatingApps, setUpdatingApps] = useState(new Set());
   const [systemState, setSystemState] = useState('stopped'); // 'stopped', 'running', 'updating'
   const [expandedCards, setExpandedCards] = useState(new Set());
+  const [allExpanded, setAllExpanded] = useState(false);
   const [addActivity, setAddActivity] = useState(null);
   const [upsunActivities, setUpsunActivities] = useState([]);
   const [metricsSource, setMetricsSource] = useState('simulation');
@@ -643,8 +644,17 @@ function App() {
   };
 
   // Collapse all cards
-  const collapseAllCards = () => {
-    setExpandedCards(new Set());
+  const toggleAllCards = () => {
+    if (allExpanded) {
+      // Collapse all
+      setExpandedCards(new Set());
+      setAllExpanded(false);
+    } else {
+      // Expand all
+      const allAppNames = new Set(Object.keys(apps));
+      setExpandedCards(allAppNames);
+      setAllExpanded(true);
+    }
   };
 
   // Toggle individual card expansion
@@ -656,6 +666,11 @@ function App() {
       } else {
         newSet.add(appName);
       }
+      
+      // Update allExpanded state based on current expansion
+      const allAppNames = new Set(Object.keys(apps));
+      setAllExpanded(newSet.size === allAppNames.size && allAppNames.size > 0);
+      
       return newSet;
     });
   };
@@ -867,10 +882,20 @@ function App() {
                 Set All to Min
               </button>
               <button
-                onClick={collapseAllCards}
-                className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors duration-200"
+                onClick={toggleAllCards}
+                className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors duration-200 flex items-center"
               >
-                Collapse All Cards
+                {allExpanded ? (
+                  <>
+                    <ChevronUp className="w-4 h-4 mr-1" />
+                    Collapse All
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-4 h-4 mr-1" />
+                    Expand All
+                  </>
+                )}
               </button>
             </div>
           </div>
