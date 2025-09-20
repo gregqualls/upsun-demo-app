@@ -76,9 +76,8 @@ async def update_resources(resource_data: Dict[str, Any]):
             "completions": resource_data.get("completions", 0)
         }
         
-        api_gateway_url = get_api_gateway_url()
         print(f"[{APP_NAME}] Calling resource_manager.update_resources with levels: {levels}")
-        await resource_manager.update_resources(levels, api_gateway_url)
+        resource_manager.update_resources(levels)
         print(f"[{APP_NAME}] resource_manager.update_resources completed")
         
         return {
