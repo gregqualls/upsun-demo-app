@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Zap, Activity, ChevronDown, ChevronUp } from 'lucide-react';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Header from './components/Header';
@@ -192,7 +192,7 @@ function App() {
   };
 
   // Toggle system on/off
-  const toggleSystem = async () => {
+  const toggleSystem = useCallback(async () => {
     if (isUpdating) return;
     
     const isCurrentlyRunning = systemState === 'running';
@@ -307,7 +307,7 @@ function App() {
       }
       // Don't revert UI on API failure - let user see the change
     }
-  };
+  }, [systemState, isUpdating, addActivity, API_BASE_URL, fetchAppsStatus, fetchMetrics, apps]);
 
   // Fetch system information
   const fetchSystemInfo = async () => {
@@ -785,13 +785,9 @@ function App() {
 
     // Start timer when system turns on, but don't reset if countdown is active
     if (systemState === 'running' && !isCountdownActive) {
-      console.log('Starting runtime timer...');
       startRuntimeTimer();
     } else if (systemState === 'stopped' && !isCountdownActive) {
-      console.log('Stopping runtime timer...');
       stopRuntimeTimer();
-    } else if (isCountdownActive) {
-      console.log('Countdown is active, not resetting timer');
     }
 
     // Cleanup
