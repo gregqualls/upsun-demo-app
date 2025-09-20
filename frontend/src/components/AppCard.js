@@ -132,7 +132,7 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState }) =
               systemState === 'stopped' 
                 ? 'bg-gray-300 border-gray-400' // Grey when system off
                 : app.status === 'healthy'
-                ? 'bg-gradient-to-r from-purple-500 to-blue-500 border-purple-600' // Upsun gradient when healthy
+                ? 'bg-green-500 border-green-600' // Green when healthy
                 : app.status === 'unhealthy'
                 ? 'bg-red-500 border-red-600' // Red when unhealthy
                 : 'bg-yellow-500 border-yellow-600' // Yellow for unknown/starting
