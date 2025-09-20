@@ -208,14 +208,14 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
       </div>
 
       {/* Architecture Diagram */}
-      <div className="relative h-32 overflow-hidden bg-gradient-to-br from-black via-gray-900 to-black">
-        {/* 3D Tron Grid - First Layer */}
+      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-black via-gray-900 to-black">
+        {/* 3D Tron Grid - Background Layer */}
         <div className="absolute inset-0 z-0">
           <svg width="100%" height="100%" className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
             <defs>
               <linearGradient id="gridFade" x1="0%" y1="100%" x2="0%" y2="0%">
-                <stop offset="0%" stopColor="#a855f7" stopOpacity="0.3"/>
-                <stop offset="50%" stopColor="#7c3aed" stopOpacity="0.15"/>
+                <stop offset="0%" stopColor="#a855f7" stopOpacity="0.2"/>
+                <stop offset="50%" stopColor="#7c3aed" stopOpacity="0.1"/>
                 <stop offset="100%" stopColor="#4c1d95" stopOpacity="0.05"/>
               </linearGradient>
               <filter id="glow">
@@ -228,39 +228,13 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
             </defs>
             {/* 3D Grid with perspective - bottom closest, top vanishing point */}
             <g>
-              {/* Horizontal grid lines (getting closer together as they go up) */}
-              {Array.from({length: 20}, (_, i) => {
-                const y = 100 - (i * 4); // Start from bottom, go up
-                const width = 100; // Full width
-                const x1 = 0;
-                const x2 = 100;
-                const opacity = 0.4 - (i * 0.02); // Fade as they go up
-                
-                return (
-                  <line
-                    key={`h-${i}`}
-                    x1={x1}
-                    y1={y}
-                    x2={x2}
-                    y2={y}
-                    stroke="url(#gridFade)"
-                    strokeWidth="0.1"
-                    opacity={opacity}
-                    filter="url(#glow)"
-                    style={{
-                      animation: `pulse ${3 + Math.random() * 2}s ease-in-out infinite`,
-                      animationDelay: `${i * 0.1}s`
-                    }}
-                  />
-                );
-              })}
               
               {/* Vertical grid lines (converging to vanishing point at top) */}
               {Array.from({length: 20}, (_, i) => {
                 const x = 0 + (i * 5); // Evenly spaced across full width
                 const topY = 20; // Vanishing point at top
                 const bottomY = 100; // Bottom edge
-                const opacity = 0.3 - (Math.abs(i - 10) * 0.015); // Fade towards edges
+                const opacity = 0.2 - (Math.abs(i - 10) * 0.01); // Fade towards edges
                 
                 return (
                   <line
@@ -270,7 +244,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
                     x2={50 + (x - 50) * 0.2} // Converge towards center at top
                     y2={topY}
                     stroke="url(#gridFade)"
-                    strokeWidth="0.1"
+                    strokeWidth="0.15"
                     opacity={opacity}
                     filter="url(#glow)"
                     style={{
@@ -287,7 +261,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
                 const width = 100; // Full width
                 const x1 = 0;
                 const x2 = 100;
-                const opacity = 0.2 - (i * 0.02);
+                const opacity = 0.15 - (i * 0.01);
                 
                 return (
                   <line
@@ -297,7 +271,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
                     x2={x2}
                     y2={y}
                     stroke="url(#gridFade)"
-                    strokeWidth="0.05"
+                    strokeWidth="0.1"
                     opacity={opacity}
                     filter="url(#glow)"
                     style={{
@@ -312,7 +286,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
         </div>
 
         {/* Static Connection Lines */}
-        <svg className="absolute inset-0 w-full h-full z-10">
+        <svg className="absolute inset-0 w-full h-full z-20">
           {connections.map((conn) => (
             <line
               key={conn.id}
@@ -328,7 +302,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
         </svg>
 
                {/* Animated Data Packets */}
-               <svg className="absolute inset-0 w-full h-full z-20">
+               <svg className="absolute inset-0 w-full h-full z-30">
                  {dataPackets.map((packet) => {
                    // Calculate start and end positions
                    const startX = packet.from.x;
