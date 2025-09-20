@@ -57,7 +57,8 @@ function App() {
           name: key,
           displayName: data[key].name,
           status: data[key].status,
-          levels: data[key].levels
+          levels: data[key].levels,
+          has_controls: data[key].has_controls
         };
       });
       
