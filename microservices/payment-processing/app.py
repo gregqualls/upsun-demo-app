@@ -14,7 +14,7 @@ import uvicorn
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from shared_resources import ResourceManager
+from shared_resources import UpsunMetricsManager
 
 # App name will be set via environment variable
 APP_NAME = os.getenv("PLATFORM_APPLICATION_NAME", "microservice")
@@ -31,7 +31,7 @@ app.add_middleware(
 )
 
 # Initialize resource manager
-resource_manager = ResourceManager(APP_NAME)
+resource_manager = UpsunMetricsManager(APP_NAME)
 
 # Get API Gateway URL for traffic simulation
 def get_api_gateway_url():
