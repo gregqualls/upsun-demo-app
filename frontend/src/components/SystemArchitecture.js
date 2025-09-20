@@ -121,7 +121,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
                   id: `${appName}-${targetName}-in-${now}-${i}`,
                   from: serviceConfig[targetName].position,
                   to: config.position,
-                  color: config.color, // Use the same color as the service for return packets
+                  color: 'purple', // API Gateway color for packets going out from API Gateway
                   timestamp: now,
                   delay: (i * 300) + 1000, // Stagger and delay return packets
                   speed: 2000 + Math.random() * 1000 // 2-3 seconds
