@@ -330,30 +330,32 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
                {/* Animated Data Packets */}
                <svg className="absolute inset-0 w-full h-full z-20">
                  {dataPackets.map((packet) => {
-                   const progress = Math.min((Date.now() - packet.timestamp - packet.delay) / packet.speed, 1);
+                   // Calculate start and end positions
+                   const startX = packet.from.x;
+                   const startY = packet.from.y;
+                   const endX = packet.to.x;
+                   const endY = packet.to.y;
                    
-                   // Ensure progress is between 0 and 1
-                   if (progress < 0 || progress >= 1) return null;
-                   
-                   // Calculate position along the line
-                   const x = packet.from.x + (packet.to.x - packet.from.x) * progress;
-                   const y = packet.from.y + (packet.to.y - packet.from.y) * progress;
-                   
-                   // Ensure packets stay within bounds
-                   if (x < 0 || x > 100 || y < 0 || y > 100) return null;
+                   // Calculate the transform needed to move from start to end
+                   const deltaX = endX - startX;
+                   const deltaY = endY - startY;
                    
                    return (
                      <circle
                        key={packet.id}
-                       cx={`${x}%`}
-                       cy={`${y}%`}
+                       cx={`${startX}%`}
+                       cy={`${startY}%`}
                        r="2"
                        fill="currentColor"
-                       className={`${getNodeColor(packet.color)} drop-shadow-lg packet-animation`}
+                       className={`${getNodeColor(packet.color)} drop-shadow-lg packet-move`}
                        style={{
                          filter: `drop-shadow(0 0 6px currentColor)`,
-                         willChange: 'transform', // Optimize for animation
-                         transform: 'translateZ(0)' // Force hardware acceleration
+                         willChange: 'transform',
+                         transform: 'translateZ(0)',
+                         animation: `packetMove ${packet.speed}ms linear forwards`,
+                         animationDelay: `${packet.delay}ms`,
+                         '--delta-x': `${deltaX}%`,
+                         '--delta-y': `${deltaY}%`
                        }}
                      />
                    );
@@ -432,10 +434,19 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
                  50% { opacity: 0.5; }
                }
                
-               .packet-animation {
-                 animation: pulse 2s ease-in-out infinite;
+               @keyframes packetMove {
+                 0% {
+                   transform: translate(0, 0) translateZ(0);
+                 }
+                 100% {
+                   transform: translate(var(--delta-x, 0%), var(--delta-y, 0%)) translateZ(0);
+                 }
+               }
+               
+               .packet-move {
                  will-change: transform, opacity;
                  transform: translateZ(0);
+                 backface-visibility: hidden;
                }
                
                /* Optimize SVG rendering */
@@ -445,7 +456,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
                }
                
                /* Reduce repaints */
-               .packet-animation circle {
+               .packet-move circle {
                  will-change: transform, opacity;
                  backface-visibility: hidden;
                  perspective: 1000px;
