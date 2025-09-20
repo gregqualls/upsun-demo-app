@@ -90,7 +90,31 @@ class UpsunMetricsManager:
                 'is_running': False,
                 'source': 'simulation'
             }
+        
+        # Check if we're on Upsun - if so, try to get real container metrics
+        if os.getenv("PLATFORM_APPLICATION_NAME"):
+            try:
+                import psutil
+                # Get real container metrics
+                cpu_percent = psutil.cpu_percent(interval=0.1)
+                memory = psutil.virtual_memory()
+                memory_percent = memory.percent
+                memory_used_mb = memory.used // (1024 * 1024)
+                
+                return {
+                    'cpu_percent': cpu_percent,
+                    'memory_percent': memory_percent,
+                    'memory_used_mb': memory_used_mb,
+                    'instance_count': self._instance_count,
+                    'is_running': True,
+                    'source': 'container_metrics'
+                }
+            except Exception as e:
+                print(f"[{self.app_name}] Error getting container metrics: {e}")
+                # Fall back to simulation if container metrics fail
+                pass
             
+        # Fallback to simulation for local dev or if container metrics fail
         processing_level = self.resource_levels.get('processing', 0)
         storage_level = self.resource_levels.get('storage', 0)
         
@@ -98,19 +122,13 @@ class UpsunMetricsManager:
         cpu_variation = random.uniform(0.9, 1.1)
         memory_variation = random.uniform(0.95, 1.05)
         
-        # Determine source based on environment
-        source = 'simulation'
-        # Check for Upsun-specific environment variables
-        if os.getenv("PLATFORM_APPLICATION_NAME"):
-            source = 'upsun_simulation'  # Running on Upsun but using simulation
-        
         return {
             'cpu_percent': min(processing_level * 0.8 * cpu_variation, 100),
             'memory_percent': min(storage_level * 0.6 * memory_variation, 100),
             'memory_used_mb': int(storage_level * 3.52 * memory_variation),  # 352MB max
             'instance_count': self._instance_count,
             'is_running': True,
-            'source': source
+            'source': 'simulation'
         }
     
     def _blend_metrics(self, sim_metrics: Dict, upsun_metrics: Dict) -> Dict[str, Any]:

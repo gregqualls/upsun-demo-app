@@ -404,29 +404,36 @@ async def get_upsun_metrics(app_name: str):
                 '--latest',
                 '--format', 'json'
             ], capture_output=True, text=True, timeout=10)
+            
+            if result.returncode == 0:
+                metrics_data = json.loads(result.stdout)
+                if metrics_data and len(metrics_data) > 0:
+                    latest = metrics_data[0]
+                    return {
+                        "cpu_percent": latest.get('cpu_percent', 0),
+                        "memory_percent": latest.get('mem_percent', 0),
+                        "memory_used_mb": latest.get('mem_used', 0) // (1024 * 1024),
+                        "instance_count": latest.get('instance_count', 'unknown'),
+                        "source": "upsun_cli"
+                    }
         except FileNotFoundError:
-            # Upsun CLI not available in container
-            return {
-                "cpu_percent": 0,
-                "memory_percent": 0,
-                "memory_used_mb": 0,
-                "instance_count": "unknown",
-                "source": "cli_not_available"
-            }
+            # Upsun CLI not available - use container metrics instead
+            pass
         
-        if result.returncode == 0:
-            metrics_data = json.loads(result.stdout)
-            if metrics_data and len(metrics_data) > 0:
-                latest = metrics_data[0]
-                return {
-                    "cpu_percent": latest.get('cpu_percent', 0),
-                    "memory_percent": latest.get('mem_percent', 0),
-                    "memory_used_mb": latest.get('mem_used', 0) // (1024 * 1024),
-                    "instance_count": latest.get('instance_count', 'unknown'),
-                    "source": "upsun_cli"
-                }
+        # Fallback to container metrics when CLI not available
+        import psutil
+        cpu_percent = psutil.cpu_percent(interval=1)
+        memory = psutil.virtual_memory()
+        memory_percent = memory.percent
+        memory_used_mb = memory.used // (1024 * 1024)
         
-        return {"error": "No metrics available", "source": "upsun_cli"}
+        return {
+            "cpu_percent": cpu_percent,
+            "memory_percent": memory_percent,
+            "memory_used_mb": memory_used_mb,
+            "instance_count": "unknown",
+            "source": "container_metrics"
+        }
         
     except Exception as e:
         print(f"Error getting Upsun metrics for {app_name}: {e}")
