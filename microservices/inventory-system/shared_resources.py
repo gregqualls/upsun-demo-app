@@ -100,7 +100,8 @@ class UpsunMetricsManager:
         
         # Determine source based on environment
         source = 'simulation'
-        if os.getenv("PLATFORM_APPLICATION_NAME"):
+        # Check for Upsun-specific environment variables
+        if os.getenv("PLATFORM_RELATIONSHIPS_api_gateway_URL"):
             source = 'upsun_simulation'  # Running on Upsun but using simulation
         
         return {
@@ -130,7 +131,7 @@ class UpsunMetricsManager:
     
     def _refresh_upsun_metrics(self):
         """Get real metrics from Upsun platform"""
-        if not os.getenv("PLATFORM_APPLICATION_NAME"):
+        if not os.getenv("PLATFORM_RELATIONSHIPS_api_gateway_URL"):
             return
             
         try:
@@ -152,7 +153,7 @@ class UpsunMetricsManager:
     
     def _refresh_instance_count(self):
         """Get instance count from Upsun resources API"""
-        if not os.getenv("PLATFORM_APPLICATION_NAME"):
+        if not os.getenv("PLATFORM_RELATIONSHIPS_api_gateway_URL"):
             self._instance_count = 1
             return
             

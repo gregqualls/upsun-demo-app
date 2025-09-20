@@ -387,7 +387,7 @@ async def get_instance_count(app_name: str):
 async def get_upsun_metrics(app_name: str):
     """Get real-time metrics from Upsun platform"""
     try:
-        if not os.getenv("PLATFORM_APPLICATION_NAME"):
+        if not os.getenv("PLATFORM_RELATIONSHIPS_api_gateway_URL"):
             return {
                 "cpu_percent": 0,
                 "memory_percent": 0,
@@ -436,7 +436,7 @@ async def get_upsun_metrics(app_name: str):
 async def get_upsun_instances(app_name: str):
     """Get instance count from Upsun resources API"""
     try:
-        if not os.getenv("PLATFORM_APPLICATION_NAME"):
+        if not os.getenv("PLATFORM_RELATIONSHIPS_api_gateway_URL"):
             return {"instances": 1, "source": "local"}
         
         # Get resources from Upsun CLI (if available)
@@ -469,7 +469,7 @@ async def get_upsun_instances(app_name: str):
 async def get_upsun_activities():
     """Get recent activities from Upsun platform"""
     try:
-        if not os.getenv("PLATFORM_APPLICATION_NAME"):
+        if not os.getenv("PLATFORM_RELATIONSHIPS_api_gateway_URL"):
             return {"activities": [], "source": "local"}
         
         # Get recent activities (if CLI available)
