@@ -785,9 +785,13 @@ function App() {
 
     // Start timer when system turns on, but don't reset if countdown is active
     if (systemState === 'running' && !isCountdownActive) {
+      console.log('Starting runtime timer...');
       startRuntimeTimer();
     } else if (systemState === 'stopped' && !isCountdownActive) {
+      console.log('Stopping runtime timer...');
       stopRuntimeTimer();
+    } else if (isCountdownActive) {
+      console.log('Countdown is active, not resetting timer');
     }
 
     // Cleanup
