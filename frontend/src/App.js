@@ -13,6 +13,7 @@ function App() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [updatingApps, setUpdatingApps] = useState(new Set());
   const [systemState, setSystemState] = useState('stopped'); // 'stopped', 'running', 'updating'
+  const [expandedCards, setExpandedCards] = useState(new Set());
 
   // Dynamically determine API URL at runtime
   const getApiBaseUrl = () => {
@@ -242,6 +243,84 @@ function App() {
 
 
 
+  // Reset all resources to medium
+  const resetAllResources = async () => {
+    if (isUpdating) return;
+    
+    setIsUpdating(true);
+    try {
+      // Reset all apps to medium levels (50)
+      const allAppsLevels = {};
+      Object.keys(apps).forEach(appName => {
+        allAppsLevels[appName] = {
+          processing: 50,
+          storage: 50,
+          traffic: 50,
+          orders: 50,
+          completions: 50
+        };
+      });
+
+      // Update UI immediately
+      setApps(prev => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach(appName => {
+          updated[appName] = {
+            ...updated[appName],
+            levels: allAppsLevels[appName]
+          };
+        });
+        return updated;
+      });
+
+      // Send API call in background
+      const response = await fetch(`${API_BASE_URL}/resources/all`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          levels: allAppsLevels
+        }),
+        mode: 'cors',
+        credentials: 'omit'
+      });
+      
+      if (!response.ok) {
+        console.warn(`API call failed: ${response.status}`);
+      }
+      
+      // Refresh data
+      fetchAppsStatus();
+      fetchMetrics();
+      
+      setApiError(null);
+    } catch (error) {
+      console.error('Error resetting all resources:', error);
+      setApiError(`API Error: ${error.message}`);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Collapse all cards
+  const collapseAllCards = () => {
+    setExpandedCards(new Set());
+  };
+
+  // Toggle individual card expansion
+  const toggleCardExpansion = (appName) => {
+    setExpandedCards(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(appName)) {
+        newSet.delete(appName);
+      } else {
+        newSet.add(appName);
+      }
+      return newSet;
+    });
+  };
+
   // Initial load
   useEffect(() => {
     const loadData = async () => {
@@ -318,6 +397,23 @@ function App() {
             </h2>
           </div>
           
+          {/* Global Controls */}
+          <div className="mb-6 flex flex-wrap gap-3 justify-center">
+            <button
+              onClick={resetAllResources}
+              disabled={isUpdating}
+              className="px-4 py-2 text-sm font-medium text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Reset All to Medium
+            </button>
+            <button
+              onClick={collapseAllCards}
+              className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors duration-200"
+            >
+              Collapse All Cards
+            </button>
+          </div>
+          
           {/* App Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {Object.values(apps).map((app) => (
@@ -329,6 +425,8 @@ function App() {
                   isUpdating={updatingApps.has(app.name)}
                   metrics={metrics}
                   systemState={systemState}
+                  isExpanded={expandedCards.has(app.name)}
+                  onToggleExpansion={() => toggleCardExpansion(app.name)}
                 />
               ))}
             </div>
