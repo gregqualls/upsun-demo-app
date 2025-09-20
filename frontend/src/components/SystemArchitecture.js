@@ -197,12 +197,12 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
 
       {/* Architecture Diagram */}
       <div className="relative h-32 overflow-hidden bg-gradient-to-br from-black via-gray-900 to-black">
-        {/* Background Grid */}
-        <div className="absolute inset-0 opacity-25">
+        {/* Background Grid - First Layer */}
+        <div className="absolute inset-0 z-0 opacity-40">
           <svg width="100%" height="100%" className="w-full h-full">
             <defs>
               <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="purple" strokeWidth="0.5"/>
+                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="purple" strokeWidth="0.8"/>
               </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#grid)" />
@@ -210,7 +210,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
         </div>
 
         {/* Static Connection Lines */}
-        <svg className="absolute inset-0 w-full h-full">
+        <svg className="absolute inset-0 w-full h-full z-10">
           {connections.map((conn) => (
             <line
               key={conn.id}
@@ -226,7 +226,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
         </svg>
 
         {/* Animated Data Packets */}
-        <svg className="absolute inset-0 w-full h-full">
+        <svg className="absolute inset-0 w-full h-full z-20">
           {dataPackets.map((packet) => {
             const progress = Math.min((Date.now() - packet.timestamp - packet.delay) / packet.speed, 1);
             
@@ -266,7 +266,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
           return (
             <div
               key={appName}
-              className="absolute transform -translate-x-1/2 -translate-y-1/2"
+              className="absolute transform -translate-x-1/2 -translate-y-1/2 z-30"
               style={{
                 left: `${config.position.x}%`,
                 top: `${config.position.y}%`
