@@ -1,92 +1,95 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Terminal, Activity, Zap, Database, Cpu, Memory } from 'lucide-react';
 
-const ActivityFeed = ({ apps, metrics, systemState }) => {
+const ActivityFeed = ({ apps, metrics, systemState, onAddActivity }) => {
   const [activities, setActivities] = useState([]);
   const [isPaused, setIsPaused] = useState(false);
   const feedRef = useRef(null);
   const activityIdRef = useRef(0);
+  const prevAppsRef = useRef({});
 
-  // Generate activity entries based on current state
+  // Track real changes in apps data
   useEffect(() => {
     if (isPaused || systemState === 'stopped') return;
 
-    const interval = setInterval(() => {
-      const now = new Date();
-      const timestamp = now.toLocaleTimeString();
-      
-      // Generate different types of activities
-      const activityTypes = [
-        {
-          type: 'api',
-          icon: <Zap className="w-3 h-3" />,
-          color: 'text-blue-400',
-          getMessage: () => {
-            const appNames = Object.keys(apps);
-            const randomApp = appNames[Math.floor(Math.random() * appNames.length)];
-            const actions = ['Resource update', 'Health check', 'Metrics fetch', 'Status sync'];
-            const action = actions[Math.floor(Math.random() * actions.length)];
-            return `${action} → ${randomApp}`;
+    const prevApps = prevAppsRef.current;
+    const now = new Date();
+    const timestamp = now.toLocaleTimeString();
+
+    // Check for resource level changes
+    Object.keys(apps).forEach(appName => {
+      const currentApp = apps[appName];
+      const prevApp = prevApps[appName];
+
+      if (prevApp && currentApp.levels) {
+        Object.keys(currentApp.levels).forEach(resource => {
+          const currentLevel = currentApp.levels[resource];
+          const prevLevel = prevApp.levels?.[resource];
+
+          if (prevLevel !== undefined && currentLevel !== prevLevel) {
+            const levelNames = { 0: 'Off', 25: 'Low', 50: 'Medium', 75: 'High', 100: 'Maximum' };
+            const currentLevelName = levelNames[currentLevel] || `${currentLevel}%`;
+            const prevLevelName = levelNames[prevLevel] || `${prevLevel}%`;
+
+            const newActivity = {
+              id: activityIdRef.current++,
+              timestamp,
+              type: 'resource',
+              icon: <Cpu className="w-3 h-3" />,
+              color: 'text-green-400',
+              message: `${appName}: ${resource} ${prevLevelName} → ${currentLevelName}`,
+              time: now.getTime()
+            };
+
+            setActivities(prev => [...prev.slice(-49), newActivity]);
           }
-        },
-        {
-          type: 'resource',
-          icon: <Cpu className="w-3 h-3" />,
-          color: 'text-green-400',
-          getMessage: () => {
-            const appNames = Object.keys(apps);
-            const randomApp = appNames[Math.floor(Math.random() * appNames.length)];
-            const resources = ['CPU', 'Memory', 'Network', 'Storage'];
-            const resource = resources[Math.floor(Math.random() * resources.length)];
-            const levels = ['Low', 'Medium', 'High', 'Maximum'];
-            const level = levels[Math.floor(Math.random() * levels.length)];
-            return `${randomApp}: ${resource} → ${level}`;
-          }
-        },
-        {
-          type: 'system',
-          icon: <Activity className="w-3 h-3" />,
-          color: 'text-yellow-400',
-          getMessage: () => {
-            const events = ['Instance scaling', 'Load balancing', 'Health monitoring', 'Auto-scaling check'];
-            const event = events[Math.floor(Math.random() * events.length)];
-            return `System: ${event}`;
-          }
-        },
-        {
+        });
+      }
+    });
+
+    prevAppsRef.current = JSON.parse(JSON.stringify(apps));
+  }, [apps, systemState, isPaused]);
+
+  // Track real metrics changes
+  useEffect(() => {
+    if (isPaused || systemState === 'stopped') return;
+
+    const now = new Date();
+    const timestamp = now.toLocaleTimeString();
+
+    Object.keys(metrics).forEach(appName => {
+      const appMetrics = metrics[appName];
+      if (appMetrics) {
+        const newActivity = {
+          id: activityIdRef.current++,
+          timestamp,
           type: 'metrics',
           icon: <Database className="w-3 h-3" />,
           color: 'text-purple-400',
-          getMessage: () => {
-            const appNames = Object.keys(apps);
-            const randomApp = appNames[Math.floor(Math.random() * appNames.length)];
-            const cpu = Math.floor(Math.random() * 100);
-            const memory = Math.floor(Math.random() * 100);
-            return `${randomApp}: CPU ${cpu}%, Memory ${memory}%`;
-          }
-        }
-      ];
+          message: `${appName}: CPU ${Math.round(appMetrics.cpu_percent)}%, Memory ${Math.round(appMetrics.memory_percent)}%`,
+          time: now.getTime()
+        };
 
-      const activityType = activityTypes[Math.floor(Math.random() * activityTypes.length)];
-      const newActivity = {
-        id: activityIdRef.current++,
-        timestamp,
-        type: activityType.type,
-        icon: activityType.icon,
-        color: activityType.color,
-        message: activityType.getMessage(),
-        time: now.getTime()
-      };
+        setActivities(prev => [...prev.slice(-49), newActivity]);
+      }
+    });
+  }, [metrics, systemState, isPaused]);
 
-      setActivities(prev => {
-        const updated = [...prev, newActivity];
-        // Keep only last 50 activities to prevent memory issues
-        return updated.slice(-50);
+  // Expose addActivity function to parent
+  useEffect(() => {
+    if (onAddActivity) {
+      onAddActivity((activity) => {
+        const now = new Date();
+        const newActivity = {
+          id: activityIdRef.current++,
+          timestamp: now.toLocaleTimeString(),
+          ...activity,
+          time: now.getTime()
+        };
+        setActivities(prev => [...prev.slice(-49), newActivity]);
       });
-    }, 800 + Math.random() * 1200); // Random interval between 800-2000ms
-
-    return () => clearInterval(interval);
-  }, [apps, systemState, isPaused]);
+    }
+  }, [onAddActivity]);
 
   // Auto-scroll to bottom when new activities are added
   useEffect(() => {

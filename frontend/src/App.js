@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Zap, Activity } from 'lucide-react';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Header from './components/Header';
 import AppCard from './components/AppCard';
@@ -15,6 +16,7 @@ function App() {
   const [updatingApps, setUpdatingApps] = useState(new Set());
   const [systemState, setSystemState] = useState('stopped'); // 'stopped', 'running', 'updating'
   const [expandedCards, setExpandedCards] = useState(new Set());
+  const [addActivity, setAddActivity] = useState(null);
 
   // Dynamically determine API URL at runtime
   const getApiBaseUrl = () => {
@@ -88,6 +90,16 @@ function App() {
 
   // Update app resource levels - optimistic updates
   const updateAppResources = async (appName, levels) => {
+    // Log API call to activity feed
+    if (addActivity) {
+      addActivity({
+        type: 'api',
+        icon: <Zap className="w-3 h-3" />,
+        color: 'text-blue-400',
+        message: `API: POST /resources → ${appName}`
+      });
+    }
+
     // Immediately update local state (optimistic update)
     setApps(prev => ({
       ...prev,
@@ -116,10 +128,30 @@ function App() {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
+      // Log successful API response
+      if (addActivity) {
+        addActivity({
+          type: 'api',
+          icon: <Zap className="w-3 h-3" />,
+          color: 'text-green-400',
+          message: `API: 200 OK ← ${appName}`
+        });
+      }
+      
       setApiError(null);
     } catch (error) {
       console.error('Error updating app resources:', error);
       setApiError(`API Error: ${error.message}`);
+      
+      // Log API error
+      if (addActivity) {
+        addActivity({
+          type: 'api',
+          icon: <Zap className="w-3 h-3" />,
+          color: 'text-red-400',
+          message: `API: ERROR ← ${appName} (${error.message})`
+        });
+      }
       
       // Revert on error - refresh from server
       await fetchAppsStatus();
@@ -188,6 +220,16 @@ function App() {
     
     setSystemState(isCurrentlyRunning ? 'stopped' : 'running');
     setIsUpdating(false); // UI is updated, no need to show loading
+    
+    // Log system toggle
+    if (addActivity) {
+      addActivity({
+        type: 'system',
+        icon: <Activity className="w-3 h-3" />,
+        color: 'text-yellow-400',
+        message: `System: ${isCurrentlyRunning ? 'STOPPING' : 'STARTING'} all apps`
+      });
+    }
     
     // Send API call in background (don't wait for it)
     try {
@@ -393,7 +435,8 @@ function App() {
           <ActivityFeed 
             apps={apps} 
             metrics={metrics} 
-            systemState={systemState} 
+            systemState={systemState}
+            onAddActivity={setAddActivity}
           />
           
           {/* Applications Header with Controls */}
