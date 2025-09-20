@@ -107,9 +107,9 @@ class ResourceManager:
                 # Method 4: Use known configuration as fallback
                 instance_counts = {
                     "user-management": 1,
-                    "payment-processing": 3,  # From your Upsun config
+                    "payment-processing": 1,  # Updated to match current Upsun config
                     "inventory-system": 1,
-                    "notification-center": 3,  # From your Upsun config
+                    "notification-center": 2,  # Updated to match current Upsun config
                     "api-gateway": 1
                 }
                 
