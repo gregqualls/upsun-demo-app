@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { Sun, Moon, Power, Clock, Info } from 'lucide-react';
-import CountdownTimer from './CountdownTimer';
+import { Sun, Moon, Power, Clock, Settings } from 'lucide-react';
 
 const Header = ({ 
   systemState, 
@@ -12,6 +11,22 @@ const Header = ({
   timeRemaining
 }) => {
   const { isDark, toggleTheme } = useTheme();
+  const [showSettings, setShowSettings] = useState(false);
+  const settingsRef = useRef(null);
+
+  // Close settings dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (settingsRef.current && !settingsRef.current.contains(event.target)) {
+        setShowSettings(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <header className="bg-white dark:bg-gray-800 shadow-lg border-b border-gray-200 dark:border-gray-700">
@@ -58,40 +73,62 @@ const Header = ({
             </div>
           </div>
 
-          {/* Idle Timeout Controls */}
+          {/* Right side controls */}
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
+            {/* Simple Countdown Timer */}
+            <div className="flex items-center space-x-2 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
               <Clock className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-              <span className="text-sm text-gray-600 dark:text-gray-400">Idle Timeout:</span>
-              <select
-                value={idleTimeout}
-                onChange={(e) => setIdleTimeout(parseInt(e.target.value))}
-                className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                <option value={5}>5 min</option>
-                <option value={10}>10 min</option>
-                <option value={15}>15 min</option>
-                <option value={30}>30 min</option>
-                <option value={60}>60 min</option>
-                <option value={120}>2 hours</option>
-              </select>
-              <div className="relative group">
-                <Info className="w-4 h-4 text-gray-400 cursor-help" />
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
-                  Auto-shutdown prevents resource waste if you forget to stop the demo
-                </div>
-              </div>
+              <span className="text-sm text-gray-600 dark:text-gray-400">Idle:</span>
+              <span className="font-mono text-sm font-medium text-gray-900 dark:text-gray-100">
+                {timeRemaining ? 
+                  `${Math.floor(timeRemaining / 60).toString().padStart(2, '0')}:${(timeRemaining % 60).toString().padStart(2, '0')}` : 
+                  `${idleTimeout}:00`
+                }
+              </span>
             </div>
-            
-            {/* Countdown Timer */}
-            {timeRemaining && (
-              <CountdownTimer
-                timeRemaining={timeRemaining}
-                type="shutdown"
-                title="Auto-shutdown in:"
-                warningThreshold={10}
-              />
-            )}
+
+            {/* Settings Button */}
+            <div className="relative" ref={settingsRef}>
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                aria-label="Idle timeout settings"
+              >
+                <Settings className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              </button>
+              
+              {/* Settings Dropdown */}
+              {showSettings && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10">
+                  <div className="p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Idle Timeout</span>
+                      <button
+                        onClick={() => setShowSettings(false)}
+                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      >
+                        ×
+                      </button>
+                    </div>
+                    <select
+                      value={idleTimeout}
+                      onChange={(e) => setIdleTimeout(parseInt(e.target.value))}
+                      className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value={5}>5 minutes</option>
+                      <option value={10}>10 minutes</option>
+                      <option value={15}>15 minutes</option>
+                      <option value={30}>30 minutes</option>
+                      <option value={60}>1 hour</option>
+                      <option value={120}>2 hours</option>
+                    </select>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                      Auto-shutdown prevents resource waste
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Theme Toggle */}
             <button

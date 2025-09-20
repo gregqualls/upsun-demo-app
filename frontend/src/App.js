@@ -6,7 +6,6 @@ import AppCard from './components/AppCard';
 import ActivityFeed from './components/ActivityFeed';
 import SystemArchitecture from './components/SystemArchitecture';
 import MetricsSourceIndicator from './components/MetricsSourceIndicator';
-import CountdownTimer from './components/CountdownTimer';
 import './index.css';
 
 function App() {
@@ -806,23 +805,6 @@ function App() {
         />
         
         <main className="container mx-auto px-4 py-8">
-          {/* Prominent Countdown Timer for Zero Downtime Deployments */}
-          {timeRemaining && timeRemaining <= 30 && (
-            <div className="mb-6">
-              <CountdownTimer
-                timeRemaining={timeRemaining}
-                type="shutdown"
-                title="System will auto-shutdown in:"
-                warningThreshold={10}
-                onCancel={() => {
-                  // Reset the idle timer when user clicks cancel
-                  setLastActivity(Date.now());
-                  setTimeRemaining(null);
-                }}
-              />
-            </div>
-          )}
-
           {/* API Error Display */}
           {apiError && (
             <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
