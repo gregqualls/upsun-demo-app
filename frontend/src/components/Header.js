@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { Sun, Moon, Power, Clock, Info } from 'lucide-react';
+import { Sun, Moon, Power, Info } from 'lucide-react';
+import CountdownTimer from './CountdownTimer';
 
 const Header = ({ 
   systemState, 
@@ -84,12 +85,12 @@ const Header = ({
             
             {/* Countdown Timer */}
             {timeRemaining && (
-              <div className="flex items-center space-x-2 px-3 py-1 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg">
-                <Clock className="w-4 h-4 text-red-600 dark:text-red-400 animate-pulse" />
-                <span className="text-sm font-medium text-red-600 dark:text-red-400">
-                  Auto-shutdown in {timeRemaining}s
-                </span>
-              </div>
+              <CountdownTimer
+                timeRemaining={timeRemaining}
+                type="shutdown"
+                title="Auto-shutdown in:"
+                warningThreshold={10}
+              />
             )}
 
             {/* Theme Toggle */}
