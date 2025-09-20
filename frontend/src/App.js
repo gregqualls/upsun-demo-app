@@ -4,6 +4,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import Header from './components/Header';
 import AppCard from './components/AppCard';
 import ActivityFeed from './components/ActivityFeed';
+import SystemArchitecture from './components/SystemArchitecture';
 import './index.css';
 
 function App() {
@@ -499,12 +500,11 @@ function App() {
             </div>
           )}
           
-          {/* Live Activity Feed */}
-          <ActivityFeed 
+          {/* System Architecture Visualization */}
+          <SystemArchitecture 
             apps={apps} 
             metrics={metrics} 
             systemState={systemState}
-            onAddActivity={setAddActivity}
           />
           
           {/* Applications Header with Controls */}
@@ -545,6 +545,16 @@ function App() {
                 />
               ))}
             </div>
+          
+          {/* Live Activity Feed - Moved to bottom */}
+          <div className="mt-12">
+            <ActivityFeed 
+              apps={apps} 
+              metrics={metrics} 
+              systemState={systemState}
+              onAddActivity={setAddActivity}
+            />
+          </div>
           
         </main>
       </div>
