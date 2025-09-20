@@ -11,13 +11,20 @@ const MetricsSourceIndicator = ({ source }) => {
           color: 'text-green-400',
           description: 'Real-time simulation with Upsun validation'
         };
-      case 'simulation':
-        return {
-          icon: <Activity className="w-4 h-4" />,
-          text: 'Live Simulation',
-          color: 'text-blue-400',
-          description: 'Real-time simulation (local dev)'
-        };
+             case 'simulation':
+               return {
+                 icon: <Activity className="w-4 h-4" />,
+                 text: 'Live Simulation',
+                 color: 'text-blue-400',
+                 description: 'Real-time simulation (local dev)'
+               };
+             case 'upsun_simulation':
+               return {
+                 icon: <Activity className="w-4 h-4" />,
+                 text: 'Upsun Simulation',
+                 color: 'text-purple-400',
+                 description: 'Real-time simulation on Upsun platform'
+               };
       case 'upsun_cli':
         return {
           icon: <Database className="w-4 h-4" />,

@@ -98,13 +98,18 @@ class UpsunMetricsManager:
         cpu_variation = random.uniform(0.9, 1.1)
         memory_variation = random.uniform(0.95, 1.05)
         
+        # Determine source based on environment
+        source = 'simulation'
+        if os.getenv("PLATFORM_APPLICATION_NAME"):
+            source = 'upsun_simulation'  # Running on Upsun but using simulation
+        
         return {
             'cpu_percent': min(processing_level * 0.8 * cpu_variation, 100),
             'memory_percent': min(storage_level * 0.6 * memory_variation, 100),
             'memory_used_mb': int(storage_level * 3.52 * memory_variation),  # 352MB max
             'instance_count': self._instance_count,
             'is_running': True,
-            'source': 'simulation'
+            'source': source
         }
     
     def _blend_metrics(self, sim_metrics: Dict, upsun_metrics: Dict) -> Dict[str, Any]:
