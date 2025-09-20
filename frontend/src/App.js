@@ -127,29 +127,25 @@ function App() {
 
   // Reset app resources - just set sliders to 50 and let normal flow handle API
   const resetAppResources = (appName) => {
-    // Update local state to set all levels to 50 (medium)
-    setApps(prev => ({
-      ...prev,
-      [appName]: {
-        ...prev[appName],
-        levels: {
-          processing: 50,
-          storage: 50,
-          traffic: 50,
-          orders: 50,
-          completions: 50
-        }
-      }
-    }));
-    
-    // Send API call in background
-    updateAppResources(appName, {
+    const newLevels = {
       processing: 50,
       storage: 50,
       traffic: 50,
       orders: 50,
       completions: 50
-    });
+    };
+    
+    // Update local state to set all levels to 50 (medium)
+    setApps(prev => ({
+      ...prev,
+      [appName]: {
+        ...prev[appName],
+        levels: newLevels
+      }
+    }));
+    
+    // Send API call in background
+    updateAppResources(appName, newLevels);
   };
 
   // Toggle system on/off
