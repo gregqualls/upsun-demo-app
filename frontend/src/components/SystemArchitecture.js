@@ -198,11 +198,11 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
       {/* Architecture Diagram */}
       <div className="relative h-32 overflow-hidden bg-gradient-to-br from-black via-gray-900 to-black">
         {/* Background Grid */}
-        <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0 opacity-25">
           <svg width="100%" height="100%" className="w-full h-full">
             <defs>
               <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="purple" strokeWidth="0.3"/>
+                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="purple" strokeWidth="0.5"/>
               </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#grid)" />
