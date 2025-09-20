@@ -26,6 +26,7 @@ function App() {
   const [timeRemaining, setTimeRemaining] = useState(null); // Seconds remaining
   const [systemStartTime, setSystemStartTime] = useState(null); // When system was turned on
   const [isCountdownActive, setIsCountdownActive] = useState(false); // Track if countdown is running
+  const [displayTime, setDisplayTime] = useState('10:00'); // Display time for header
 
   // Dynamically determine API URL at runtime
   const getApiBaseUrl = () => {
@@ -806,6 +807,36 @@ function App() {
     };
   }, [systemState, runtimeTimeout, toggleSystem, isCountdownActive]); // Re-run when system state or timeout setting changes
 
+  // Update display time every second
+  useEffect(() => {
+    const updateDisplayTime = () => {
+      if (timeRemaining) {
+        // Show countdown
+        const minutes = Math.floor(timeRemaining / 60);
+        const seconds = timeRemaining % 60;
+        setDisplayTime(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+      } else if (systemStartTime && systemState === 'running') {
+        // Show time remaining until shutdown
+        const elapsed = Date.now() - systemStartTime;
+        const remainingMs = (runtimeTimeout * 60 * 1000) - elapsed;
+        if (remainingMs > 0) {
+          const minutes = Math.floor(remainingMs / 60000);
+          const seconds = Math.floor((remainingMs % 60000) / 1000);
+          setDisplayTime(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+        } else {
+          setDisplayTime('00:00');
+        }
+      } else {
+        // Show timeout setting
+        setDisplayTime(`${runtimeTimeout}:00`);
+      }
+    };
+
+    updateDisplayTime();
+    const interval = setInterval(updateDisplayTime, 1000);
+    return () => clearInterval(interval);
+  }, [timeRemaining, systemStartTime, systemState, runtimeTimeout]);
+
   if (isLoading) {
     return (
       <ThemeProvider>
@@ -828,8 +859,7 @@ function App() {
           onToggle={toggleSystem}
           runtimeTimeout={runtimeTimeout}
           setRuntimeTimeout={setRuntimeTimeout}
-          timeRemaining={timeRemaining}
-          systemStartTime={systemStartTime}
+          displayTime={displayTime}
         />
         
         <main className="container mx-auto px-4 py-8">

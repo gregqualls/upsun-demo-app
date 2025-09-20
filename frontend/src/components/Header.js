@@ -8,46 +8,12 @@ const Header = ({
   onToggle,
   runtimeTimeout,
   setRuntimeTimeout,
-  timeRemaining,
-  systemStartTime
+  displayTime
 }) => {
   const { isDark, toggleTheme } = useTheme();
   const [showSettings, setShowSettings] = useState(false);
-  const [displayTime, setDisplayTime] = useState(null);
   const settingsRef = useRef(null);
 
-  // Update display time every second
-  useEffect(() => {
-    const updateDisplayTime = () => {
-      console.log(`Header updateDisplayTime: timeRemaining=${timeRemaining}, systemStartTime=${systemStartTime}, systemState=${systemState}`);
-      if (timeRemaining) {
-        // Show countdown
-        console.log('Showing timeRemaining countdown');
-        setDisplayTime(`${Math.floor(timeRemaining / 60).toString().padStart(2, '0')}:${(timeRemaining % 60).toString().padStart(2, '0')}`);
-      } else if (systemStartTime && systemState === 'running') {
-        // Show time remaining until shutdown
-        const elapsed = Date.now() - systemStartTime;
-        const remainingMs = (runtimeTimeout * 60 * 1000) - elapsed;
-        console.log(`Calculated time: elapsed=${elapsed}ms, remainingMs=${remainingMs}ms`);
-        if (remainingMs > 0) {
-          const minutes = Math.floor(remainingMs / 60000);
-          const seconds = Math.floor((remainingMs % 60000) / 1000);
-          console.log(`Setting display time: ${minutes}:${seconds}`);
-          setDisplayTime(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
-        } else {
-          setDisplayTime('00:00');
-        }
-      } else {
-        // Show timeout setting
-        console.log('Showing timeout setting');
-        setDisplayTime(`${runtimeTimeout}:00`);
-      }
-    };
-
-    updateDisplayTime();
-    const interval = setInterval(updateDisplayTime, 1000);
-    return () => clearInterval(interval);
-  }, [timeRemaining, systemStartTime, systemState, runtimeTimeout]);
 
   // Close settings dropdown when clicking outside
   useEffect(() => {
@@ -114,7 +80,7 @@ const Header = ({
             <div className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
               <Clock className="w-4 h-4 text-gray-600 dark:text-gray-400 flex-shrink-0" />
               <span className="font-mono text-sm font-medium text-gray-900 dark:text-gray-100">
-                {displayTime || `${runtimeTimeout}:00`}
+                {displayTime}
               </span>
             </div>
 
