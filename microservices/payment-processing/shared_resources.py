@@ -130,14 +130,19 @@ class ResourceManager:
         # Check every 60 seconds for instance count changes (less frequent to reduce instability)
         if current_time - self._last_instance_check > 60:
             try:
+                print(f"[{self.app_name}] Refreshing instance count (current: {self.instance_count})...")
                 new_count = self._get_instance_count()
                 if new_count != self.instance_count:
                     print(f"[{self.app_name}] Instance count changed from {self.instance_count} to {new_count}")
                     self.instance_count = new_count
+                else:
+                    print(f"[{self.app_name}] Instance count unchanged: {self.instance_count}")
                 self._last_instance_check = current_time
             except Exception as e:
                 print(f"[{self.app_name}] Error refreshing instance count: {e}")
-                # Don't update _last_instance_check on error to retry sooner
+        else:
+            print(f"[{self.app_name}] Skipping instance count refresh (too soon, current: {self.instance_count})")
+            # Don't update _last_instance_check on error to retry sooner
         
     def get_system_info(self):
         """Get system resource information"""
