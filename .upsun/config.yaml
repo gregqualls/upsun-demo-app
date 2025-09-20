@@ -1,5 +1,6 @@
 applications:
   api-gateway:
+    container_profile: BALANCED
     type: python:3.11
     source:
       root: api-gateway
@@ -93,6 +94,7 @@ applications:
 
   frontend:
     type: nodejs:20
+    container_profile: BALANCED
     source:
       root: frontend
     hooks:
