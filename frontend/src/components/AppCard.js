@@ -289,7 +289,7 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState, isE
               {/* Instances as Container Icons */}
               <div className="flex items-center space-x-2">
                 <span className="text-gray-600 dark:text-gray-400">Instances</span>
-                <div className="flex space-x-1">
+                <div className="flex space-x-1 items-center">
                   {(() => {
                     const instanceCount = metrics[app.name.toLowerCase().replace(/\s+/g, '_')].instance_count;
                     if (instanceCount === "unknown" || instanceCount === undefined) {
@@ -299,6 +299,8 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState, isE
                       <Box key={index} className="w-4 h-4 text-purple-500" />
                     ));
                   })()}
+                  {/* Small indicator for autoscaling detection */}
+                  <div className="w-1 h-1 bg-green-400 rounded-full animate-pulse" title="Monitoring for autoscaling"></div>
                 </div>
               </div>
             </div>

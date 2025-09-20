@@ -320,6 +320,40 @@ function App() {
     }
   };
 
+  // Stop all activities when browser window closes
+  const stopAllActivities = async () => {
+    try {
+      // Set all apps to minimum levels (0) to stop all activities
+      const allAppsLevels = {};
+      Object.keys(apps).forEach(appName => {
+        allAppsLevels[appName] = {
+          processing: 0,
+          storage: 0,
+          traffic: 0,
+          orders: 0,
+          completions: 0
+        };
+      });
+
+      // Send API call to stop all activities
+      await fetch(`${API_BASE_URL}/resources/all`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          levels: allAppsLevels
+        }),
+        mode: 'cors',
+        credentials: 'omit'
+      });
+
+      console.log('All activities stopped due to window close');
+    } catch (error) {
+      console.error('Error stopping activities on window close:', error);
+    }
+  };
+
 
 
 
@@ -632,6 +666,41 @@ function App() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Real-time instance count updates (more frequent for autoscaling detection)
+  useEffect(() => {
+    const instanceInterval = setInterval(() => {
+      // Force refresh metrics to get updated instance counts
+      fetchMetrics();
+    }, 5000); // Update every 5 seconds for instance counts
+
+    return () => clearInterval(instanceInterval);
+  }, []);
+
+  // Stop all activities when browser window closes
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      // Stop all activities when window is about to close
+      stopAllActivities();
+    };
+
+    const handleVisibilityChange = () => {
+      // Stop all activities when tab becomes hidden (user switches tabs or minimizes)
+      if (document.hidden) {
+        stopAllActivities();
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [apps]); // Re-run when apps change
 
   if (isLoading) {
     return (

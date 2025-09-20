@@ -118,8 +118,8 @@ class ResourceManager:
     def _refresh_instance_count(self):
         """Refresh instance count if enough time has passed"""
         current_time = time.time()
-        # Check every 60 seconds for instance count changes (less frequent to reduce instability)
-        if current_time - self._last_instance_check > 60:
+        # Check every 30 seconds for instance count changes (more frequent for autoscaling detection)
+        if current_time - self._last_instance_check > 30:
             try:
                 print(f"[{self.app_name}] Refreshing instance count (current: {self.instance_count})...")
                 new_count = self._get_instance_count()
