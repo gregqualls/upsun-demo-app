@@ -338,61 +338,47 @@ async def get_instance_count(app_name: str):
         
         # Running on Upsun - try to get instance count
         try:
-            # Try to get instance count for specific app
+            # Get all resources using table format (json not supported)
             result = subprocess.run(
-                ['upsun', 'resources:get', app_name, '--format=json'], 
+                ['upsun', 'resources:get'], 
                 capture_output=True, 
                 text=True,
                 timeout=10
             )
             
-            # If specific app fails, try getting all resources
-            if result.returncode != 0:
-                result = subprocess.run(
-                    ['upsun', 'resources:get', '--format=json'], 
-                    capture_output=True, 
-                    text=True,
-                    timeout=10
-                )
-            
             if result.returncode == 0:
-                resources_data = json.loads(result.stdout)
-                print(f"Upsun resources data for {app_name}: {resources_data}")
+                # Parse the table output to find instance count
+                lines = result.stdout.strip().split('\n')
+                print(f"Upsun resources output for {app_name}: {result.stdout}")
                 
-                # Handle different response formats
-                resources = []
-                if isinstance(resources_data, list):
-                    resources = resources_data
-                elif isinstance(resources_data, dict):
-                    resources = resources_data.get('resources', [])
-                    # If it's a single resource, wrap it in a list
-                    if 'name' in resources_data and 'instances' in resources_data:
-                        resources = [resources_data]
+                for line in lines:
+                    if '|' in line and app_name in line:
+                        # Split by | and look for the instances column
+                        parts = [part.strip() for part in line.split('|')]
+                        if len(parts) >= 6:  # Should have at least 6 columns
+                            try:
+                                instances = int(parts[5])  # Instances is the 6th column
+                                print(f"Found {instances} instances for {app_name} from Upsun CLI table")
+                                return {"instances": instances, "source": "upsun_cli"}
+                            except (ValueError, IndexError) as e:
+                                print(f"Error parsing instances for {app_name}: {e}")
+                                continue
                 
-                # Look for our app in the resources
-                for resource in resources:
-                    if resource.get('name') == app_name:
-                        instances = resource.get('instances', 1)
-                        print(f"Found {instances} instances for {app_name} from Upsun CLI")
-                        return {"instances": instances, "source": "upsun_cli"}
-                
-                print(f"App {app_name} not found in Upsun resources")
+                print(f"App {app_name} not found in Upsun resources table")
             else:
                 print(f"Upsun CLI failed: {result.stderr}")
                 
         except subprocess.TimeoutExpired:
             print(f"Upsun CLI timeout for {app_name}")
-        except json.JSONDecodeError as e:
-            print(f"Failed to parse Upsun CLI output for {app_name}: {e}")
         except Exception as e:
             print(f"Upsun CLI error for {app_name}: {e}")
         
-        # Fallback to known configuration
+        # Fallback to known configuration (updated from actual Upsun output)
         instance_counts = {
-            "user-management": 1,
-            "payment-processing": 3,
-            "inventory-system": 1,
-            "notification-center": 3,
+            "user-management": 2,
+            "payment-processing": 1,
+            "inventory-system": 3,
+            "notification-center": 1,
             "api-gateway": 1
         }
         

@@ -104,12 +104,12 @@ class ResourceManager:
                 except Exception as e:
                     print(f"[{app_name}] API Gateway query error: {e}")
                 
-                # Method 4: Use known configuration as fallback
+                # Method 4: Use known configuration as fallback (updated from actual Upsun output)
                 instance_counts = {
-                    "user-management": 1,
-                    "payment-processing": 1,  # Updated to match current Upsun config
-                    "inventory-system": 1,
-                    "notification-center": 2,  # Updated to match current Upsun config
+                    "user-management": 2,
+                    "payment-processing": 1,
+                    "inventory-system": 3,
+                    "notification-center": 1,
                     "api-gateway": 1
                 }
                 
