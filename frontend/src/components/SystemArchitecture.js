@@ -15,14 +15,14 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
   const [dataPackets, setDataPackets] = useState([]);
   const [connections, setConnections] = useState([]);
 
-  // Define service positions and connections - more spread out
+  // Define service positions and connections - 3 top, 3 bottom with API Gateway center bottom
   const serviceConfig = {
     'api_gateway': {
       name: 'API Gateway',
       icon: Globe,
-      position: { x: 50, y: 50 },
+      position: { x: 50, y: 75 },
       color: 'purple',
-      connections: ['user_management', 'payment_processing', 'inventory_system', 'notification_center']
+      connections: ['user_management', 'payment_processing', 'inventory_system', 'notification_center', 'dashboard']
     },
     'user_management': {
       name: 'User Management',
@@ -34,28 +34,28 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
     'payment_processing': {
       name: 'Payment Processing',
       icon: CreditCard,
-      position: { x: 80, y: 20 },
+      position: { x: 50, y: 20 },
       color: 'green',
       connections: ['api_gateway']
     },
     'inventory_system': {
       name: 'Inventory System',
       icon: Package,
-      position: { x: 20, y: 80 },
+      position: { x: 80, y: 20 },
       color: 'orange',
       connections: ['api_gateway']
     },
     'notification_center': {
       name: 'Notification Center',
       icon: Bell,
-      position: { x: 80, y: 80 },
+      position: { x: 20, y: 90 },
       color: 'pink',
       connections: ['api_gateway']
     },
     'dashboard': {
       name: 'Dashboard',
       icon: Activity,
-      position: { x: 50, y: 10 },
+      position: { x: 80, y: 90 },
       color: 'indigo',
       connections: ['api_gateway']
     }
