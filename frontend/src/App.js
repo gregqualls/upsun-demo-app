@@ -760,8 +760,8 @@ function App() {
         countdownTimer = setInterval(() => {
           setTimeRemaining(prev => {
             if (prev <= 1) {
-              // Time's up - stop all activities
-              stopAllActivities();
+              // Time's up - turn off system switch
+              setSystemState('stopped');
               setTimeRemaining(null);
               setSystemStartTime(null);
               return null;
