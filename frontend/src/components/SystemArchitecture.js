@@ -201,101 +201,100 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
         <div className="absolute inset-0 z-0">
           <svg width="100%" height="100%" className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
             <defs>
-              <linearGradient id="gridFade" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="purple" stopOpacity="0.8"/>
-                <stop offset="50%" stopColor="purple" stopOpacity="0.4"/>
-                <stop offset="100%" stopColor="purple" stopOpacity="0.1"/>
-              </linearGradient>
-              <linearGradient id="glowFade" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#a855f7" stopOpacity="1"/>
-                <stop offset="50%" stopColor="#7c3aed" stopOpacity="0.6"/>
-                <stop offset="100%" stopColor="#4c1d95" stopOpacity="0.2"/>
+              <linearGradient id="gridFade" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" stopColor="#a855f7" stopOpacity="0.8"/>
+                <stop offset="50%" stopColor="#7c3aed" stopOpacity="0.4"/>
+                <stop offset="100%" stopColor="#4c1d95" stopOpacity="0.1"/>
               </linearGradient>
               <filter id="glow">
-                <feGaussianBlur stdDeviation="1" result="coloredBlur"/>
+                <feGaussianBlur stdDeviation="0.5" result="coloredBlur"/>
                 <feMerge> 
                   <feMergeNode in="coloredBlur"/>
                   <feMergeNode in="SourceGraphic"/>
                 </feMerge>
               </filter>
-              <pattern id="tronGrid" width="4" height="4" patternUnits="userSpaceOnUse">
-                <path d="M 4 0 L 0 0 0 4" fill="none" stroke="url(#gridFade)" strokeWidth="0.3"/>
-              </pattern>
             </defs>
-            {/* Perspective grid lines with 3D effect */}
-            <g transform="perspective(100) rotateX(60deg) translateZ(-20)">
-              {/* Horizontal lines */}
-              {Array.from({length: 20}, (_, i) => (
-                <line
-                  key={`h-${i}`}
-                  x1="0"
-                  y1={i * 5}
-                  x2="100"
-                  y2={i * 5}
-                  stroke="url(#glowFade)"
-                  strokeWidth="0.3"
-                  opacity={1 - (i * 0.05)}
-                  filter="url(#glow)"
-                  style={{
-                    animation: `pulse ${2 + Math.random() * 2}s ease-in-out infinite`,
-                    animationDelay: `${i * 0.1}s`
-                  }}
-                />
-              ))}
-              {/* Vertical lines */}
-              {Array.from({length: 20}, (_, i) => (
-                <line
-                  key={`v-${i}`}
-                  x1={i * 5}
-                  y1="0"
-                  x2={i * 5}
-                  y2="100"
-                  stroke="url(#glowFade)"
-                  strokeWidth="0.3"
-                  opacity={1 - (i * 0.05)}
-                  filter="url(#glow)"
-                  style={{
-                    animation: `pulse ${2 + Math.random() * 2}s ease-in-out infinite`,
-                    animationDelay: `${i * 0.1}s`
-                  }}
-                />
-              ))}
-            </g>
-            {/* Additional depth lines for 3D effect */}
-            <g transform="perspective(50) rotateX(45deg) translateZ(-10)">
-              {Array.from({length: 10}, (_, i) => (
-                <line
-                  key={`depth-${i}`}
-                  x1="0"
-                  y1={i * 10}
-                  x2="100"
-                  y2={i * 10 + 20}
-                  stroke="url(#glowFade)"
-                  strokeWidth="0.2"
-                  opacity={0.4 - (i * 0.04)}
-                  filter="url(#glow)"
-                  style={{
-                    animation: `pulse ${3 + Math.random() * 2}s ease-in-out infinite`,
-                    animationDelay: `${i * 0.2}s`
-                  }}
-                />
-              ))}
-            </g>
-            {/* Vanishing point lines for depth */}
+            {/* 3D Grid with perspective - bottom closest, top vanishing point */}
             <g>
-              {Array.from({length: 8}, (_, i) => (
-                <line
-                  key={`vanishing-${i}`}
-                  x1="50"
-                  y1="50"
-                  x2={20 + i * 10}
-                  y2="100"
-                  stroke="url(#glowFade)"
-                  strokeWidth="0.1"
-                  opacity={0.2 - (i * 0.02)}
-                  filter="url(#glow)"
-                />
-              ))}
+              {/* Horizontal grid lines (getting closer together as they go up) */}
+              {Array.from({length: 15}, (_, i) => {
+                const y = 100 - (i * 6); // Start from bottom, go up
+                const width = 20 + (i * 4); // Wider at bottom, narrower at top
+                const x1 = 50 - width/2;
+                const x2 = 50 + width/2;
+                const opacity = 1 - (i * 0.06); // Fade as they go up
+                
+                return (
+                  <line
+                    key={`h-${i}`}
+                    x1={x1}
+                    y1={y}
+                    x2={x2}
+                    y2={y}
+                    stroke="url(#gridFade)"
+                    strokeWidth="0.2"
+                    opacity={opacity}
+                    filter="url(#glow)"
+                    style={{
+                      animation: `pulse ${2 + Math.random() * 2}s ease-in-out infinite`,
+                      animationDelay: `${i * 0.1}s`
+                    }}
+                  />
+                );
+              })}
+              
+              {/* Vertical grid lines (converging to vanishing point at top) */}
+              {Array.from({length: 12}, (_, i) => {
+                const x = 20 + (i * 5); // Evenly spaced at bottom
+                const topY = 20; // Vanishing point at top
+                const bottomY = 100; // Bottom edge
+                const opacity = 1 - (Math.abs(i - 6) * 0.08); // Fade towards edges
+                
+                return (
+                  <line
+                    key={`v-${i}`}
+                    x1={x}
+                    y1={bottomY}
+                    x2={50 + (x - 50) * 0.3} // Converge towards center at top
+                    y2={topY}
+                    stroke="url(#gridFade)"
+                    strokeWidth="0.2"
+                    opacity={opacity}
+                    filter="url(#glow)"
+                    style={{
+                      animation: `pulse ${2 + Math.random() * 2}s ease-in-out infinite`,
+                      animationDelay: `${i * 0.1}s`
+                    }}
+                  />
+                );
+              })}
+              
+              {/* Additional depth lines for more 3D effect */}
+              {Array.from({length: 8}, (_, i) => {
+                const y = 100 - (i * 8);
+                const width = 15 + (i * 3);
+                const x1 = 50 - width/2;
+                const x2 = 50 + width/2;
+                const opacity = 0.3 - (i * 0.03);
+                
+                return (
+                  <line
+                    key={`depth-${i}`}
+                    x1={x1}
+                    y1={y}
+                    x2={x2}
+                    y2={y}
+                    stroke="url(#gridFade)"
+                    strokeWidth="0.1"
+                    opacity={opacity}
+                    filter="url(#glow)"
+                    style={{
+                      animation: `pulse ${3 + Math.random() * 2}s ease-in-out infinite`,
+                      animationDelay: `${i * 0.15}s`
+                    }}
+                  />
+                );
+              })}
             </g>
           </svg>
         </div>
