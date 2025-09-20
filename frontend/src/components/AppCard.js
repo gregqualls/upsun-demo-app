@@ -290,9 +290,15 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState, isE
               <div className="flex items-center space-x-2">
                 <span className="text-gray-600 dark:text-gray-400">Instances</span>
                 <div className="flex space-x-1">
-                  {Array.from({ length: metrics[app.name.toLowerCase().replace(/\s+/g, '_')].instance_count || 1 }).map((_, index) => (
-                    <Box key={index} className="w-4 h-4 text-purple-500" />
-                  ))}
+                  {(() => {
+                    const instanceCount = metrics[app.name.toLowerCase().replace(/\s+/g, '_')].instance_count;
+                    if (instanceCount === "unknown" || instanceCount === undefined) {
+                      return <span className="text-gray-400 text-sm">?</span>;
+                    }
+                    return Array.from({ length: instanceCount }).map((_, index) => (
+                      <Box key={index} className="w-4 h-4 text-purple-500" />
+                    ));
+                  })()}
                 </div>
               </div>
             </div>

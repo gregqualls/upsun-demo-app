@@ -104,18 +104,9 @@ class ResourceManager:
                 except Exception as e:
                     print(f"[{app_name}] API Gateway query error: {e}")
                 
-                # Method 4: Use known configuration as fallback (updated from actual Upsun output)
-                instance_counts = {
-                    "user-management": 2,
-                    "payment-processing": 1,
-                    "inventory-system": 3,
-                    "notification-center": 1,
-                    "api-gateway": 1
-                }
-                
-                fallback_count = instance_counts.get(app_name, 1)
-                print(f"[{app_name}] Using fallback instance count: {fallback_count}")
-                return fallback_count
+                # Method 4: Can't determine instance count - return unknown
+                print(f"[{app_name}] Could not determine instance count from any method")
+                return "unknown"
             else:
                 # Running locally - always 1 instance
                 print(f"[{self.app_name}] Running locally - 1 instance")

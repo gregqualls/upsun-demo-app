@@ -373,22 +373,13 @@ async def get_instance_count(app_name: str):
         except Exception as e:
             print(f"Upsun CLI error for {app_name}: {e}")
         
-        # Fallback to known configuration (updated from actual Upsun output)
-        instance_counts = {
-            "user-management": 2,
-            "payment-processing": 1,
-            "inventory-system": 3,
-            "notification-center": 1,
-            "api-gateway": 1
-        }
-        
-        instances = instance_counts.get(app_name, 1)
-        print(f"Using fallback instance count for {app_name}: {instances}")
-        return {"instances": instances, "source": "fallback"}
+        # Can't get instance count from Upsun CLI - return unknown
+        print(f"Could not determine instance count for {app_name} from Upsun CLI")
+        return {"instances": "unknown", "source": "unknown"}
         
     except Exception as e:
         print(f"Error getting instance count for {app_name}: {e}")
-        return {"instances": 1, "source": "error"}
+        return {"instances": "unknown", "source": "error"}
 
 if __name__ == "__main__":
     import uvicorn
