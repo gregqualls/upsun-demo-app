@@ -21,32 +21,32 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
       name: 'API Gateway',
       icon: Globe,
       position: { x: 50, y: 50 },
-      color: 'cyan',
+      color: 'purple',
       connections: ['user_management', 'payment_processing', 'inventory_system', 'notification_center']
     },
     'user_management': {
-      name: 'User Mgmt',
+      name: 'User Management',
       icon: Users,
       position: { x: 20, y: 20 },
       color: 'blue',
       connections: ['api_gateway']
     },
     'payment_processing': {
-      name: 'Payment',
+      name: 'Payment Processing',
       icon: CreditCard,
       position: { x: 80, y: 20 },
       color: 'green',
       connections: ['api_gateway']
     },
     'inventory_system': {
-      name: 'Inventory',
+      name: 'Inventory System',
       icon: Package,
       position: { x: 20, y: 80 },
       color: 'orange',
       connections: ['api_gateway']
     },
     'notification_center': {
-      name: 'Notifications',
+      name: 'Notification Center',
       icon: Bell,
       position: { x: 80, y: 80 },
       color: 'pink',
@@ -56,7 +56,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
       name: 'Dashboard',
       icon: Activity,
       position: { x: 50, y: 10 },
-      color: 'purple',
+      color: 'indigo',
       connections: ['api_gateway']
     }
   };
@@ -102,16 +102,28 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
             config.connections.forEach(targetName => {
               if (targetName === 'api_gateway') {
                 const intensity = Math.min(appMetrics.cpu_percent / 50, 1);
-                const packetCount = Math.floor(intensity * 3) + 1; // 1-4 packets based on intensity
+                const packetCount = Math.floor(intensity * 2) + 1; // 1-3 packets based on intensity
                 
                 for (let i = 0; i < packetCount; i++) {
+                  // Outgoing packets (to API Gateway)
                   packets.push({
-                    id: `${appName}-${targetName}-${now}-${i}`,
+                    id: `${appName}-${targetName}-out-${now}-${i}`,
                     from: config.position,
                     to: serviceConfig[targetName].position,
                     color: config.color,
                     timestamp: now,
-                    delay: i * 500, // Stagger packets
+                    delay: i * 300, // Stagger packets
+                    speed: 2000 + Math.random() * 1000 // 2-3 seconds
+                  });
+                  
+                  // Incoming packets (from API Gateway) - with slight delay
+                  packets.push({
+                    id: `${appName}-${targetName}-in-${now}-${i}`,
+                    from: serviceConfig[targetName].position,
+                    to: config.position,
+                    color: 'purple', // API Gateway color for return packets
+                    timestamp: now,
+                    delay: (i * 300) + 1000, // Stagger and delay return packets
                     speed: 2000 + Math.random() * 1000 // 2-3 seconds
                   });
                 }
@@ -153,26 +165,26 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
 
   const getGlowColor = (color) => {
     const colorMap = {
-      'cyan': 'shadow-cyan-500/50',
+      'purple': 'shadow-purple-500/50',
       'blue': 'shadow-blue-500/50',
       'green': 'shadow-green-500/50',
       'orange': 'shadow-orange-500/50',
       'pink': 'shadow-pink-500/50',
-      'purple': 'shadow-purple-500/50'
+      'indigo': 'shadow-indigo-500/50'
     };
     return colorMap[color] || 'shadow-gray-500/50';
   };
 
   return (
-    <div className="w-full bg-black text-cyan-400 font-mono text-sm rounded-lg shadow-lg overflow-hidden mb-8 relative border border-cyan-500/20">
+    <div className="w-full bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-purple-400 font-mono text-sm rounded-lg shadow-lg overflow-hidden mb-8 relative border border-purple-500/20">
       {/* Header */}
-      <div className="flex items-center justify-between bg-gray-900/50 px-4 py-3 border-b border-cyan-500/30">
+      <div className="flex items-center justify-between bg-gray-800/50 px-4 py-3 border-b border-purple-500/30">
         <div className="flex items-center space-x-2">
-          <Zap className="w-5 h-5 text-cyan-400" />
-          <span className="font-bold text-cyan-300">System Architecture</span>
-          <div className={`w-2 h-2 rounded-full ${systemState === 'running' ? 'bg-cyan-500' : 'bg-gray-500'}`}></div>
+          <Zap className="w-5 h-5 text-purple-400" />
+          <span className="font-bold text-purple-300">System Architecture</span>
+          <div className={`w-2 h-2 rounded-full ${systemState === 'running' ? 'bg-purple-500' : 'bg-gray-500'}`}></div>
         </div>
-        <div className="text-xs text-cyan-400/70">
+        <div className="text-xs text-purple-400/70">
           {systemState === 'running' ? 'Live Data Flow' : 'System Stopped'}
         </div>
       </div>
@@ -184,7 +196,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
           <svg width="100%" height="100%" className="w-full h-full">
             <defs>
               <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="cyan" strokeWidth="0.5"/>
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="purple" strokeWidth="0.5"/>
               </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#grid)" />
@@ -202,7 +214,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
               y2={`${conn.to.y}%`}
               stroke="currentColor"
               strokeWidth="1"
-              className="text-cyan-500/30"
+              className="text-purple-500/30"
             />
           ))}
         </svg>
@@ -264,14 +276,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
                 `}></div>
                 
                 {/* Service Icon */}
-                <Icon className={`w-5 h-5 mb-1 ${isActive ? `text-${config.color}-400` : 'text-gray-500'}`} />
-                
-                {/* Service Name */}
-                <div className="text-xs text-center leading-tight">
-                  <div className={`font-medium ${isActive ? 'text-cyan-300' : 'text-gray-400'}`}>
-                    {config.name}
-                  </div>
-                </div>
+                <Icon className={`w-6 h-6 ${isActive ? `text-${config.color}-400` : 'text-gray-500'}`} />
               </div>
             </div>
           );
@@ -279,7 +284,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
       </div>
 
       {/* Legend */}
-      <div className="px-4 py-2 bg-gray-900/30 text-xs text-cyan-400/70">
+      <div className="px-4 py-2 bg-gray-800/30 text-xs text-purple-400/70">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1">
@@ -299,7 +304,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
               <span>Inactive</span>
             </div>
           </div>
-          <div className="text-cyan-400/70">
+          <div className="text-purple-400/70">
             {dataPackets.length} active packets
           </div>
         </div>

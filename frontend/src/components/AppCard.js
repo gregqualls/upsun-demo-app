@@ -12,7 +12,12 @@ import {
   ChevronUp,
   Settings,
   Box,
-  RotateCcw
+  RotateCcw,
+  Globe,
+  Users,
+  CreditCard,
+  Package,
+  Bell
 } from 'lucide-react';
 
 const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState, isExpanded, onToggleExpansion }) => {
@@ -31,6 +36,26 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState, isE
     onUpdate(app.name, newLevels);
   };
 
+
+  const getServiceIcon = () => {
+    const appName = app.name.toLowerCase().replace(/\s+/g, '_');
+    switch (appName) {
+      case 'api_gateway':
+        return <Globe className="w-6 h-6 text-purple-500" />;
+      case 'user_management':
+        return <Users className="w-6 h-6 text-blue-500" />;
+      case 'payment_processing':
+        return <CreditCard className="w-6 h-6 text-green-500" />;
+      case 'inventory_system':
+        return <Package className="w-6 h-6 text-orange-500" />;
+      case 'notification_center':
+        return <Bell className="w-6 h-6 text-pink-500" />;
+      case 'dashboard':
+        return <Activity className="w-6 h-6 text-indigo-500" />;
+      default:
+        return <Activity className="w-6 h-6 text-gray-500" />;
+    }
+  };
 
   const getStatusIcon = () => {
     switch (app.status) {
@@ -117,7 +142,7 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState, isE
       {/* App Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
-          {getStatusIcon()}
+          {getServiceIcon()}
           <h3 className="text-xl font-bold text-gray-900 dark:text-white">
             {app.displayName}
           </h3>
