@@ -101,7 +101,7 @@ class UpsunMetricsManager:
         # Determine source based on environment
         source = 'simulation'
         # Check for Upsun-specific environment variables
-        if os.getenv("PLATFORM_RELATIONSHIPS_api_gateway_URL"):
+        if os.getenv("PLATFORM_APPLICATION_NAME"):
             source = 'upsun_simulation'  # Running on Upsun but using simulation
         
         return {
@@ -131,40 +131,66 @@ class UpsunMetricsManager:
     
     def _refresh_upsun_metrics(self):
         """Get real metrics from Upsun platform"""
-        if not os.getenv("PLATFORM_RELATIONSHIPS_api_gateway_URL"):
+        if not os.getenv("PLATFORM_APPLICATION_NAME"):
             return
             
         try:
-            api_gateway_url = os.getenv("PLATFORM_RELATIONSHIPS_api_gateway_URL")
-            if api_gateway_url:
-                response = requests.get(f"{api_gateway_url}/upsun-metrics/{self.app_name}", timeout=5)
-                if response.status_code == 200:
-                    data = response.json()
-                    self._last_upsun_metrics = {
-                        'cpu_percent': data.get('cpu_percent', 0),
-                        'memory_percent': data.get('memory_percent', 0),
-                        'memory_used_mb': data.get('memory_used_mb', 0),
-                        'instance_count': data.get('instance_count', 'unknown'),
-                        'timestamp': time.time()
-                    }
-                    print(f"[{self.app_name}] Updated Upsun metrics: {self._last_upsun_metrics}")
+            # Get API Gateway URL from PLATFORM_RELATIONSHIPS
+            import base64
+            import json
+            relationships_data = os.getenv("PLATFORM_RELATIONSHIPS")
+            if relationships_data:
+                relationships = json.loads(base64.b64decode(relationships_data).decode('utf-8'))
+                # Find the API Gateway service URL
+                api_gateway_url = None
+                for service_name, service_data in relationships.items():
+                    if 'api-gateway' in service_name or service_name == 'api_gateway':
+                        if isinstance(service_data, list) and len(service_data) > 0:
+                            api_gateway_url = f"http://{service_data[0]['host']}"
+                            break
+                
+                if api_gateway_url:
+                    response = requests.get(f"{api_gateway_url}/upsun-metrics/{self.app_name}", timeout=5)
+                    if response.status_code == 200:
+                        data = response.json()
+                        self._last_upsun_metrics = {
+                            'cpu_percent': data.get('cpu_percent', 0),
+                            'memory_percent': data.get('memory_percent', 0),
+                            'memory_used_mb': data.get('memory_used_mb', 0),
+                            'instance_count': data.get('instance_count', 'unknown'),
+                            'timestamp': time.time()
+                        }
+                        print(f"[{self.app_name}] Updated Upsun metrics: {self._last_upsun_metrics}")
         except Exception as e:
             print(f"[{self.app_name}] Error getting Upsun metrics: {e}")
     
     def _refresh_instance_count(self):
         """Get instance count from Upsun resources API"""
-        if not os.getenv("PLATFORM_RELATIONSHIPS_api_gateway_URL"):
+        if not os.getenv("PLATFORM_APPLICATION_NAME"):
             self._instance_count = 1
             return
             
         try:
-            api_gateway_url = os.getenv("PLATFORM_RELATIONSHIPS_api_gateway_URL")
-            if api_gateway_url:
-                response = requests.get(f"{api_gateway_url}/upsun-instances/{self.app_name}", timeout=5)
-                if response.status_code == 200:
-                    data = response.json()
-                    self._instance_count = data.get('instances', 'unknown')
-                    print(f"[{self.app_name}] Updated instance count: {self._instance_count}")
+            # Get API Gateway URL from PLATFORM_RELATIONSHIPS
+            import base64
+            import json
+            relationships_data = os.getenv("PLATFORM_RELATIONSHIPS")
+            if relationships_data:
+                relationships = json.loads(base64.b64decode(relationships_data).decode('utf-8'))
+                # Find the API Gateway service URL
+                api_gateway_url = None
+                for service_name, service_data in relationships.items():
+                    if 'api-gateway' in service_name or service_name == 'api_gateway':
+                        if isinstance(service_data, list) and len(service_data) > 0:
+                            api_gateway_url = f"http://{service_data[0]['host']}"
+                            break
+                
+                if api_gateway_url:
+                    response = requests.get(f"{api_gateway_url}/upsun-instances/{self.app_name}", timeout=5)
+                    if response.status_code == 200:
+                        data = response.json()
+                        self._instance_count = data.get('instances', 'unknown')
+                        print(f"[{self.app_name}] Updated instance count: {self._instance_count}")
         except Exception as e:
             print(f"[{self.app_name}] Error getting instance count: {e}")
     
