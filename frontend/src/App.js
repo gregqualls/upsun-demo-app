@@ -769,6 +769,7 @@ function App() {
               // Time's up - turn off system switch
               console.log('Countdown finished, calling toggleSystem');
               setIsCountdownActive(false);
+              // Call toggleSystem directly without dependency
               toggleSystem();
               setTimeRemaining(null);
               setSystemStartTime(null);
@@ -805,7 +806,7 @@ function App() {
       if (runtimeTimer) clearTimeout(runtimeTimer);
       if (countdownTimer) clearInterval(countdownTimer);
     };
-  }, [systemState, runtimeTimeout, toggleSystem, isCountdownActive]); // Re-run when system state or timeout setting changes
+  }, [systemState, runtimeTimeout, isCountdownActive]); // Removed toggleSystem from dependencies
 
   // Update display time every second
   useEffect(() => {
@@ -844,7 +845,7 @@ function App() {
       console.log('Clearing display time interval');
       clearInterval(interval);
     };
-  }, []); // Empty dependency array - only run once
+  }, [timeRemaining, systemStartTime, systemState, runtimeTimeout]); // Include all dependencies
 
   if (isLoading) {
     return (
