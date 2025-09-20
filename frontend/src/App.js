@@ -388,28 +388,26 @@ function App() {
             </div>
           )}
           
-          {/* Business Applications Header */}
-          <div className="mb-8">
+          {/* Applications Header with Controls */}
+          <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Business Applications
+              Applications
             </h2>
-          </div>
-          
-          {/* Global Controls */}
-          <div className="mb-6 flex flex-wrap gap-3 justify-center">
-            <button
-              onClick={resetAllResources}
-              disabled={isUpdating}
-              className="px-4 py-2 text-sm font-medium text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Reset All to Medium
-            </button>
-            <button
-              onClick={collapseAllCards}
-              className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors duration-200"
-            >
-              Collapse All Cards
-            </button>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={resetAllResources}
+                disabled={isUpdating}
+                className="px-4 py-2 text-sm font-medium text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Reset All to Medium
+              </button>
+              <button
+                onClick={collapseAllCards}
+                className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors duration-200"
+              >
+                Collapse All Cards
+              </button>
+            </div>
           </div>
           
           {/* App Cards Grid */}
