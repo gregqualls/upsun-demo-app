@@ -413,6 +413,184 @@ function App() {
     }
   };
 
+  // Set all resources to maximum
+  const setAllToMax = async () => {
+    if (isUpdating) return;
+    
+    setIsUpdating(true);
+    try {
+      // Set all apps to maximum levels (100)
+      const allAppsLevels = {};
+      Object.keys(apps).forEach(appName => {
+        allAppsLevels[appName] = {
+          processing: 100,
+          storage: 100,
+          traffic: 100,
+          orders: 100,
+          completions: 100
+        };
+      });
+
+      // Update UI immediately
+      setApps(prev => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach(appName => {
+          updated[appName] = {
+            ...updated[appName],
+            levels: allAppsLevels[appName]
+          };
+        });
+        return updated;
+      });
+
+      // Log API call
+      if (addActivity) {
+        addActivity({
+          type: 'api',
+          icon: <Zap className="w-3 h-3" />,
+          color: 'text-blue-400',
+          message: `API: POST /resources/all → SET all apps to maximum`
+        });
+      }
+
+      // Send API call in background
+      const response = await fetch(`${API_BASE_URL}/resources/all`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          levels: allAppsLevels
+        }),
+        mode: 'cors',
+        credentials: 'omit'
+      });
+      
+      if (!response.ok) {
+        console.warn(`API call failed: ${response.status}`);
+        // Log API error
+        if (addActivity) {
+          addActivity({
+            type: 'api',
+            icon: <Zap className="w-3 h-3" />,
+            color: 'text-red-400',
+            message: `API: ERROR ← /resources/all (${response.status})`
+          });
+        }
+      } else {
+        // Log successful API response
+        if (addActivity) {
+          addActivity({
+            type: 'api',
+            icon: <Zap className="w-3 h-3" />,
+            color: 'text-green-400',
+            message: `API: 200 OK ← /resources/all`
+          });
+        }
+      }
+      
+      // Refresh data
+      fetchAppsStatus();
+      fetchMetrics();
+      
+      setApiError(null);
+    } catch (error) {
+      console.error('Error setting all resources to max:', error);
+      setApiError(`API Error: ${error.message}`);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Set all resources to minimum
+  const setAllToMin = async () => {
+    if (isUpdating) return;
+    
+    setIsUpdating(true);
+    try {
+      // Set all apps to minimum levels (0)
+      const allAppsLevels = {};
+      Object.keys(apps).forEach(appName => {
+        allAppsLevels[appName] = {
+          processing: 0,
+          storage: 0,
+          traffic: 0,
+          orders: 0,
+          completions: 0
+        };
+      });
+
+      // Update UI immediately
+      setApps(prev => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach(appName => {
+          updated[appName] = {
+            ...updated[appName],
+            levels: allAppsLevels[appName]
+          };
+        });
+        return updated;
+      });
+
+      // Log API call
+      if (addActivity) {
+        addActivity({
+          type: 'api',
+          icon: <Zap className="w-3 h-3" />,
+          color: 'text-blue-400',
+          message: `API: POST /resources/all → SET all apps to minimum`
+        });
+      }
+
+      // Send API call in background
+      const response = await fetch(`${API_BASE_URL}/resources/all`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          levels: allAppsLevels
+        }),
+        mode: 'cors',
+        credentials: 'omit'
+      });
+      
+      if (!response.ok) {
+        console.warn(`API call failed: ${response.status}`);
+        // Log API error
+        if (addActivity) {
+          addActivity({
+            type: 'api',
+            icon: <Zap className="w-3 h-3" />,
+            color: 'text-red-400',
+            message: `API: ERROR ← /resources/all (${response.status})`
+          });
+        }
+      } else {
+        // Log successful API response
+        if (addActivity) {
+          addActivity({
+            type: 'api',
+            icon: <Zap className="w-3 h-3" />,
+            color: 'text-green-400',
+            message: `API: 200 OK ← /resources/all`
+          });
+        }
+      }
+      
+      // Refresh data
+      fetchAppsStatus();
+      fetchMetrics();
+      
+      setApiError(null);
+    } catch (error) {
+      console.error('Error setting all resources to min:', error);
+      setApiError(`API Error: ${error.message}`);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   // Collapse all cards
   const collapseAllCards = () => {
     setExpandedCards(new Set());
@@ -519,6 +697,20 @@ function App() {
                 className="px-4 py-2 text-sm font-medium text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Reset All to Medium
+              </button>
+              <button
+                onClick={setAllToMax}
+                disabled={isUpdating}
+                className="px-4 py-2 text-sm font-medium text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Set All to Max
+              </button>
+              <button
+                onClick={setAllToMin}
+                disabled={isUpdating}
+                className="px-4 py-2 text-sm font-medium text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Set All to Min
               </button>
               <button
                 onClick={collapseAllCards}
