@@ -465,6 +465,15 @@ async def get_upsun_instances(app_name: str):
         print(f"Error getting Upsun instances for {app_name}: {e}")
         return {"instances": "unknown", "source": "error"}
 
+@app.get("/debug/env")
+async def debug_environment():
+    """Debug endpoint to see what environment variables are available"""
+    env_vars = {}
+    for key, value in os.environ.items():
+        if 'PLATFORM' in key or 'UPSUN' in key:
+            env_vars[key] = value
+    return {"environment_variables": env_vars}
+
 @app.get("/upsun-activities")
 async def get_upsun_activities():
     """Get recent activities from Upsun platform"""
