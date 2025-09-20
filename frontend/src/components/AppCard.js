@@ -63,9 +63,6 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState }) =
     return 'Maximum';
   };
 
-  const formatPercentage = (value) => {
-    return typeof value === 'number' ? `${value.toFixed(1)}%` : 'N/A';
-  };
 
   const resourceConfigs = [
     {
@@ -221,50 +218,42 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState }) =
               Live metrics from API (host system locally, containers in production)
               <br />
               <span className="text-yellow-600 dark:text-yellow-400">
-                Note: Upsun apps allocated 0.1 CPU + 352MB RAM per instance (BALANCED profile)
+                Note: Upsun apps use BALANCED profile for resource allocation
               </span>
             </div>
           )}
-          <div className="space-y-3">
-            {/* CPU Bar */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center space-x-6">
+              {/* CPU Bar */}
+              <div className="flex items-center space-x-2">
                 <span className="text-gray-600 dark:text-gray-400">CPU</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatPercentage(metrics[app.name.toLowerCase().replace(/\s+/g, '_')].cpu_percent)}
-                </span>
+                <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                  <div 
+                    className="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
+                    style={{ width: `${Math.min(metrics[app.name.toLowerCase().replace(/\s+/g, '_')].cpu_percent, 100)}%` }}
+                  ></div>
+                </div>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div 
-                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${Math.min(metrics[app.name.toLowerCase().replace(/\s+/g, '_')].cpu_percent, 100)}%` }}
-                ></div>
-              </div>
-            </div>
 
-            {/* Memory Bar */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-sm">
+              {/* Memory Bar */}
+              <div className="flex items-center space-x-2">
                 <span className="text-gray-600 dark:text-gray-400">Memory</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatPercentage(metrics[app.name.toLowerCase().replace(/\s+/g, '_')].memory_percent)}
-                </span>
+                <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                  <div 
+                    className="bg-green-500 h-1.5 rounded-full transition-all duration-300"
+                    style={{ width: `${Math.min(metrics[app.name.toLowerCase().replace(/\s+/g, '_')].memory_percent, 100)}%` }}
+                  ></div>
+                </div>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div 
-                  className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${Math.min(metrics[app.name.toLowerCase().replace(/\s+/g, '_')].memory_percent, 100)}%` }}
-                ></div>
-              </div>
-            </div>
 
-            {/* Instances as Container Icons */}
-            <div className="flex items-center space-x-2">
-              <span className="text-gray-600 dark:text-gray-400 text-sm">Instances</span>
-              <div className="flex space-x-1">
-                {Array.from({ length: metrics[app.name.toLowerCase().replace(/\s+/g, '_')].instance_count || 1 }).map((_, index) => (
-                  <div key={index} className="w-4 h-4 bg-blue-500 rounded-sm border border-blue-600"></div>
-                ))}
+              {/* Instances as Container Icons */}
+              <div className="flex items-center space-x-2">
+                <span className="text-gray-600 dark:text-gray-400">Instances</span>
+                <div className="flex space-x-1">
+                  {Array.from({ length: metrics[app.name.toLowerCase().replace(/\s+/g, '_')].instance_count || 1 }).map((_, index) => (
+                    <div key={index} className="w-3 h-3 bg-blue-500 rounded-sm border border-blue-600"></div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
