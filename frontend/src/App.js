@@ -761,7 +761,7 @@ function App() {
           setTimeRemaining(prev => {
             if (prev <= 1) {
               // Time's up - turn off system switch
-              setSystemState('stopped');
+              toggleSystem();
               setTimeRemaining(null);
               setSystemStartTime(null);
               return null;
@@ -791,7 +791,7 @@ function App() {
       if (runtimeTimer) clearTimeout(runtimeTimer);
       if (countdownTimer) clearInterval(countdownTimer);
     };
-  }, [systemState, runtimeTimeout]); // Re-run when system state or timeout setting changes
+  }, [systemState, runtimeTimeout, toggleSystem]); // Re-run when system state or timeout setting changes
 
   if (isLoading) {
     return (
