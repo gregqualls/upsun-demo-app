@@ -10,7 +10,8 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
-  Settings
+  Settings,
+  Box
 } from 'lucide-react';
 
 const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState }) => {
@@ -251,7 +252,7 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState }) =
                 <span className="text-gray-600 dark:text-gray-400">Instances</span>
                 <div className="flex space-x-1">
                   {Array.from({ length: metrics[app.name.toLowerCase().replace(/\s+/g, '_')].instance_count || 1 }).map((_, index) => (
-                    <div key={index} className="w-3 h-3 bg-blue-500 rounded-sm border border-blue-600"></div>
+                    <Box key={index} className="w-3 h-3 text-blue-500" />
                   ))}
                 </div>
               </div>
