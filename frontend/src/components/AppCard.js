@@ -249,7 +249,7 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics }) => {
               Live metrics from API (host system locally, containers in production)
               <br />
               <span className="text-yellow-600 dark:text-yellow-400">
-                Note: Upsun apps allocated 0.1 CPU + 64MB RAM per instance
+                Note: Upsun apps allocated 0.1 CPU + 352MB RAM per instance (BALANCED profile)
               </span>
             </div>
           )}
