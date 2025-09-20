@@ -40,35 +40,35 @@ def get_service_urls():
 
 SERVICES = get_service_urls()
 
-# Global state for resource levels - per app
+# Global state for resource levels - per app (default to medium/50)
 resource_levels = {
     "user_management": {
-        "processing": 0,
-        "storage": 0,
-        "traffic": 0,
-        "orders": 0,
-        "completions": 0
+        "processing": 50,
+        "storage": 50,
+        "traffic": 50,
+        "orders": 50,
+        "completions": 50
     },
     "payment_processing": {
-        "processing": 0,
-        "storage": 0,
-        "traffic": 0,
-        "orders": 0,
-        "completions": 0
+        "processing": 50,
+        "storage": 50,
+        "traffic": 50,
+        "orders": 50,
+        "completions": 50
     },
     "inventory_system": {
-        "processing": 0,
-        "storage": 0,
-        "traffic": 0,
-        "orders": 0,
-        "completions": 0
+        "processing": 50,
+        "storage": 50,
+        "traffic": 50,
+        "orders": 50,
+        "completions": 50
     },
     "notification_center": {
-        "processing": 0,
-        "storage": 0,
-        "traffic": 0,
-        "orders": 0,
-        "completions": 0
+        "processing": 50,
+        "storage": 50,
+        "traffic": 50,
+        "orders": 50,
+        "completions": 50
     }
 }
 
@@ -232,13 +232,13 @@ async def reset_app_resources(app_name: str):
     if app_name not in resource_levels:
         raise HTTPException(status_code=400, detail=f"Invalid app name: {app_name}")
     
-    # Reset local state
+    # Reset local state to medium levels
     resource_levels[app_name] = {
-        "processing": 0,
-        "storage": 0,
-        "traffic": 0,
-        "orders": 0,
-        "completions": 0
+        "processing": 50,
+        "storage": 50,
+        "traffic": 50,
+        "orders": 50,
+        "completions": 50
     }
     
     # Reset on the service

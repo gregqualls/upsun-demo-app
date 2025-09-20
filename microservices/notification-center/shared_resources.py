@@ -159,6 +159,8 @@ class ResourceManager:
     
     def create_processing_load(self, level: int):
         """Create CPU-intensive processing load"""
+        # Always add baseline activity when system is on (level > 0)
+        # This ensures there's always some CPU activity visible
         if level == 0:
             # Stop any existing CPU simulation
             if hasattr(self, 'cpu_thread') and self.cpu_thread and self.cpu_thread.is_alive():
@@ -166,13 +168,16 @@ class ResourceManager:
             return
             
         # Calculate iterations based on level (0-100)
-        iterations = int((level / 100) * 1000000)
+        # Add baseline activity + level-based activity
+        baseline_iterations = 50000  # Always some baseline activity
+        level_iterations = int((level / 100) * 1000000)
+        total_iterations = baseline_iterations + level_iterations
         
         # Start CPU simulation in background thread
         def cpu_worker():
             while True:
                 result = 0
-                for i in range(iterations):
+                for i in range(total_iterations):
                     result += math.sqrt(i * math.pi) * math.sin(i)
                     # Add a small delay to prevent overwhelming the system
                     if i % 10000 == 0:

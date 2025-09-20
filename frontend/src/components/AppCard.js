@@ -13,7 +13,7 @@ import {
   Settings
 } from 'lucide-react';
 
-const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics }) => {
+const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState }) => {
   const [localLevels, setLocalLevels] = useState(app.levels);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -43,21 +43,15 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics }) => {
   };
 
   const getStatusColor = () => {
-    // Check if app is running based on metrics
-    const isAppRunning = metrics && metrics[app.name.toLowerCase().replace(/\s+/g, '_')]?.is_running;
+    // Only grey out if system is off (based on systemState from parent)
+    const isSystemOff = systemState === 'stopped';
     
-    if (!isAppRunning) {
+    if (isSystemOff) {
       return 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50';
     }
     
-    switch (app.status) {
-      case 'healthy':
-        return 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20';
-      case 'unhealthy':
-        return 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20';
-      default:
-        return 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20';
-    }
+    // Normal colors when system is on
+    return 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800';
   };
 
   const getIntensityLabel = (value) => {
@@ -133,40 +127,18 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics }) => {
             <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
           )}
         </div>
-        <div className="flex items-center space-x-2">
-          <div className="relative group">
-            {(() => {
-              const isAppRunning = metrics && metrics[app.name.toLowerCase().replace(/\s+/g, '_')]?.is_running;
-              const displayStatus = isAppRunning ? app.status : 'inactive';
-              
-              return (
-                <>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium cursor-help ${
-                    displayStatus === 'healthy' 
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                      : displayStatus === 'unhealthy'
-                      ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                      : displayStatus === 'inactive'
-                      ? 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
-                      : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-                  }`}>
-                    {displayStatus}
-                  </span>
-                  {/* Tooltip */}
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-                    {displayStatus === 'healthy' 
-                      ? 'Service is running normally and responding to requests'
-                      : displayStatus === 'inactive'
-                      ? 'Service is stopped and not consuming resources'
-                      : displayStatus === 'unhealthy'
-                      ? 'Service is not responding or has errors'
-                      : 'Service status is unknown or starting up'
-                    }
-                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                  </div>
-                </>
-              );
-            })()}
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Health</span>
+            <div className={`w-4 h-4 rounded-full border-2 ${
+              systemState === 'stopped' 
+                ? 'bg-gray-300 border-gray-400' // Grey when system off
+                : app.status === 'healthy'
+                ? 'bg-green-500 border-green-600' // Green when healthy
+                : app.status === 'unhealthy'
+                ? 'bg-red-500 border-red-600' // Red when unhealthy
+                : 'bg-yellow-500 border-yellow-600' // Yellow for unknown/starting
+            }`}></div>
           </div>
         </div>
       </div>
@@ -253,25 +225,46 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics }) => {
               </span>
             </div>
           )}
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-1">
+          <div className="space-y-3">
+            {/* CPU Bar */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600 dark:text-gray-400">CPU</span>
-                <span className="font-semibold text-gray-900 dark:text-white">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
                   {formatPercentage(metrics[app.name.toLowerCase().replace(/\s+/g, '_')].cpu_percent)}
                 </span>
               </div>
-              <div className="flex items-center space-x-1">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div 
+                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min(metrics[app.name.toLowerCase().replace(/\s+/g, '_')].cpu_percent, 100)}%` }}
+                ></div>
+              </div>
+            </div>
+
+            {/* Memory Bar */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600 dark:text-gray-400">Memory</span>
-                <span className="font-semibold text-gray-900 dark:text-white">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
                   {formatPercentage(metrics[app.name.toLowerCase().replace(/\s+/g, '_')].memory_percent)}
                 </span>
               </div>
-              <div className="flex items-center space-x-1">
-                <span className="text-gray-600 dark:text-gray-400">Instances</span>
-                <span className="font-mono text-gray-500 dark:text-gray-400">
-                  {metrics[app.name.toLowerCase().replace(/\s+/g, '_')].instance_count || 1}
-                </span>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div 
+                  className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min(metrics[app.name.toLowerCase().replace(/\s+/g, '_')].memory_percent, 100)}%` }}
+                ></div>
+              </div>
+            </div>
+
+            {/* Instances as Container Icons */}
+            <div className="flex items-center space-x-2">
+              <span className="text-gray-600 dark:text-gray-400 text-sm">Instances</span>
+              <div className="flex space-x-1">
+                {Array.from({ length: metrics[app.name.toLowerCase().replace(/\s+/g, '_')].instance_count || 1 }).map((_, index) => (
+                  <div key={index} className="w-4 h-4 bg-blue-500 rounded-sm border border-blue-600"></div>
+                ))}
               </div>
             </div>
           </div>

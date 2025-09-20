@@ -328,6 +328,7 @@ function App() {
                   onReset={resetAppResources}
                   isUpdating={updatingApps.has(app.name)}
                   metrics={metrics}
+                  systemState={systemState}
                 />
               ))}
             </div>
