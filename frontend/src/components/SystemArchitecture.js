@@ -102,7 +102,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
                 ? Math.min(appMetrics.cpu_percent / 100, 0.5) // Lower intensity for dashboard
                 : Math.min(appMetrics.cpu_percent / 50, 1);
               
-              const packetCount = Math.floor(intensity * 2) + 1; // 1-3 packets based on intensity
+              const packetCount = Math.floor(intensity * 1) + 1; // 1-2 packets based on intensity (reduced)
               
               for (let i = 0; i < packetCount; i++) {
                 // Outgoing packets (to API Gateway)
@@ -143,7 +143,7 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
     }
 
     generatePackets();
-    const interval = setInterval(generatePackets, 1500); // Generate new packets every 1.5 seconds
+    const interval = setInterval(generatePackets, 3000); // Generate new packets every 3 seconds (reduced frequency)
     
     return () => clearInterval(interval);
   }, [systemState, generatePackets]);
@@ -152,8 +152,8 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
   useEffect(() => {
     const cleanup = setInterval(() => {
       const now = Date.now();
-      setDataPackets(prev => prev.filter(packet => now - packet.timestamp < 8000)); // Keep packets for 8 seconds
-    }, 1000);
+      setDataPackets(prev => prev.filter(packet => now - packet.timestamp < 6000)); // Keep packets for 6 seconds (reduced)
+    }, 2000); // Clean up every 2 seconds instead of every 1 second
     
     return () => clearInterval(cleanup);
   }, []);

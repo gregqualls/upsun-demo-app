@@ -216,9 +216,9 @@ class UpsunMetricsManager:
         """Start CPU-intensive thread for realistic simulation"""
         def cpu_worker():
             while self._cpu_thread and self.resource_levels.get('processing', 0) > 0:
-                # CPU-intensive work
-                sum(range(1000000))
-                time.sleep(0.01)  # Small delay to prevent 100% CPU
+                # CPU-intensive work (reduced intensity)
+                sum(range(100000))  # Reduced from 1,000,000 to 100,000
+                time.sleep(0.05)  # Increased delay from 0.01 to 0.05 seconds
         
         self._cpu_thread = threading.Thread(target=cpu_worker, daemon=True)
         self._cpu_thread.start()
