@@ -125,29 +125,31 @@ function App() {
     }
   };
 
-  // Reset app resources
-  const resetAppResources = async (appName) => {
-    setIsUpdating(true);
-    try {
-      const response = await fetch(`${API_BASE_URL}/apps/${appName}/reset`, {
-        method: 'POST',
-        mode: 'cors',
-        credentials: 'omit'
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  // Reset app resources - just set sliders to 50 and let normal flow handle API
+  const resetAppResources = (appName) => {
+    // Update local state to set all levels to 50 (medium)
+    setApps(prev => ({
+      ...prev,
+      [appName]: {
+        ...prev[appName],
+        levels: {
+          processing: 50,
+          storage: 50,
+          traffic: 50,
+          orders: 50,
+          completions: 50
+        }
       }
-      
-      // Refresh apps data
-      await fetchAppsStatus();
-      setApiError(null);
-    } catch (error) {
-      console.error('Error resetting app resources:', error);
-      setApiError(`API Error: ${error.message}`);
-    } finally {
-      setIsUpdating(false);
-    }
+    }));
+    
+    // Send API call in background
+    updateAppResources(appName, {
+      processing: 50,
+      storage: 50,
+      traffic: 50,
+      orders: 50,
+      completions: 50
+    });
   };
 
   // Toggle system on/off
