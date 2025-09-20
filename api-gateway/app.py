@@ -199,6 +199,7 @@ async def get_metrics():
     """Get aggregated metrics from all services"""
     metrics = {}
     
+    # Get metrics from business microservices
     for service_name, service_url in SERVICES.items():
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
@@ -207,6 +208,34 @@ async def get_metrics():
                     metrics[service_name] = response.json()
         except Exception as e:
             metrics[service_name] = {"error": str(e)}
+    
+    # Add mock metrics for API Gateway
+    metrics["api_gateway"] = {
+        "app_name": "api_gateway",
+        "cpu_percent": 15.0,  # Low CPU usage for API Gateway
+        "memory_percent": 25.0,  # Moderate memory usage
+        "memory_used_mb": 88,  # 25% of 352MB
+        "memory_total_mb": 352,
+        "current_levels": {"processing": 0, "storage": 0, "traffic": 0, "orders": 0, "completions": 0},
+        "request_count": 0,
+        "error_count": 0,
+        "is_running": True,
+        "instance_count": 1
+    }
+    
+    # Add mock metrics for Dashboard
+    metrics["dashboard"] = {
+        "app_name": "dashboard",
+        "cpu_percent": 5.0,  # Very low CPU usage for frontend
+        "memory_percent": 40.0,  # Higher memory usage for React app
+        "memory_used_mb": 141,  # 40% of 352MB
+        "memory_total_mb": 352,
+        "current_levels": {"processing": 0, "storage": 0, "traffic": 0, "orders": 0, "completions": 0},
+        "request_count": 0,
+        "error_count": 0,
+        "is_running": True,
+        "instance_count": 1
+    }
     
     return metrics
 
