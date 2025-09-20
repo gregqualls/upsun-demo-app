@@ -1,7 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  Server, 
-  Database, 
   Globe, 
   Users, 
   CreditCard, 
@@ -15,12 +13,12 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
   const [dataPackets, setDataPackets] = useState([]);
   const [connections, setConnections] = useState([]);
 
-  // Define service positions and connections - 3 top, 3 bottom with API Gateway center bottom
+  // Define service positions and connections - 3 top, 3 bottom all on same level
   const serviceConfig = {
     'api_gateway': {
       name: 'API Gateway',
       icon: Globe,
-      position: { x: 50, y: 75 },
+      position: { x: 50, y: 80 },
       color: 'purple',
       connections: ['user_management', 'payment_processing', 'inventory_system', 'notification_center', 'dashboard']
     },
@@ -48,21 +46,21 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
     'notification_center': {
       name: 'Notification Center',
       icon: Bell,
-      position: { x: 20, y: 90 },
+      position: { x: 20, y: 80 },
       color: 'pink',
       connections: ['api_gateway']
     },
     'dashboard': {
       name: 'Dashboard',
       icon: Activity,
-      position: { x: 80, y: 90 },
+      position: { x: 80, y: 80 },
       color: 'indigo',
       connections: ['api_gateway']
     }
   };
 
   // Generate static connections
-  useEffect(() => {
+  const generateConnections = useCallback(() => {
     const conns = [];
     Object.entries(serviceConfig).forEach(([appName, config]) => {
       config.connections.forEach(targetName => {
@@ -77,70 +75,74 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
         }
       });
     });
-    setConnections(conns);
+    return conns;
   }, []);
 
+  useEffect(() => {
+    setConnections(generateConnections());
+  }, [generateConnections]);
+
   // Generate animated data packets
+  const generatePackets = useCallback(() => {
+    const packets = [];
+    const now = Date.now();
+    
+    // Generate packets based on active apps
+    Object.keys(apps).forEach(appName => {
+      const appMetrics = metrics[appName];
+      
+      if (appMetrics && appMetrics.is_running && appName !== 'dashboard') {
+        const config = serviceConfig[appName];
+        if (config) {
+          // Create packets to API Gateway
+          config.connections.forEach(targetName => {
+            if (targetName === 'api_gateway') {
+              const intensity = Math.min(appMetrics.cpu_percent / 50, 1);
+              const packetCount = Math.floor(intensity * 2) + 1; // 1-3 packets based on intensity
+              
+              for (let i = 0; i < packetCount; i++) {
+                // Outgoing packets (to API Gateway)
+                packets.push({
+                  id: `${appName}-${targetName}-out-${now}-${i}`,
+                  from: config.position,
+                  to: serviceConfig[targetName].position,
+                  color: config.color,
+                  timestamp: now,
+                  delay: i * 300, // Stagger packets
+                  speed: 2000 + Math.random() * 1000 // 2-3 seconds
+                });
+                
+                // Incoming packets (from API Gateway) - with slight delay
+                packets.push({
+                  id: `${appName}-${targetName}-in-${now}-${i}`,
+                  from: serviceConfig[targetName].position,
+                  to: config.position,
+                  color: 'purple', // API Gateway color for return packets
+                  timestamp: now,
+                  delay: (i * 300) + 1000, // Stagger and delay return packets
+                  speed: 2000 + Math.random() * 1000 // 2-3 seconds
+                });
+              }
+            }
+          });
+        }
+      }
+    });
+    
+    setDataPackets(prev => [...prev, ...packets]);
+  }, [apps, metrics]);
+
   useEffect(() => {
     if (systemState !== 'running') {
       setDataPackets([]);
       return;
     }
 
-    const generatePackets = () => {
-      const packets = [];
-      const now = Date.now();
-      
-      // Generate packets based on active apps
-      Object.keys(apps).forEach(appName => {
-        const appMetrics = metrics[appName];
-        
-        if (appMetrics && appMetrics.is_running && appName !== 'dashboard') {
-          const config = serviceConfig[appName];
-          if (config) {
-            // Create packets to API Gateway
-            config.connections.forEach(targetName => {
-              if (targetName === 'api_gateway') {
-                const intensity = Math.min(appMetrics.cpu_percent / 50, 1);
-                const packetCount = Math.floor(intensity * 2) + 1; // 1-3 packets based on intensity
-                
-                for (let i = 0; i < packetCount; i++) {
-                  // Outgoing packets (to API Gateway)
-                  packets.push({
-                    id: `${appName}-${targetName}-out-${now}-${i}`,
-                    from: config.position,
-                    to: serviceConfig[targetName].position,
-                    color: config.color,
-                    timestamp: now,
-                    delay: i * 300, // Stagger packets
-                    speed: 2000 + Math.random() * 1000 // 2-3 seconds
-                  });
-                  
-                  // Incoming packets (from API Gateway) - with slight delay
-                  packets.push({
-                    id: `${appName}-${targetName}-in-${now}-${i}`,
-                    from: serviceConfig[targetName].position,
-                    to: config.position,
-                    color: 'purple', // API Gateway color for return packets
-                    timestamp: now,
-                    delay: (i * 300) + 1000, // Stagger and delay return packets
-                    speed: 2000 + Math.random() * 1000 // 2-3 seconds
-                  });
-                }
-              }
-            });
-          }
-        }
-      });
-      
-      setDataPackets(prev => [...prev, ...packets]);
-    };
-
     generatePackets();
     const interval = setInterval(generatePackets, 1500); // Generate new packets every 1.5 seconds
     
     return () => clearInterval(interval);
-  }, [apps, metrics, systemState]);
+  }, [systemState, generatePackets]);
 
   // Clean up old packets
   useEffect(() => {
@@ -223,10 +225,16 @@ const SystemArchitecture = ({ apps, metrics, systemState }) => {
         <svg className="absolute inset-0 w-full h-full">
           {dataPackets.map((packet) => {
             const progress = Math.min((Date.now() - packet.timestamp - packet.delay) / packet.speed, 1);
+            
+            // Ensure progress is between 0 and 1
+            if (progress < 0 || progress >= 1) return null;
+            
+            // Calculate position along the line
             const x = packet.from.x + (packet.to.x - packet.from.x) * progress;
             const y = packet.from.y + (packet.to.y - packet.from.y) * progress;
             
-            if (progress >= 1) return null;
+            // Ensure packets stay within bounds
+            if (x < 0 || x > 100 || y < 0 || y > 100) return null;
             
             return (
               <circle
