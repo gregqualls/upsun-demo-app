@@ -19,22 +19,27 @@ const Header = ({
   // Update display time every second
   useEffect(() => {
     const updateDisplayTime = () => {
+      console.log(`Header updateDisplayTime: timeRemaining=${timeRemaining}, systemStartTime=${systemStartTime}, systemState=${systemState}`);
       if (timeRemaining) {
         // Show countdown
+        console.log('Showing timeRemaining countdown');
         setDisplayTime(`${Math.floor(timeRemaining / 60).toString().padStart(2, '0')}:${(timeRemaining % 60).toString().padStart(2, '0')}`);
       } else if (systemStartTime && systemState === 'running') {
         // Show time remaining until shutdown
         const elapsed = Date.now() - systemStartTime;
         const remainingMs = (runtimeTimeout * 60 * 1000) - elapsed;
+        console.log(`Calculated time: elapsed=${elapsed}ms, remainingMs=${remainingMs}ms`);
         if (remainingMs > 0) {
           const minutes = Math.floor(remainingMs / 60000);
           const seconds = Math.floor((remainingMs % 60000) / 1000);
+          console.log(`Setting display time: ${minutes}:${seconds}`);
           setDisplayTime(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
         } else {
           setDisplayTime('00:00');
         }
       } else {
         // Show timeout setting
+        console.log('Showing timeout setting');
         setDisplayTime(`${runtimeTimeout}:00`);
       }
     };

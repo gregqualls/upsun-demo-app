@@ -747,6 +747,7 @@ function App() {
     let countdownTimer = null;
 
     const startRuntimeTimer = () => {
+      console.log('startRuntimeTimer called, setting systemStartTime');
       setSystemStartTime(Date.now());
       setTimeRemaining(null);
       
@@ -755,7 +756,9 @@ function App() {
       if (countdownTimer) clearInterval(countdownTimer);
       
       // Set new runtime timer
+      console.log(`Setting timeout for ${runtimeTimeout} minutes`);
       runtimeTimer = setTimeout(() => {
+        console.log('Runtime timeout reached, starting countdown');
         // Start countdown when runtime timeout is reached
         setIsCountdownActive(true);
         setTimeRemaining(60); // 1 minute countdown
@@ -763,6 +766,7 @@ function App() {
           setTimeRemaining(prev => {
             if (prev <= 1) {
               // Time's up - turn off system switch
+              console.log('Countdown finished, calling toggleSystem');
               setIsCountdownActive(false);
               toggleSystem();
               setTimeRemaining(null);
@@ -784,10 +788,15 @@ function App() {
     };
 
     // Start timer when system turns on, but don't reset if countdown is active
+    console.log(`useEffect: systemState=${systemState}, isCountdownActive=${isCountdownActive}`);
     if (systemState === 'running' && !isCountdownActive) {
+      console.log('Starting runtime timer');
       startRuntimeTimer();
     } else if (systemState === 'stopped' && !isCountdownActive) {
+      console.log('Stopping runtime timer');
       stopRuntimeTimer();
+    } else if (isCountdownActive) {
+      console.log('Countdown is active, not changing timer');
     }
 
     // Cleanup
