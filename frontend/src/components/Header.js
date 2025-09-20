@@ -6,13 +6,43 @@ const Header = ({
   systemState, 
   isUpdating, 
   onToggle,
-  idleTimeout,
-  setIdleTimeout,
-  timeRemaining
+  runtimeTimeout,
+  setRuntimeTimeout,
+  timeRemaining,
+  systemStartTime
 }) => {
   const { isDark, toggleTheme } = useTheme();
   const [showSettings, setShowSettings] = useState(false);
+  const [displayTime, setDisplayTime] = useState(null);
   const settingsRef = useRef(null);
+
+  // Update display time every second
+  useEffect(() => {
+    const updateDisplayTime = () => {
+      if (timeRemaining) {
+        // Show countdown
+        setDisplayTime(`${Math.floor(timeRemaining / 60).toString().padStart(2, '0')}:${(timeRemaining % 60).toString().padStart(2, '0')}`);
+      } else if (systemStartTime && systemState === 'running') {
+        // Show time remaining until shutdown
+        const elapsed = Date.now() - systemStartTime;
+        const remainingMs = (runtimeTimeout * 60 * 1000) - elapsed;
+        if (remainingMs > 0) {
+          const minutes = Math.floor(remainingMs / 60000);
+          const seconds = Math.floor((remainingMs % 60000) / 1000);
+          setDisplayTime(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+        } else {
+          setDisplayTime('00:00');
+        }
+      } else {
+        // Show timeout setting
+        setDisplayTime(`${runtimeTimeout}:00`);
+      }
+    };
+
+    updateDisplayTime();
+    const interval = setInterval(updateDisplayTime, 1000);
+    return () => clearInterval(interval);
+  }, [timeRemaining, systemStartTime, systemState, runtimeTimeout]);
 
   // Close settings dropdown when clicking outside
   useEffect(() => {
@@ -78,12 +108,9 @@ const Header = ({
             {/* Simple Countdown Timer */}
             <div className="flex items-center space-x-2 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
               <Clock className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-              <span className="text-sm text-gray-600 dark:text-gray-400">Idle:</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">Runtime:</span>
               <span className="font-mono text-sm font-medium text-gray-900 dark:text-gray-100">
-                {timeRemaining ? 
-                  `${Math.floor(timeRemaining / 60).toString().padStart(2, '0')}:${(timeRemaining % 60).toString().padStart(2, '0')}` : 
-                  `${idleTimeout}:00`
-                }
+                {displayTime || `${runtimeTimeout}:00`}
               </span>
             </div>
 
@@ -102,7 +129,7 @@ const Header = ({
                 <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10">
                   <div className="p-3">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Idle Timeout</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Runtime Timeout</span>
                       <button
                         onClick={() => setShowSettings(false)}
                         className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -111,8 +138,8 @@ const Header = ({
                       </button>
                     </div>
                     <select
-                      value={idleTimeout}
-                      onChange={(e) => setIdleTimeout(parseInt(e.target.value))}
+                      value={runtimeTimeout}
+                      onChange={(e) => setRuntimeTimeout(parseInt(e.target.value))}
                       className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
                     >
                       <option value={5}>5 minutes</option>
@@ -123,7 +150,7 @@ const Header = ({
                       <option value={120}>2 hours</option>
                     </select>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                      Auto-shutdown prevents resource waste
+                      Auto-shutdown after system runtime
                     </p>
                   </div>
                 </div>

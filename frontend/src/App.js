@@ -21,9 +21,9 @@ function App() {
   const [addActivity, setAddActivity] = useState(null);
   const [upsunActivities, setUpsunActivities] = useState([]);
   const [metricsSource, setMetricsSource] = useState('simulation');
-  const [idleTimeout, setIdleTimeout] = useState(10); // Minutes before auto-shutdown
+  const [runtimeTimeout, setRuntimeTimeout] = useState(10); // Minutes before auto-shutdown
   const [timeRemaining, setTimeRemaining] = useState(null); // Seconds remaining
-  const [lastActivity, setLastActivity] = useState(Date.now()); // Track last user activity
+  const [systemStartTime, setSystemStartTime] = useState(null); // When system was turned on
 
   // Dynamically determine API URL at runtime
   const getApiBaseUrl = () => {
@@ -725,22 +725,22 @@ function App() {
     return () => clearInterval(instanceInterval);
   }, []);
 
-  // Idle timeout system - only stop activities after X minutes of inactivity
+  // Runtime timeout system - stop system after X minutes of being ON
   useEffect(() => {
-    let idleTimer = null;
+    let runtimeTimer = null;
     let countdownTimer = null;
 
-    const resetIdleTimer = () => {
-      setLastActivity(Date.now());
+    const startRuntimeTimer = () => {
+      setSystemStartTime(Date.now());
       setTimeRemaining(null);
       
       // Clear existing timers
-      if (idleTimer) clearTimeout(idleTimer);
+      if (runtimeTimer) clearTimeout(runtimeTimer);
       if (countdownTimer) clearInterval(countdownTimer);
       
-      // Set new idle timer
-      idleTimer = setTimeout(() => {
-        // Start countdown when idle timeout is reached
+      // Set new runtime timer
+      runtimeTimer = setTimeout(() => {
+        // Start countdown when runtime timeout is reached
         setTimeRemaining(60); // 1 minute countdown
         countdownTimer = setInterval(() => {
           setTimeRemaining(prev => {
@@ -748,36 +748,35 @@ function App() {
               // Time's up - stop all activities
               stopAllActivities();
               setTimeRemaining(null);
+              setSystemStartTime(null);
               return null;
             }
             return prev - 1;
           });
         }, 1000);
-      }, idleTimeout * 60 * 1000); // Convert minutes to milliseconds
+      }, runtimeTimeout * 60 * 1000); // Convert minutes to milliseconds
     };
 
-    const handleActivity = () => {
-      resetIdleTimer();
+    const stopRuntimeTimer = () => {
+      setSystemStartTime(null);
+      setTimeRemaining(null);
+      if (runtimeTimer) clearTimeout(runtimeTimer);
+      if (countdownTimer) clearInterval(countdownTimer);
     };
 
-    // Track user activity
-    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-    events.forEach(event => {
-      document.addEventListener(event, handleActivity, true);
-    });
-
-    // Initialize timer
-    resetIdleTimer();
+    // Start timer when system turns on
+    if (systemState === 'running') {
+      startRuntimeTimer();
+    } else {
+      stopRuntimeTimer();
+    }
 
     // Cleanup
     return () => {
-      events.forEach(event => {
-        document.removeEventListener(event, handleActivity, true);
-      });
-      if (idleTimer) clearTimeout(idleTimer);
+      if (runtimeTimer) clearTimeout(runtimeTimer);
       if (countdownTimer) clearInterval(countdownTimer);
     };
-  }, [idleTimeout, apps]); // Re-run when timeout setting or apps change
+  }, [systemState, runtimeTimeout]); // Re-run when system state or timeout setting changes
 
   if (isLoading) {
     return (
@@ -799,9 +798,10 @@ function App() {
           systemState={systemState}
           isUpdating={isUpdating}
           onToggle={toggleSystem}
-          idleTimeout={idleTimeout}
-          setIdleTimeout={setIdleTimeout}
+          runtimeTimeout={runtimeTimeout}
+          setRuntimeTimeout={setRuntimeTimeout}
           timeRemaining={timeRemaining}
+          systemStartTime={systemStartTime}
         />
         
         <main className="container mx-auto px-4 py-8">
