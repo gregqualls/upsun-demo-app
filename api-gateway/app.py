@@ -220,7 +220,8 @@ async def get_metrics():
         "request_count": 0,
         "error_count": 0,
         "is_running": True,
-        "instance_count": 1
+        "instance_count": 1,
+        "source": "simulation"
     }
     
     # Add mock metrics for Dashboard
@@ -234,7 +235,8 @@ async def get_metrics():
         "request_count": 0,
         "error_count": 0,
         "is_running": True,
-        "instance_count": 1
+        "instance_count": 1,
+        "source": "simulation"
     }
     
     return metrics
