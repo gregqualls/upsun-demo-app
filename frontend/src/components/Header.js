@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { Sun, Moon, Power, Info } from 'lucide-react';
+import { Sun, Moon, Power, Clock, Info } from 'lucide-react';
 import CountdownTimer from './CountdownTimer';
 
 const Header = ({ 
