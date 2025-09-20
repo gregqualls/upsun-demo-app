@@ -21,6 +21,9 @@ function App() {
   const [addActivity, setAddActivity] = useState(null);
   const [upsunActivities, setUpsunActivities] = useState([]);
   const [metricsSource, setMetricsSource] = useState('simulation');
+  const [idleTimeout, setIdleTimeout] = useState(10); // Minutes before auto-shutdown
+  const [timeRemaining, setTimeRemaining] = useState(null); // Seconds remaining
+  const [lastActivity, setLastActivity] = useState(Date.now()); // Track last user activity
 
   // Dynamically determine API URL at runtime
   const getApiBaseUrl = () => {
@@ -722,30 +725,59 @@ function App() {
     return () => clearInterval(instanceInterval);
   }, []);
 
-  // Stop all activities when browser window closes
+  // Idle timeout system - only stop activities after X minutes of inactivity
   useEffect(() => {
-    const handleBeforeUnload = (event) => {
-      // Stop all activities when window is about to close
-      stopAllActivities();
+    let idleTimer = null;
+    let countdownTimer = null;
+
+    const resetIdleTimer = () => {
+      setLastActivity(Date.now());
+      setTimeRemaining(null);
+      
+      // Clear existing timers
+      if (idleTimer) clearTimeout(idleTimer);
+      if (countdownTimer) clearInterval(countdownTimer);
+      
+      // Set new idle timer
+      idleTimer = setTimeout(() => {
+        // Start countdown when idle timeout is reached
+        setTimeRemaining(60); // 1 minute countdown
+        countdownTimer = setInterval(() => {
+          setTimeRemaining(prev => {
+            if (prev <= 1) {
+              // Time's up - stop all activities
+              stopAllActivities();
+              setTimeRemaining(null);
+              return null;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }, idleTimeout * 60 * 1000); // Convert minutes to milliseconds
     };
 
-    const handleVisibilityChange = () => {
-      // Stop all activities when tab becomes hidden (user switches tabs or minimizes)
-      if (document.hidden) {
-        stopAllActivities();
-      }
+    const handleActivity = () => {
+      resetIdleTimer();
     };
 
-    // Add event listeners
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // Track user activity
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    events.forEach(event => {
+      document.addEventListener(event, handleActivity, true);
+    });
+
+    // Initialize timer
+    resetIdleTimer();
 
     // Cleanup
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      events.forEach(event => {
+        document.removeEventListener(event, handleActivity, true);
+      });
+      if (idleTimer) clearTimeout(idleTimer);
+      if (countdownTimer) clearInterval(countdownTimer);
     };
-  }, [apps]); // Re-run when apps change
+  }, [idleTimeout, apps]); // Re-run when timeout setting or apps change
 
   if (isLoading) {
     return (
@@ -767,6 +799,9 @@ function App() {
           systemState={systemState}
           isUpdating={isUpdating}
           onToggle={toggleSystem}
+          idleTimeout={idleTimeout}
+          setIdleTimeout={setIdleTimeout}
+          timeRemaining={timeRemaining}
         />
         
         <main className="container mx-auto px-4 py-8">

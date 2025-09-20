@@ -1,11 +1,14 @@
 import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { Sun, Moon, Power } from 'lucide-react';
+import { Sun, Moon, Power, Clock, Info } from 'lucide-react';
 
 const Header = ({ 
   systemState, 
   isUpdating, 
-  onToggle
+  onToggle,
+  idleTimeout,
+  setIdleTimeout,
+  timeRemaining
 }) => {
   const { isDark, toggleTheme } = useTheme();
 
@@ -54,18 +57,54 @@ const Header = ({
             </div>
           </div>
 
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            aria-label="Toggle theme"
-          >
-            {isDark ? (
-              <Sun className="w-5 h-5 text-purple-600" />
-            ) : (
-              <Moon className="w-5 h-5 text-purple-600" />
+          {/* Idle Timeout Controls */}
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Clock className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              <span className="text-sm text-gray-600 dark:text-gray-400">Idle Timeout:</span>
+              <select
+                value={idleTimeout}
+                onChange={(e) => setIdleTimeout(parseInt(e.target.value))}
+                className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value={5}>5 min</option>
+                <option value={10}>10 min</option>
+                <option value={15}>15 min</option>
+                <option value={30}>30 min</option>
+                <option value={60}>60 min</option>
+                <option value={120}>2 hours</option>
+              </select>
+              <div className="relative group">
+                <Info className="w-4 h-4 text-gray-400 cursor-help" />
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                  Auto-shutdown prevents resource waste if you forget to stop the demo
+                </div>
+              </div>
+            </div>
+            
+            {/* Countdown Timer */}
+            {timeRemaining && (
+              <div className="flex items-center space-x-2 px-3 py-1 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg">
+                <Clock className="w-4 h-4 text-red-600 dark:text-red-400 animate-pulse" />
+                <span className="text-sm font-medium text-red-600 dark:text-red-400">
+                  Auto-shutdown in {timeRemaining}s
+                </span>
+              </div>
             )}
-          </button>
+
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              aria-label="Toggle theme"
+            >
+              {isDark ? (
+                <Sun className="w-5 h-5 text-purple-600" />
+              ) : (
+                <Moon className="w-5 h-5 text-purple-600" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </header>
