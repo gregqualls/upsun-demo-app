@@ -157,12 +157,12 @@ const ActivityFeed = ({ apps, metrics, systemState, onAddActivity }) => {
         ) : (
           activities.map((activity) => (
             <div key={activity.id} className="flex items-center space-x-3 text-gray-300">
-              <span className="text-gray-500 text-xs w-16">{activity.timestamp}</span>
-              <span className={`${activity.color} flex items-center space-x-1`}>
+              <span className="text-gray-500 text-xs w-24 flex-shrink-0">{activity.timestamp}</span>
+              <span className={`${activity.color} flex items-center space-x-1 flex-shrink-0`}>
                 {activity.icon}
                 <span className="text-xs font-bold uppercase">{activity.type}</span>
               </span>
-              <span className="text-gray-200">{activity.message}</span>
+              <span className="text-gray-200 flex-1 min-w-0">{activity.message}</span>
             </div>
           ))
         )}

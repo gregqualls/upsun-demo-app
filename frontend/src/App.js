@@ -233,6 +233,16 @@ function App() {
     
     // Send API call in background (don't wait for it)
     try {
+      // Log API call
+      if (addActivity) {
+        addActivity({
+          type: 'api',
+          icon: <Zap className="w-3 h-3" />,
+          color: 'text-blue-400',
+          message: `API: POST /resources/all → ${isCurrentlyRunning ? 'STOP' : 'START'} all apps`
+        });
+      }
+
       const response = await fetch(`${API_BASE_URL}/resources/all`, {
         method: 'POST',
         headers: {
@@ -247,7 +257,26 @@ function App() {
       
       if (!response.ok) {
         console.warn(`API call failed: ${response.status}`);
+        // Log API error
+        if (addActivity) {
+          addActivity({
+            type: 'api',
+            icon: <Zap className="w-3 h-3" />,
+            color: 'text-red-400',
+            message: `API: ERROR ← /resources/all (${response.status})`
+          });
+        }
         // Don't revert UI on API failure - let user see the change
+      } else {
+        // Log successful API response
+        if (addActivity) {
+          addActivity({
+            type: 'api',
+            icon: <Zap className="w-3 h-3" />,
+            color: 'text-green-400',
+            message: `API: 200 OK ← /resources/all`
+          });
+        }
       }
       
       // Refresh apps status and metrics after API call
@@ -257,6 +286,15 @@ function App() {
       setApiError(null);
     } catch (error) {
       console.error('Background API call failed:', error);
+      // Log API error
+      if (addActivity) {
+        addActivity({
+          type: 'api',
+          icon: <Zap className="w-3 h-3" />,
+          color: 'text-red-400',
+          message: `API: ERROR ← /resources/all (${error.message})`
+        });
+      }
       // Don't revert UI on API failure - let user see the change
     }
   };
@@ -314,6 +352,16 @@ function App() {
         return updated;
       });
 
+      // Log API call
+      if (addActivity) {
+        addActivity({
+          type: 'api',
+          icon: <Zap className="w-3 h-3" />,
+          color: 'text-blue-400',
+          message: `API: POST /resources/all → RESET all apps to medium`
+        });
+      }
+
       // Send API call in background
       const response = await fetch(`${API_BASE_URL}/resources/all`, {
         method: 'POST',
@@ -329,6 +377,25 @@ function App() {
       
       if (!response.ok) {
         console.warn(`API call failed: ${response.status}`);
+        // Log API error
+        if (addActivity) {
+          addActivity({
+            type: 'api',
+            icon: <Zap className="w-3 h-3" />,
+            color: 'text-red-400',
+            message: `API: ERROR ← /resources/all (${response.status})`
+          });
+        }
+      } else {
+        // Log successful API response
+        if (addActivity) {
+          addActivity({
+            type: 'api',
+            icon: <Zap className="w-3 h-3" />,
+            color: 'text-green-400',
+            message: `API: 200 OK ← /resources/all`
+          });
+        }
       }
       
       // Refresh data
