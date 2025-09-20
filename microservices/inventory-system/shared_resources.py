@@ -365,6 +365,8 @@ class ResourceManager:
         total_intensity = sum(current_levels.values())
         if total_intensity > 0:
             # Scale system resources based on app intensity
+            # Note: Upsun apps are allocated 0.1 CPU and 0.062 GB (64MB) RAM
+            # This scaling simulates realistic usage within those constraints
             app_cpu_usage = (cpu_percent * total_intensity / 500)
             app_memory_usage = (memory_info.percent * total_intensity / 500)
         else:

@@ -247,6 +247,10 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics }) => {
           {process.env.NODE_ENV === 'development' && (
             <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
               Live metrics from API (host system locally, containers in production)
+              <br />
+              <span className="text-yellow-600 dark:text-yellow-400">
+                Note: Upsun apps allocated 0.1 CPU + 64MB RAM per instance
+              </span>
             </div>
           )}
           <div className="flex items-center justify-between text-sm">
