@@ -118,14 +118,14 @@ class UpsunMetricsManager:
         processing_level = self.resource_levels.get('processing', 0)
         storage_level = self.resource_levels.get('storage', 0)
         
-        # Add some dynamism to make it look alive
-        cpu_variation = random.uniform(0.9, 1.1)
-        memory_variation = random.uniform(0.95, 1.05)
+        # Add some dynamism to make it look alive (reduced intensity for demo)
+        cpu_variation = random.uniform(0.95, 1.05)  # Less variation
+        memory_variation = random.uniform(0.98, 1.02)  # Even less variation
         
         return {
-            'cpu_percent': min(processing_level * 0.8 * cpu_variation, 100),
-            'memory_percent': min(storage_level * 0.6 * memory_variation, 100),
-            'memory_used_mb': int(storage_level * 3.52 * memory_variation),  # 352MB max
+            'cpu_percent': min(processing_level * 0.4 * cpu_variation, 50),  # Much lower CPU usage
+            'memory_percent': min(storage_level * 0.3 * memory_variation, 30),  # Lower memory usage
+            'memory_used_mb': int(storage_level * 1.76 * memory_variation),  # 176MB max (half of 352MB)
             'instance_count': self._instance_count,
             'is_running': True,
             'source': 'simulation'
@@ -216,9 +216,9 @@ class UpsunMetricsManager:
         """Start CPU-intensive thread for realistic simulation"""
         def cpu_worker():
             while self._cpu_thread and self.resource_levels.get('processing', 0) > 0:
-                # CPU-intensive work (reduced intensity)
-                sum(range(100000))  # Reduced from 1,000,000 to 100,000
-                time.sleep(0.05)  # Increased delay from 0.01 to 0.05 seconds
+                # Much lighter CPU work for demo purposes
+                sum(range(1000))  # Very light work - just 1000 iterations
+                time.sleep(0.1)  # Sleep longer between iterations
         
         self._cpu_thread = threading.Thread(target=cpu_worker, daemon=True)
         self._cpu_thread.start()
