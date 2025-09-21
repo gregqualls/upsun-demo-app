@@ -77,10 +77,7 @@ async def update_resources(resource_data: Dict[str, Any]):
     try:
         levels = {
             "processing": resource_data.get("processing", 0),
-            "storage": resource_data.get("storage", 0),
-            "traffic": resource_data.get("traffic", 0),
-            "orders": resource_data.get("orders", 0),
-            "completions": resource_data.get("completions", 0)
+            "storage": resource_data.get("storage", 0)
         }
         
         print(f"[{APP_NAME}] Calling resource_manager.update_resources with levels: {levels}")
