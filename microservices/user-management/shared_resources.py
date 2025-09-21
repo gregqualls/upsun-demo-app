@@ -25,11 +25,8 @@ class UpsunMetricsManager:
         self.app_name = app_name
         self.is_running = False
         self.resource_levels = {
-            'processing': 0,
-            'storage': 0,
-            'traffic': 0,
-            'orders': 0,
-            'completions': 0
+            'processing': 0,  # CPU load
+            'storage': 0      # Memory usage
         }
         self._last_upsun_metrics = {}
         self._last_upsun_check = 0
@@ -123,9 +120,9 @@ class UpsunMetricsManager:
         memory_variation = random.uniform(0.95, 1.05)
         
         return {
-            'cpu_percent': min(processing_level * 0.8 * cpu_variation, 100),
-            'memory_percent': min(storage_level * 0.6 * memory_variation, 100),
-            'memory_used_mb': int(storage_level * 3.52 * memory_variation),  # 352MB max
+            'cpu_percent': min(processing_level * 1.0 * cpu_variation, 100),  # 50 = 50% CPU, 75 = 75% CPU, 100 = 100% CPU
+            'memory_percent': min(storage_level * 1.0 * memory_variation, 100),  # 50 = 50% RAM, 75 = 75% RAM, 100 = 100% RAM
+            'memory_used_mb': int(storage_level * 3.52 * memory_variation),  # 50 = 176MB, 75 = 264MB, 100 = 352MB
             'instance_count': self._instance_count,
             'is_running': True,
             'source': 'simulation'
@@ -216,9 +213,9 @@ class UpsunMetricsManager:
         """Start CPU-intensive thread for realistic simulation"""
         def cpu_worker():
             while self._cpu_thread and self.resource_levels.get('processing', 0) > 0:
-                # CPU-intensive work
-                sum(range(1000000))
-                time.sleep(0.01)  # Small delay to prevent 100% CPU
+                # Realistic CPU work for demo - medium load
+                sum(range(50000))  # Moderate work for demo purposes
+                time.sleep(0.01)  # Short sleep for continuous load
         
         self._cpu_thread = threading.Thread(target=cpu_worker, daemon=True)
         self._cpu_thread.start()
