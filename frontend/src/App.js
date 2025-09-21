@@ -232,6 +232,14 @@ function App() {
     setSystemState(isCurrentlyRunning ? 'stopped' : 'running');
     setIsUpdating(false); // UI is updated, no need to show loading
     
+    // Clean up countdown state when toggling system
+    if (isCurrentlyRunning) {
+      // System is being stopped, clean up countdown
+      setTimeRemaining(null);
+      setSystemStartTime(null);
+      setIsCountdownActive(false);
+    }
+    
     // Log system toggle
     if (addActivity) {
       addActivity({
@@ -769,11 +777,14 @@ function App() {
               // Time's up - turn off system switch
               console.log('Countdown finished, calling toggleSystem');
               setIsCountdownActive(false);
-              // Call toggleSystem directly without dependency
+              // Clear the countdown timer first
+              if (countdownTimer) {
+                clearInterval(countdownTimer);
+                countdownTimer = null;
+              }
+              // Call toggleSystem and let it handle the state cleanup
               toggleSystem();
-              setTimeRemaining(null);
-              setSystemStartTime(null);
-              return null;
+              return 0; // Show 0:00 briefly before cleanup
             }
             return prev - 1;
           });
