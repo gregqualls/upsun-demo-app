@@ -172,14 +172,11 @@ function App() {
   // Reset app resources - just set sliders to 50 and let normal flow handle API
   const resetAppResources = (appName) => {
     const newLevels = {
-      processing: 50,
-      storage: 50,
-      traffic: 50,
-      orders: 50,
-      completions: 50
+      processing: 50,  // CPU load
+      storage: 50      // Memory usage
     };
     
-    // Update local state to set all levels to 50 (medium)
+    // Update local state to set all levels to 50 (normal)
     setApps(prev => ({
       ...prev,
       [appName]: {
@@ -204,16 +201,10 @@ function App() {
       const currentLevels = apps[appName].levels;
       allAppsLevels[appName] = isCurrentlyRunning ? {
         processing: 0,
-        storage: 0,
-        traffic: 0,
-        orders: 0,
-        completions: 0
+        storage: 0
       } : {
         processing: currentLevels.processing || 50,
-        storage: currentLevels.storage || 50,
-        traffic: currentLevels.traffic || 50,
-        orders: currentLevels.orders || 50,
-        completions: currentLevels.completions || 50
+        storage: currentLevels.storage || 50
       };
     });
 
@@ -357,9 +348,6 @@ function App() {
         allAppsLevels[appName] = {
           processing: 0,
           storage: 0,
-          traffic: 0,
-          orders: 0,
-          completions: 0
         };
       });
 
@@ -386,21 +374,18 @@ function App() {
 
 
 
-  // Reset all resources to medium
+  // Reset all resources to normal
   const resetAllResources = async () => {
     if (isUpdating) return;
     
     setIsUpdating(true);
     try {
-      // Reset all apps to medium levels (50)
+      // Reset all apps to normal levels (50)
       const allAppsLevels = {};
       Object.keys(apps).forEach(appName => {
         allAppsLevels[appName] = {
           processing: 50,
           storage: 50,
-          traffic: 50,
-          orders: 50,
-          completions: 50
         };
       });
 
@@ -422,7 +407,7 @@ function App() {
           type: 'api',
           icon: <Zap className="w-3 h-3" />,
           color: 'text-blue-400',
-          message: `API: POST /resources/all → RESET all apps to medium`
+          message: `API: POST /resources/all → RESET all apps to normal`
         });
       }
 
@@ -487,9 +472,6 @@ function App() {
         allAppsLevels[appName] = {
           processing: 100,
           storage: 100,
-          traffic: 100,
-          orders: 100,
-          completions: 100
         };
       });
 
@@ -576,9 +558,6 @@ function App() {
         allAppsLevels[appName] = {
           processing: 0,
           storage: 0,
-          traffic: 0,
-          orders: 0,
-          completions: 0
         };
       });
 
@@ -929,7 +908,7 @@ function App() {
                 disabled={isUpdating}
                 className="px-4 py-2 text-sm font-medium text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Reset All to Medium
+                Reset All to Normal
               </button>
               <button
                 onClick={setAllToMax}

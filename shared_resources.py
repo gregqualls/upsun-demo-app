@@ -25,11 +25,8 @@ class UpsunMetricsManager:
         self.app_name = app_name
         self.is_running = False
         self.resource_levels = {
-            'processing': 0,
-            'storage': 0,
-            'traffic': 0,
-            'orders': 0,
-            'completions': 0
+            'processing': 0,  # CPU load
+            'storage': 0      # Memory usage
         }
         self._last_upsun_metrics = {}
         self._last_upsun_check = 0
@@ -60,13 +57,13 @@ class UpsunMetricsManager:
         """Get hybrid metrics - real-time simulation + Upsun background"""
         current_time = time.time()
         
-        # Refresh Upsun metrics every 60 seconds (matches console)
-        if current_time - self._last_upsun_check > 60:
+        # Refresh Upsun metrics every 120 seconds (less frequent)
+        if current_time - self._last_upsun_check > 120:
             self._refresh_upsun_metrics()
             self._last_upsun_check = current_time
             
-        # Refresh instance count every 30 seconds
-        if current_time - self._last_instance_check > 30:
+        # Refresh instance count every 60 seconds (less frequent)
+        if current_time - self._last_instance_check > 60:
             self._refresh_instance_count()
             self._last_instance_check = current_time
             
@@ -123,9 +120,9 @@ class UpsunMetricsManager:
         memory_variation = random.uniform(0.98, 1.02)  # Even less variation
         
         return {
-            'cpu_percent': min(processing_level * 0.4 * cpu_variation, 50),  # Much lower CPU usage
-            'memory_percent': min(storage_level * 0.3 * memory_variation, 30),  # Lower memory usage
-            'memory_used_mb': int(storage_level * 1.76 * memory_variation),  # 176MB max (half of 352MB)
+            'cpu_percent': min(processing_level * 1.0 * cpu_variation, 100),  # 50 = 50% CPU, 75 = 75% CPU, 100 = 100% CPU
+            'memory_percent': min(storage_level * 1.0 * memory_variation, 100),  # 50 = 50% RAM, 75 = 75% RAM, 100 = 100% RAM
+            'memory_used_mb': int(storage_level * 3.52 * memory_variation),  # 50 = 176MB, 75 = 264MB, 100 = 352MB
             'instance_count': self._instance_count,
             'is_running': True,
             'source': 'simulation'
@@ -216,9 +213,9 @@ class UpsunMetricsManager:
         """Start CPU-intensive thread for realistic simulation"""
         def cpu_worker():
             while self._cpu_thread and self.resource_levels.get('processing', 0) > 0:
-                # Much lighter CPU work for demo purposes
-                sum(range(1000))  # Very light work - just 1000 iterations
-                time.sleep(0.1)  # Sleep longer between iterations
+                # Realistic CPU work for demo - medium load
+                sum(range(50000))  # Moderate work for demo purposes
+                time.sleep(0.01)  # Short sleep for continuous load
         
         self._cpu_thread = threading.Thread(target=cpu_worker, daemon=True)
         self._cpu_thread.start()

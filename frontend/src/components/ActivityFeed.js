@@ -27,7 +27,7 @@ const ActivityFeed = ({ apps, metrics, systemState, onAddActivity }) => {
           const prevLevel = prevApp.levels?.[resource];
 
           if (prevLevel !== undefined && currentLevel !== prevLevel) {
-            const levelNames = { 0: 'Off', 25: 'Low', 50: 'Medium', 75: 'High', 100: 'Maximum' };
+            const levelNames = { 0: 'Off', 25: 'Low', 50: 'Normal', 75: 'High', 100: 'Maximum' };
             const currentLevelName = levelNames[currentLevel] || `${currentLevel}%`;
             const prevLevelName = levelNames[prevLevel] || `${prevLevel}%`;
 

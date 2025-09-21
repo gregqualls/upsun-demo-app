@@ -189,7 +189,7 @@ const ResourceControls = ({ resourceLevels, onUpdate, systemInfo, stressMode, on
             disabled={isSimulatingLoad}
             className="bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400 text-white px-3 py-2 rounded-lg font-medium transition-colors text-sm"
           >
-            Medium Load (50%)
+            Normal Load (50%)
           </button>
           <button
             onClick={() => handleSimulateLoad(75)}

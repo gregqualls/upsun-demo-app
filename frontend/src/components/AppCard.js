@@ -85,7 +85,7 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState, isE
     if (value === 0) return 'Off';
     if (value <= 20) return 'Low';
     if (value <= 40) return 'Light';
-    if (value <= 60) return 'Medium';
+    if (value <= 60) return 'Normal';
     if (value <= 80) return 'High';
     return 'Maximum';
   };
@@ -94,43 +94,19 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState, isE
   const resourceConfigs = [
     {
       key: 'processing',
-      label: 'Processing',
+      label: 'CPU Load',
       icon: Cpu,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100 dark:bg-purple-900/30',
-      description: 'CPU-intensive tasks'
+      description: 'CPU-intensive processing tasks'
     },
     {
       key: 'storage',
-      label: 'Storage',
+      label: 'Memory Usage',
       icon: Database,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100 dark:bg-blue-900/30',
       description: 'Memory-intensive operations'
-    },
-    {
-      key: 'traffic',
-      label: 'Traffic',
-      icon: Network,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100 dark:bg-purple-900/30',
-      description: 'Network communication'
-    },
-    {
-      key: 'orders',
-      label: 'Orders',
-      icon: ShoppingCart,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100 dark:bg-blue-900/30',
-      description: 'Order processing'
-    },
-    {
-      key: 'completions',
-      label: 'Completions',
-      icon: CheckCircle,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100 dark:bg-purple-900/30',
-      description: 'Work completion tracking'
     }
   ];
 
@@ -192,7 +168,7 @@ const AppCard = ({ app, onUpdate, onReset, isUpdating, metrics, systemState, isE
                   onClick={() => onReset(app.name)}
                   disabled={isUpdating}
                   className="p-2 text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 rounded-md hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Reset to Medium"
+                  title="Reset to Normal"
                 >
                   <RotateCcw className="w-4 h-4" />
                 </button>
