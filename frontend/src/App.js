@@ -797,6 +797,7 @@ function App() {
                 return updated;
               });
               // Call API to stop system
+              return 0; // Return 0 to show 0:00 before turning off
               fetch('/api/system/toggle', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
