@@ -44,31 +44,19 @@ SERVICES = get_service_urls()
 resource_levels = {
     "user_management": {
         "processing": 50,
-        "storage": 50,
-        "traffic": 50,
-        "orders": 50,
-        "completions": 50
+        "storage": 50
     },
     "payment_processing": {
         "processing": 50,
-        "storage": 50,
-        "traffic": 50,
-        "orders": 50,
-        "completions": 50
+        "storage": 50
     },
     "inventory_system": {
         "processing": 50,
-        "storage": 50,
-        "traffic": 50,
-        "orders": 50,
-        "completions": 50
+        "storage": 50
     },
     "notification_center": {
         "processing": 50,
-        "storage": 50,
-        "traffic": 50,
-        "orders": 50,
-        "completions": 50
+        "storage": 50
     }
 }
 

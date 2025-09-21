@@ -777,15 +777,31 @@ function App() {
             console.log(`Countdown: ${prev} seconds remaining`);
             if (prev <= 1) {
               // Time's up - turn off system switch
-              console.log('Countdown finished, calling toggleSystem');
+              console.log('Countdown finished, turning off system');
               setIsCountdownActive(false);
               // Clear the countdown timer first
               if (countdownTimer) {
                 clearInterval(countdownTimer);
                 countdownTimer = null;
               }
-              // Call toggleSystem and let it handle the state cleanup
-              toggleSystem();
+              // Turn off system directly without calling toggleSystem (avoid recursion)
+              setSystemState('stopped');
+              setApps(prev => {
+                const updated = { ...prev };
+                Object.keys(updated).forEach(appName => {
+                  updated[appName] = {
+                    ...updated[appName],
+                    levels: { processing: 0, storage: 0 }
+                  };
+                });
+                return updated;
+              });
+              // Call API to stop system
+              fetch('/api/system/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_running: false })
+              }).catch(console.error);
               return 0; // Show 0:00 briefly before cleanup
             }
             return prev - 1;
