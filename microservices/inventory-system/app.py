@@ -62,7 +62,7 @@ async def metrics():
 @app.get("/system")
 async def system_info():
     """Get system information"""
-    return resource_manager.get_system_info()
+    return resource_manager.get_metrics()
 
 @app.post("/resources")
 async def update_resources(resource_data: Dict[str, Any]):
