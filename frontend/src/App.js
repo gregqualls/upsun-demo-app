@@ -774,6 +774,7 @@ function App() {
         setTimeRemaining(60); // 1 minute countdown
         countdownTimer = setInterval(() => {
           setTimeRemaining(prev => {
+            console.log(`Countdown: ${prev} seconds remaining`);
             if (prev <= 1) {
               // Time's up - turn off system switch
               console.log('Countdown finished, calling toggleSystem');
@@ -794,6 +795,7 @@ function App() {
     };
 
     const stopRuntimeTimer = () => {
+      console.log('stopRuntimeTimer called');
       setSystemStartTime(null);
       setTimeRemaining(null);
       setIsCountdownActive(false);
