@@ -46,24 +46,44 @@ class UpsunMetricsManager:
             total_intensity = sum(levels.values())
             self.is_running = total_intensity > 0
             
-        # Start/stop CPU thread based on processing level
+        # Start/stop CPU thread based on both processing level AND is_running state
         with self._cpu_thread_lock:
-            if self.resource_levels.get('processing', 0) > 0 and not self._cpu_thread:
+            if (self.resource_levels.get('processing', 0) > 0 and 
+                self.is_running and 
+                not self._cpu_thread):
                 self._start_cpu_thread()
-            elif self.resource_levels.get('processing', 0) == 0 and self._cpu_thread:
+            elif ((self.resource_levels.get('processing', 0) == 0 or 
+                   not self.is_running) and 
+                  self._cpu_thread):
+                self._stop_cpu_thread()
+    
+    def set_running(self, running: bool):
+        """Explicitly set the running state (for system toggle)"""
+        with self._lock:
+            self.is_running = running
+            
+        # Start/stop CPU thread based on both processing level AND is_running state
+        with self._cpu_thread_lock:
+            if (self.resource_levels.get('processing', 0) > 0 and 
+                self.is_running and 
+                not self._cpu_thread):
+                self._start_cpu_thread()
+            elif ((self.resource_levels.get('processing', 0) == 0 or 
+                   not self.is_running) and 
+                  self._cpu_thread):
                 self._stop_cpu_thread()
     
     def get_metrics(self) -> Dict[str, Any]:
         """Get hybrid metrics - real-time simulation + Upsun background"""
         current_time = time.time()
         
-        # Refresh Upsun metrics every 60 seconds (matches console)
-        if current_time - self._last_upsun_check > 60:
+        # Refresh Upsun metrics every 120 seconds (less frequent)
+        if current_time - self._last_upsun_check > 120:
             self._refresh_upsun_metrics()
             self._last_upsun_check = current_time
             
-        # Refresh instance count every 30 seconds
-        if current_time - self._last_instance_check > 30:
+        # Refresh instance count every 60 seconds (less frequent)
+        if current_time - self._last_instance_check > 60:
             self._refresh_instance_count()
             self._last_instance_check = current_time
             
@@ -115,12 +135,12 @@ class UpsunMetricsManager:
         processing_level = self.resource_levels.get('processing', 0)
         storage_level = self.resource_levels.get('storage', 0)
         
-        # Add some dynamism to make it look alive
-        cpu_variation = random.uniform(0.9, 1.1)
-        memory_variation = random.uniform(0.95, 1.05)
+        # Add some dynamism to make it look alive (reduced intensity for demo)
+        cpu_variation = random.uniform(0.95, 1.05)  # Less variation
+        memory_variation = random.uniform(0.98, 1.02)  # Even less variation
         
         return {
-            'cpu_percent': min(processing_level * 1.0 * cpu_variation, 100),  # 50 = 50% CPU, 75 = 75% CPU, 100 = 100% CPU
+            'cpu_percent': min(processing_level * 1.3 * cpu_variation, 100),  # 50 = 65% CPU, 75 = 97% CPU, 100 = 100% CPU
             'memory_percent': min(storage_level * 1.0 * memory_variation, 100),  # 50 = 50% RAM, 75 = 75% RAM, 100 = 100% RAM
             'memory_used_mb': int(storage_level * 3.52 * memory_variation),  # 50 = 176MB, 75 = 264MB, 100 = 352MB
             'instance_count': self._instance_count,

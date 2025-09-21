@@ -194,6 +194,32 @@ async def update_all_resource_levels(request_data: Dict[str, Any]):
     
     return {"message": "Resource levels updated for all apps", "levels": resource_levels}
 
+@app.post("/system/toggle")
+async def toggle_system(request_data: Dict[str, Any]):
+    """Toggle system on/off for all apps"""
+    is_running = request_data.get("is_running", False)
+    
+    # Propagate to all services in parallel
+    async def update_service_running(app_name):
+        if app_name not in SERVICES:
+            return
+        service_url = SERVICES[app_name]
+        try:
+            print(f"Setting {app_name} running state to {is_running}")
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                response = await client.post(f"{service_url}/system/running", json={"is_running": is_running})
+                print(f"{app_name} running state updated: {response.status_code}")
+        except Exception as e:
+            print(f"Error updating {app_name} running state: {e}")
+    
+    # Start all updates in background (don't wait)
+    tasks = []
+    for app_name in SERVICES.keys():
+        task = asyncio.create_task(update_service_running(app_name))
+        tasks.append(task)
+    
+    return {"message": f"System {'started' if is_running else 'stopped'} for all apps", "is_running": is_running}
+
 @app.get("/metrics")
 async def get_metrics():
     """Get aggregated metrics from all services"""

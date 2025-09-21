@@ -194,6 +194,7 @@ function App() {
     if (isUpdating) return;
     
     const isCurrentlyRunning = systemState === 'running';
+    const newRunningState = !isCurrentlyRunning;
     const allAppsLevels = {};
     
     // Use current slider values or defaults
@@ -220,7 +221,7 @@ function App() {
       return updated;
     });
     
-    setSystemState(isCurrentlyRunning ? 'stopped' : 'running');
+    setSystemState(newRunningState ? 'running' : 'stopped');
     setIsUpdating(false); // UI is updated, no need to show loading
     
     // Clean up countdown state when toggling system
@@ -229,6 +230,27 @@ function App() {
       setTimeRemaining(null);
       setSystemStartTime(null);
       setIsCountdownActive(false);
+    }
+    
+    // Call the new system toggle endpoint
+    try {
+      const response = await fetch('/api/system/toggle', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          is_running: newRunningState
+        })
+      });
+      
+      if (response.ok) {
+        console.log(`System ${newRunningState ? 'started' : 'stopped'} successfully`);
+      } else {
+        console.error('Failed to toggle system:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error toggling system:', error);
     }
     
     // Log system toggle

@@ -64,6 +64,13 @@ async def system_info():
     """Get system information"""
     return resource_manager.get_metrics()
 
+@app.post("/system/running")
+async def set_running_state(request_data: Dict[str, Any]):
+    """Set the running state of the service"""
+    is_running = request_data.get("is_running", False)
+    resource_manager.set_running(is_running)
+    return {"message": f"Service running state set to {is_running}", "is_running": is_running}
+
 @app.post("/resources")
 async def update_resources(resource_data: Dict[str, Any]):
     """Update resource levels for this service"""
