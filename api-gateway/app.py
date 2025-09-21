@@ -328,7 +328,7 @@ async def get_apps():
     # Add API Gateway (no controls)
     apps["api_gateway"] = {
         "name": "API Gateway",
-        "levels": {"processing": 0, "storage": 0, "traffic": 0, "orders": 0, "completions": 0},
+        "levels": {"processing": 0, "storage": 0},
         "status": "healthy",
         "has_controls": False
     }
@@ -336,7 +336,7 @@ async def get_apps():
     # Add Dashboard (no controls)
     apps["dashboard"] = {
         "name": "Dashboard",
-        "levels": {"processing": 0, "storage": 0, "traffic": 0, "orders": 0, "completions": 0},
+        "levels": {"processing": 0, "storage": 0},
         "status": "healthy",
         "has_controls": False
     }
