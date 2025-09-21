@@ -12,11 +12,23 @@ import json
 import math
 import threading
 import random
-import psutil
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, Optional
-import httpx
-import requests
+try:
+    import httpx
+    HTTPX_AVAILABLE = True
+except ImportError:
+    HTTPX_AVAILABLE = False
+try:
+    import requests
+    REQUESTS_AVAILABLE = True
+except ImportError:
+    REQUESTS_AVAILABLE = False
 
 class UpsunMetricsManager:
     """Hybrid metrics manager - real-time simulation + Upsun metrics"""
@@ -109,9 +121,8 @@ class UpsunMetricsManager:
             }
         
         # Check if we're on Upsun - if so, try to get real container metrics
-        if os.getenv("PLATFORM_APPLICATION_NAME"):
+        if os.getenv("PLATFORM_APPLICATION_NAME") and PSUTIL_AVAILABLE:
             try:
-                import psutil
                 # Get real container metrics
                 cpu_percent = psutil.cpu_percent(interval=0.1)
                 memory = psutil.virtual_memory()
@@ -220,7 +231,7 @@ class UpsunMetricsManager:
                             api_gateway_url = f"http://{service_data[0]['host']}"
                             break
                 
-                if api_gateway_url:
+                if api_gateway_url and REQUESTS_AVAILABLE:
                     response = requests.get(f"{api_gateway_url}/upsun-instances/{self.app_name}", timeout=5)
                     if response.status_code == 200:
                         data = response.json()
