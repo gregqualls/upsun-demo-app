@@ -38,9 +38,8 @@ The application features a modern, responsive UI with per-application resource c
 Each business application includes:
 - **Processing**: CPU-intensive tasks and calculations
 - **Storage**: Memory-intensive operations and data structures
-- **Traffic**: Network communication and API calls
-- **Orders**: Business process simulation and workflow
-- **Completions**: Work completion tracking and metrics
+
+**Simplified Control**: The system now uses a streamlined 2-slider interface (Processing/Storage) for easier demo control while maintaining realistic resource simulation.
 
 **Service Communication**: All services communicate via HTTP using Upsun's internal relationships (`http://service-name.internal`), with centralized resource management through a shared library.
 
@@ -88,15 +87,16 @@ Each business application includes:
 ## 🎯 Demo Features
 
 ### Per-Application Resource Control
-- **Individual App Controls**: Each business application has its own resource sliders
-- **Business Metrics**: Processing, Storage, Traffic, Orders, and Completions
+- **Individual App Controls**: Each business application has its own resource sliders (Processing/Storage)
+- **Simplified Metrics**: Streamlined 2-slider interface for easier demo control
 - **Real-time Adjustments**: Modify resource usage for each app independently
 - **App-Specific Actions**: Start/Stop/Reset individual applications
 - **Bulk Operations**: Control all apps simultaneously
 
 ### Real-time Monitoring
 - **App Status Dashboard**: Live health checks for each business application
-- **Resource Metrics**: Real-time CPU, memory, and network usage per app
+- **Resource Metrics**: Real-time CPU and memory usage per app with visual progress bars
+- **Instance Monitoring**: Live container instance counts with autoscaling indicators
 - **Performance Data**: Request counts, error rates, and response times
 - **System Overview**: Aggregated metrics across all applications
 - **Visual Indicators**: Color-coded status and resource levels
@@ -127,27 +127,27 @@ Each business application is a configurable microservice:
 
 #### User Management (`user-management/`)
 - **Port**: 8001 (local) / Dynamic (Upsun)
-- **Framework**: FastAPI + Shared Resource Manager
+- **Framework**: FastAPI + UpsunMetricsManager
 - **Purpose**: User account and authentication services
-- **Resource Types**: Processing, Storage, Traffic, Orders, Completions
+- **Resource Types**: Processing (CPU), Storage (Memory)
 
 #### Payment Processing (`payment-processing/`)
 - **Port**: 8002 (local) / Dynamic (Upsun)
-- **Framework**: FastAPI + Shared Resource Manager
+- **Framework**: FastAPI + UpsunMetricsManager
 - **Purpose**: Financial transaction handling
-- **Resource Types**: Processing, Storage, Traffic, Orders, Completions
+- **Resource Types**: Processing (CPU), Storage (Memory)
 
 #### Inventory System (`inventory-system/`)
 - **Port**: 8003 (local) / Dynamic (Upsun)
-- **Framework**: FastAPI + Shared Resource Manager
+- **Framework**: FastAPI + UpsunMetricsManager
 - **Purpose**: Product and stock management
-- **Resource Types**: Processing, Storage, Traffic, Orders, Completions
+- **Resource Types**: Processing (CPU), Storage (Memory)
 
 #### Notification Center (`notification-center/`)
 - **Port**: 8004 (local) / Dynamic (Upsun)
-- **Framework**: FastAPI + Shared Resource Manager
+- **Framework**: FastAPI + UpsunMetricsManager
 - **Purpose**: Communication and alerting
-- **Resource Types**: Processing, Storage, Traffic, Orders, Completions
+- **Resource Types**: Processing (CPU), Storage (Memory)
 
 ### Frontend (`frontend/`)
 - **Port**: 3000
@@ -170,9 +170,10 @@ This application is designed to showcase Upsun's key features:
 - Network load affects service instances
 
 ### Built-in Monitoring
-- Upsun's native metrics and monitoring
-- Service health checks and status reporting
-- Performance analytics and alerting
+- **Hybrid Metrics**: Combines real-time simulation with Upsun's native metrics
+- **UpsunMetricsManager**: Intelligent metrics collection and instance monitoring
+- **Service Health Checks**: Real-time status reporting and health indicators
+- **Performance Analytics**: CPU, memory, and instance count tracking
 
 ### Service Discovery
 - Automatic service-to-service communication
@@ -187,18 +188,18 @@ This application is designed to showcase Upsun's key features:
 ## 🆕 What's New in v1
 
 ### Major Architecture Changes
-- **Replaced** separate CPU/Memory/Network services with **4 business applications**
-- **Added** centralized resource management library (`shared_resources.py`)
-- **Created** configurable microservice template system
-- **Updated** frontend with per-app resource controls
-- **Implemented** business-focused metrics (Processing, Storage, Traffic, Orders, Completions)
+- **Simplified Resource Control**: Streamlined from 5 sliders to 2 sliders (Processing/Storage)
+- **Hybrid Metrics System**: UpsunMetricsManager combines real-time simulation with Upsun metrics
+- **Enhanced Monitoring**: Live instance counts, CPU/memory bars, and autoscaling indicators
+- **Improved Performance**: Reduced CPU load and optimized resource simulation
+- **Better Demo Experience**: Cleaner interface focused on core Upsun features
 
 ### Key Improvements
-- **Realistic Microservices**: Each app behaves like a real business service
-- **Individual Control**: Per-app resource management instead of global controls
-- **Better Demo Experience**: More engaging and realistic for presentations
-- **Centralized Resources**: Easy to modify resource simulation logic
-- **Scalable Architecture**: Easy to add more business applications
+- **Simplified Interface**: 2-slider system (Processing/Storage) for easier demo control
+- **Hybrid Metrics**: Real-time simulation combined with Upsun's native monitoring
+- **Live Instance Tracking**: Visual container counts with autoscaling indicators
+- **Better Performance**: Optimized resource simulation with reduced CPU overhead
+- **Enhanced UX**: Cleaner, more focused interface for presentations
 
 ## 🛠️ Development
 
@@ -246,18 +247,18 @@ This application is designed to showcase Upsun's key features:
 
 ### Demo Flow (5-10 minutes)
 1. **Introduction**: Show the modern UI with business application cards
-2. **Per-App Controls**: Demonstrate individual resource sliders for each app
-3. **Business Metrics**: Explain Processing, Storage, Traffic, Orders, Completions
-4. **Real-time Updates**: Show live status indicators and metrics
-5. **Auto-Scaling**: Increase resource usage and show Upsun scaling
-6. **Monitoring**: Show real-time metrics and app health
+2. **Per-App Controls**: Demonstrate individual resource sliders (Processing/Storage) for each app
+3. **Simplified Metrics**: Explain the streamlined 2-slider interface for easier control
+4. **Real-time Updates**: Show live status indicators, CPU/memory bars, and instance counts
+5. **Auto-Scaling**: Increase resource usage and show Upsun scaling with live instance tracking
+6. **Hybrid Monitoring**: Show real-time metrics combined with Upsun's native monitoring
 7. **Dark Mode**: Toggle themes to show UI flexibility
 
 ### Key Talking Points
-- **Realistic Microservices**: Each app behaves like a real business service
-- **Individual Control**: Per-app resource management vs global controls
-- **Business Focus**: Metrics that make sense to business stakeholders
-- **Upsun Features**: Highlight auto-scaling, monitoring, and management
+- **Simplified Interface**: 2-slider system (Processing/Storage) for easier demo control
+- **Hybrid Metrics**: Real-time simulation combined with Upsun's native monitoring
+- **Live Instance Tracking**: Visual container counts with autoscaling indicators
+- **Upsun Features**: Highlight auto-scaling, monitoring, and management capabilities
 - **Developer Experience**: Show easy deployment and configuration
 - **Scalability**: Easy to add more business applications
 
@@ -266,39 +267,14 @@ This application is designed to showcase Upsun's key features:
 ### Main Dashboard
 The application features a clean, modern interface with individual cards for each business application:
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  🌙 Upsun Demo - Multi-Service Resource Simulation    [🌙] │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  Business Applications                                       │
-│  ┌─────────────────┐  ┌─────────────────┐                  │
-│  │ User Management │  │ Payment Process │                  │
-│  │ ● Healthy       │  │ ● Healthy       │                  │
-│  │                 │  │                 │                  │
-│  │ Processing  ████│  │ Processing  ████│                  │
-│  │ Storage     ████│  │ Storage     ████│                  │
-│  │ Traffic     ████│  │ Traffic     ████│                  │
-│  │ Orders      ████│  │ Orders      ████│                  │
-│  │ Completions ████│  │ Completions ████│                  │
-│  │                 │  │                 │                  │
-│  │ [▶ Start] [⏸ Stop] [🔄 Reset]      │  │ [▶ Start] [⏸ Stop] [🔄 Reset]      │
-│  └─────────────────┘  └─────────────────┘                  │
-│                                                             │
-│  ┌─────────────────┐  ┌─────────────────┐                  │
-│  │ Inventory System│  │ Notification Ctr│                  │
-│  │ ● Healthy       │  │ ● Healthy       │                  │
-│  │                 │  │                 │                  │
-│  │ Processing  ████│  │ Processing  ████│                  │
-│  │ Storage     ████│  │ Storage     ████│                  │
-│  │ Traffic     ████│  │ Traffic     ████│                  │
-│  │ Orders      ████│  │ Orders      ████│                  │
-│  │ Completions ████│  │ Completions ████│                  │
-│  │                 │  │                 │                  │
-│  │ [▶ Start] [⏸ Stop] [🔄 Reset]      │  │ [▶ Start] [⏸ Stop] [🔄 Reset]      │
-│  └─────────────────┘  └─────────────────┘                  │
-└─────────────────────────────────────────────────────────────┘
-```
+![Upsun Demo Application Screenshot](Screenshot%202025-10-03%20at%2012.59.15%20PM.png)
+
+The interface showcases:
+- **Individual App Cards**: Each business application has its own card with health status
+- **2-Slider Controls**: Simplified Processing/Storage controls for each app
+- **Live Metrics**: Real-time CPU and memory usage bars
+- **Instance Monitoring**: Visual container instance counts with autoscaling indicators
+- **Modern UI**: Clean design with dark mode toggle and responsive layout
 
 ### Live Demo URLs
 - **Frontend**: https://rearchitect-ljoo54q-ckxfak37732ke.ch-1.platformsh.site/
@@ -327,22 +303,22 @@ The application features a clean, modern interface with individual cards for eac
 ## 🎯 Why v1 is Better
 
 ### For Demos
-- **More Realistic**: Business applications that stakeholders can relate to
-- **Better Engagement**: Individual app controls are more interactive
-- **Clearer Value**: Business metrics make the benefits obvious
-- **Professional Look**: Modern UI that impresses audiences
+- **Simplified Interface**: 2-slider system is easier to understand and control
+- **Better Engagement**: Live instance counts and CPU/memory bars are more visual
+- **Clearer Value**: Hybrid metrics show both simulation and real Upsun data
+- **Professional Look**: Modern UI with live monitoring indicators
 
 ### For Development
-- **Easier to Extend**: Add new apps by just updating the config
-- **Centralized Logic**: Resource simulation in one place
-- **Better Architecture**: Follows microservices best practices
-- **Maintainable**: Clear separation of concerns
+- **Hybrid Metrics**: UpsunMetricsManager combines simulation with real Upsun data
+- **Simplified Logic**: 2-slider system reduces complexity while maintaining realism
+- **Better Performance**: Optimized resource simulation with reduced CPU overhead
+- **Maintainable**: Clear separation of concerns with centralized resource management
 
 ### For Upsun Showcase
-- **Real Auto-Scaling**: Each app scales independently
-- **Better Monitoring**: Per-app metrics and status
-- **Realistic Load**: Business processes create realistic load patterns
-- **Professional Deployment**: Production-ready architecture
+- **Real Auto-Scaling**: Each app scales independently with live instance tracking
+- **Hybrid Monitoring**: Combines real-time simulation with Upsun's native metrics
+- **Visual Indicators**: Live CPU/memory bars and container instance counts
+- **Professional Deployment**: Production-ready architecture with optimized performance
 
 ## 📝 License
 
