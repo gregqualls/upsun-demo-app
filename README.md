@@ -267,7 +267,7 @@ This application is designed to showcase Upsun's key features:
 ### Main Dashboard
 The application features a clean, modern interface with individual cards for each business application:
 
-![Upsun Demo Application Screenshot](Screenshot%202025-10-03%20at%2012.59.15%20PM.png)
+![Upsun Demo Application Screenshot](demo-screenshot.png)
 
 The interface showcases:
 - **Individual App Cards**: Each business application has its own card with health status
