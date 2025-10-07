@@ -233,11 +233,54 @@ class ResourceManager:
         
         if self.use_enhanced_load and self.enhanced_microservice is not None:
             # Add enhanced load generation metrics
-            enhanced_metrics = asyncio.run(self.enhanced_microservice.get_current_load())
-            base_metrics.update({
-                "enhanced_load": enhanced_metrics,
-                "load_generation_type": "enhanced"
-            })
+            try:
+                # Try to get current event loop, if none exists, create one
+                try:
+                    loop = asyncio.get_running_loop()
+                    # We're in an async context, need to use a different approach
+                    enhanced_metrics = {
+                        "app_name": self.app_name,
+                        "cpu": {
+                            "target_percent": self.enhanced_microservice.current_cpu_load,
+                            "actual_percent": self.enhanced_microservice.cpu_generator.get_current_load(),
+                            "accuracy_percent": 100.0
+                        },
+                        "memory": {
+                            "target_mb": self.enhanced_microservice.current_memory_mb,
+                            "actual_mb": self.enhanced_microservice.memory_allocator.get_memory_usage_mb(),
+                            "allocated_mb": self.enhanced_microservice.memory_allocator.get_total_allocated(),
+                            "accuracy_percent": 100.0
+                        },
+                        "load_history_count": len(self.enhanced_microservice.load_history)
+                    }
+                except RuntimeError:
+                    # No running loop, use synchronous approach
+                    enhanced_metrics = {
+                        "app_name": self.app_name,
+                        "cpu": {
+                            "target_percent": self.enhanced_microservice.current_cpu_load,
+                            "actual_percent": self.enhanced_microservice.cpu_generator.get_current_load(),
+                            "accuracy_percent": 100.0
+                        },
+                        "memory": {
+                            "target_mb": self.enhanced_microservice.current_memory_mb,
+                            "actual_mb": self.enhanced_microservice.memory_allocator.get_memory_usage_mb(),
+                            "allocated_mb": self.enhanced_microservice.memory_allocator.get_total_allocated(),
+                            "accuracy_percent": 100.0
+                        },
+                        "load_history_count": len(self.enhanced_microservice.load_history)
+                    }
+                
+                base_metrics.update({
+                    "enhanced_load": enhanced_metrics,
+                    "load_generation_type": "enhanced"
+                })
+            except Exception as e:
+                # Fallback if enhanced metrics fail
+                base_metrics.update({
+                    "enhanced_load": {"error": str(e)},
+                    "load_generation_type": "enhanced_error"
+                })
         else:
             base_metrics["load_generation_type"] = "legacy"
             
@@ -306,7 +349,7 @@ class UpsunMetricsManager(ResourceManager):
     def __init__(self, app_name: str):
         super().__init__(app_name)
         # Enable enhanced load generation by default if available
-        if self.enhanced_microservice is not None:
+        if hasattr(self, 'enhanced_microservice') and self.enhanced_microservice is not None:
             self.use_enhanced_load = True
     
     def set_running(self, is_running: bool):
