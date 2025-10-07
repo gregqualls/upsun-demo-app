@@ -126,3 +126,7 @@ dist
 # Temporary folders
 tmp/
 temp/
+
+# Planning documents (contain sensitive information)
+IMPLEMENTATION_PLAN.md
+SCALSUN_METRICS_ANALYSIS.md
