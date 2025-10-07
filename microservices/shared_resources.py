@@ -2,6 +2,9 @@
 Centralized resource management library for microservices.
 This library provides CPU, memory, and network resource simulation
 that can be used by any microservice in the ecosystem.
+
+Enhanced with professional-grade load generation using PID regulators
+and direct memory allocation for precise control.
 """
 
 import asyncio
@@ -16,6 +19,15 @@ import psutil
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, Optional
 import httpx
+
+# Import enhanced load generation
+try:
+    from enhanced_load_generator import EnhancedMicroservice, CPULoadGenerator, MemoryAllocator
+except ImportError:
+    # Fallback for when enhanced_load_generator is not available
+    EnhancedMicroservice = None
+    CPULoadGenerator = None
+    MemoryAllocator = None
 
 class ResourceManager:
     """Centralized resource management for microservices"""
@@ -35,6 +47,14 @@ class ResourceManager:
         self.memory_data = []
         self.request_count = 0
         self.error_count = 0
+        
+        # Enhanced load generation
+        if EnhancedMicroservice is not None:
+            self.enhanced_microservice = EnhancedMicroservice(app_name)
+            self.use_enhanced_load = True  # Toggle for enhanced vs legacy load generation
+        else:
+            self.enhanced_microservice = None
+            self.use_enhanced_load = False
         
     def get_system_info(self):
         """Get system resource information"""
@@ -161,35 +181,45 @@ class ResourceManager:
                 time.sleep(0.001)
     
     async def update_resources(self, levels: Dict[str, int], api_gateway_url: str = None):
-        """Update all resource levels"""
+        """Update all resource levels with enhanced load generation"""
         self.current_levels.update(levels)
         
-        # Create processing load
-        if "processing" in levels:
-            self.create_processing_load(levels["processing"])
+        if self.use_enhanced_load and self.enhanced_microservice is not None:
+            # Use enhanced load generation for CPU and memory
+            if "processing" in levels:
+                cpu_percent = (levels["processing"] / 100) * 100  # Convert 0-100 to percentage
+                await self.enhanced_microservice.set_cpu_load(cpu_percent)
+            
+            if "storage" in levels:
+                # Convert 0-100 to MB (0% = 0MB, 100% = 200MB)
+                memory_mb = int((levels["storage"] / 100) * 200)
+                await self.enhanced_microservice.set_memory_load(memory_mb)
+        else:
+            # Use legacy load generation
+            if "processing" in levels:
+                self.create_processing_load(levels["processing"])
+            
+            if "storage" in levels:
+                self.create_storage_load(levels["storage"])
         
-        # Create storage load  
-        if "storage" in levels:
-            self.create_storage_load(levels["storage"])
-        
-        # Create traffic load
+        # Create traffic load (always use legacy for network simulation)
         if "traffic" in levels and api_gateway_url:
             await self.create_traffic_load(levels["traffic"], api_gateway_url)
         
-        # Create orders load
+        # Create orders load (always use legacy for business simulation)
         if "orders" in levels:
             self.create_orders_load(levels["orders"])
         
-        # Create completions load
+        # Create completions load (always use legacy for work simulation)
         if "completions" in levels:
             self.create_completions_load(levels["completions"])
     
     def get_metrics(self):
-        """Get current resource metrics"""
+        """Get current resource metrics with enhanced load generation data"""
         memory_info = psutil.virtual_memory()
         cpu_percent = psutil.cpu_percent(interval=1)
         
-        return {
+        base_metrics = {
             "app_name": self.app_name,
             "cpu_percent": cpu_percent,
             "memory_percent": memory_info.percent,
@@ -200,6 +230,18 @@ class ResourceManager:
             "error_count": self.error_count,
             "is_running": self.is_running
         }
+        
+        if self.use_enhanced_load and self.enhanced_microservice is not None:
+            # Add enhanced load generation metrics
+            enhanced_metrics = asyncio.run(self.enhanced_microservice.get_current_load())
+            base_metrics.update({
+                "enhanced_load": enhanced_metrics,
+                "load_generation_type": "enhanced"
+            })
+        else:
+            base_metrics["load_generation_type"] = "legacy"
+            
+        return base_metrics
     
     def get_health(self):
         """Get service health status"""
@@ -217,3 +259,70 @@ class ResourceManager:
                 "app_name": self.app_name,
                 "error": str(e)
             }
+    
+    def set_enhanced_load(self, enabled: bool):
+        """Toggle between enhanced and legacy load generation"""
+        if self.enhanced_microservice is None:
+            self.use_enhanced_load = False
+            return
+            
+        self.use_enhanced_load = enabled
+        if not enabled:
+            # Stop enhanced load generation when switching to legacy
+            self.enhanced_microservice.stop_all_load()
+    
+    async def get_enhanced_load_history(self, limit: int = 10):
+        """Get enhanced load generation history"""
+        if self.use_enhanced_load and self.enhanced_microservice is not None:
+            return self.enhanced_microservice.get_load_history(limit)
+        return []
+    
+    def stop_all_load(self):
+        """Stop all load generation (both enhanced and legacy)"""
+        if self.use_enhanced_load and self.enhanced_microservice is not None:
+            self.enhanced_microservice.stop_all_load()
+        
+        # Stop legacy load generation
+        self.memory_data.clear()
+        for task in self.worker_tasks:
+            if not task.done():
+                task.cancel()
+        self.worker_tasks.clear()
+    
+    def cleanup(self):
+        """Cleanup all resources"""
+        self.stop_all_load()
+        if self.use_enhanced_load and self.enhanced_microservice is not None:
+            self.enhanced_microservice.cleanup()
+        self.thread_pool.shutdown(wait=True)
+
+
+class UpsunMetricsManager(ResourceManager):
+    """
+    Upsun-specific metrics manager that extends ResourceManager
+    Provides compatibility with existing microservice code
+    """
+    
+    def __init__(self, app_name: str):
+        super().__init__(app_name)
+        # Enable enhanced load generation by default if available
+        if hasattr(self, 'enhanced_microservice') and self.enhanced_microservice is not None:
+            self.use_enhanced_load = True
+    
+    def set_running(self, is_running: bool):
+        """Set the running state of the service"""
+        self.is_running = is_running
+        if not is_running:
+            self.stop_all_load()
+    
+    async def update_resources(self, levels: Dict[str, int], api_gateway_url: str = None):
+        """Update resources with Upsun-specific handling"""
+        await super().update_resources(levels, api_gateway_url)
+    
+    def get_metrics(self):
+        """Get metrics with Upsun-specific formatting"""
+        return super().get_metrics()
+    
+    def get_health(self):
+        """Get health status with Upsun-specific formatting"""
+        return super().get_health()

@@ -2,6 +2,9 @@
 Centralized resource management library for microservices.
 This library provides CPU, memory, and network resource simulation
 that can be used by any microservice in the ecosystem.
+
+Enhanced with professional-grade load generation using PID regulators
+and direct memory allocation for precise control.
 """
 
 import asyncio
@@ -12,251 +15,233 @@ import json
 import math
 import threading
 import random
-try:
-    import psutil
-    PSUTIL_AVAILABLE = True
-except ImportError:
-    PSUTIL_AVAILABLE = False
+import psutil
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, Optional
-try:
-    import httpx
-    HTTPX_AVAILABLE = True
-except ImportError:
-    HTTPX_AVAILABLE = False
-try:
-    import requests
-    REQUESTS_AVAILABLE = True
-except ImportError:
-    REQUESTS_AVAILABLE = False
+import httpx
 
-class UpsunMetricsManager:
-    """Hybrid metrics manager - real-time simulation + Upsun metrics"""
+# Import enhanced load generation
+try:
+    from enhanced_load_generator import EnhancedMicroservice, CPULoadGenerator, MemoryAllocator
+except ImportError:
+    # Fallback for when enhanced_load_generator is not available
+    EnhancedMicroservice = None
+    CPULoadGenerator = None
+    MemoryAllocator = None
+
+class ResourceManager:
+    """Centralized resource management for microservices"""
     
     def __init__(self, app_name: str):
         self.app_name = app_name
-        self.is_running = False
-        self.resource_levels = {
-            'processing': 0,  # CPU load
-            'storage': 0      # Memory usage
+        self.current_levels = {
+            "processing": 0,    # CPU-intensive tasks
+            "storage": 0,       # Memory-intensive tasks  
+            "traffic": 0,       # Network-intensive tasks
+            "orders": 0,        # Business process simulation
+            "completions": 0    # Work completion simulation
         }
-        self._last_upsun_metrics = {}
-        self._last_upsun_check = 0
-        self._instance_count = "unknown"
-        self._last_instance_check = 0
-        self._cpu_thread = None
-        self._cpu_thread_lock = threading.Lock()
-        self._lock = threading.Lock()
+        self.is_running = False
+        self.worker_tasks = []
+        self.thread_pool = ThreadPoolExecutor(max_workers=4)
+        self.memory_data = []
         self.request_count = 0
         self.error_count = 0
-        self.memory_data = []
         
-    def update_resources(self, levels: Dict[str, int]):
-        """Update resource levels and determine if app should be running"""
-        with self._lock:
-            self.resource_levels = levels
-            total_intensity = sum(levels.values())
-            self.is_running = total_intensity > 0
-            
-        # Start/stop CPU thread based on both processing level AND is_running state
-        with self._cpu_thread_lock:
-            if (self.resource_levels.get('processing', 0) > 0 and 
-                self.is_running and 
-                not self._cpu_thread):
-                self._start_cpu_thread()
-            elif ((self.resource_levels.get('processing', 0) == 0 or 
-                   not self.is_running) and 
-                  self._cpu_thread):
-                self._stop_cpu_thread()
+        # Enhanced load generation
+        if EnhancedMicroservice is not None:
+            self.enhanced_microservice = EnhancedMicroservice(app_name)
+            self.use_enhanced_load = True  # Toggle for enhanced vs legacy load generation
+        else:
+            self.enhanced_microservice = None
+            self.use_enhanced_load = False
+        
+    def get_system_info(self):
+        """Get system resource information"""
+        cpu_count = psutil.cpu_count()
+        memory_info = psutil.virtual_memory()
+        
+        return {
+            "cpu_count": cpu_count,
+            "memory_total": memory_info.total,
+            "memory_available": memory_info.available,
+            "memory_percent": memory_info.percent,
+            "app_name": self.app_name
+        }
     
-    def set_running(self, running: bool):
-        """Explicitly set the running state (for system toggle)"""
-        with self._lock:
-            self.is_running = running
+    def create_processing_load(self, level: int):
+        """Create CPU-intensive processing load"""
+        if level == 0:
+            return
             
-        # Start/stop CPU thread based on both processing level AND is_running state
-        with self._cpu_thread_lock:
-            if (self.resource_levels.get('processing', 0) > 0 and 
-                self.is_running and 
-                not self._cpu_thread):
-                self._start_cpu_thread()
-            elif ((self.resource_levels.get('processing', 0) == 0 or 
-                   not self.is_running) and 
-                  self._cpu_thread):
-                self._stop_cpu_thread()
+        # Calculate iterations based on level (0-100)
+        iterations = int((level / 100) * 1000000)
+        
+        # CPU-intensive calculations
+        result = 0
+        for i in range(iterations):
+            result += math.sqrt(i * math.pi) * math.sin(i)
+        
+        return result
     
-    def get_metrics(self) -> Dict[str, Any]:
-        """Get hybrid metrics - real-time simulation + Upsun background"""
-        current_time = time.time()
-        
-        # Refresh Upsun metrics every 120 seconds (less frequent)
-        if current_time - self._last_upsun_check > 120:
-            self._refresh_upsun_metrics()
-            self._last_upsun_check = current_time
+    def create_storage_load(self, level: int):
+        """Create memory-intensive storage load"""
+        if level == 0:
+            self.memory_data.clear()
+            return
             
-        # Refresh instance count every 60 seconds (less frequent)
-        if current_time - self._last_instance_check > 60:
-            self._refresh_instance_count()
-            self._last_instance_check = current_time
+        # Calculate memory usage based on level (0-100)
+        # Target: 0% = 0MB, 100% = 200MB per app
+        target_mb = int((level / 100) * 200)
+        
+        # Clear existing data
+        self.memory_data.clear()
+        
+        # Create data structures to consume memory
+        elements_needed = target_mb * 1024  # 1KB per element
+        
+        # Create lists of strings to consume memory
+        chunk_size = 10000
+        for i in range(0, elements_needed, chunk_size):
+            chunk = [f"storage_data_{self.app_name}_{i+j}_{'x'*100}" 
+                    for j in range(min(chunk_size, elements_needed - i))]
+            self.memory_data.extend(chunk)
             
-        # Get real-time simulation metrics
-        sim_metrics = self._get_simulation_metrics()
-        
-        # Blend with Upsun metrics if available
-        if self._last_upsun_metrics:
-            return self._blend_metrics(sim_metrics, self._last_upsun_metrics)
-        
-        return sim_metrics
+            # Small delay to prevent blocking
+            if i % (chunk_size * 10) == 0:
+                time.sleep(0.001)
     
-    def _get_simulation_metrics(self) -> Dict[str, Any]:
-        """Get real-time simulation metrics based on current levels"""
-        if not self.is_running:
-            return {
-                'cpu_percent': 0,
-                'memory_percent': 0,
-                'memory_used_mb': 0,
-                'instance_count': self._instance_count,
-                'is_running': False,
-                'source': 'simulation'
+    async def create_traffic_load(self, level: int, api_gateway_url: str):
+        """Create network-intensive traffic load"""
+        if level == 0:
+            return
+            
+        # Calculate request frequency based on level
+        requests_per_second = int((level / 100) * 10)  # Max 10 requests/second
+        
+        if requests_per_second == 0:
+            return
+            
+        # Make requests to API gateway
+        try:
+            async with httpx.AsyncClient(timeout=2.0) as client:
+                endpoints = ["/", "/health", "/metrics"]
+                endpoint = random.choice(endpoints)
+                
+                response = await client.get(f"{api_gateway_url}{endpoint}")
+                self.request_count += 1
+                
+                if response.status_code >= 400:
+                    self.error_count += 1
+                    
+        except Exception as e:
+            self.error_count += 1
+    
+    def create_orders_load(self, level: int):
+        """Create business process simulation (orders processing)"""
+        if level == 0:
+            return
+            
+        # Simulate order processing workload
+        orders_to_process = int((level / 100) * 1000)
+        
+        # Simulate order processing logic
+        for i in range(orders_to_process):
+            # Simulate order validation
+            order_id = f"ORD-{self.app_name}-{i}"
+            order_data = {
+                "id": order_id,
+                "items": random.randint(1, 10),
+                "total": random.uniform(10.0, 1000.0),
+                "status": "processing"
             }
-        
-        # Check if we're on Upsun - if so, try to get real container metrics
-        if os.getenv("PLATFORM_APPLICATION_NAME") and PSUTIL_AVAILABLE:
-            try:
-                # Get real container metrics
-                cpu_percent = psutil.cpu_percent(interval=0.1)
-                memory = psutil.virtual_memory()
-                memory_percent = memory.percent
-                memory_used_mb = memory.used // (1024 * 1024)
-                
-                return {
-                    'cpu_percent': cpu_percent,
-                    'memory_percent': memory_percent,
-                    'memory_used_mb': memory_used_mb,
-                    'instance_count': self._instance_count,
-                    'is_running': True,
-                    'source': 'container_metrics'
-                }
-            except Exception as e:
-                print(f"[{self.app_name}] Error getting container metrics: {e}")
-                # Fall back to simulation if container metrics fail
-                pass
             
-        # Fallback to simulation for local dev or if container metrics fail
-        processing_level = self.resource_levels.get('processing', 0)
-        storage_level = self.resource_levels.get('storage', 0)
-        
-        # Add some dynamism to make it look alive (reduced intensity for demo)
-        cpu_variation = random.uniform(0.95, 1.05)  # Less variation
-        memory_variation = random.uniform(0.98, 1.02)  # Even less variation
-        
-        return {
-            'cpu_percent': min(processing_level * 1.3 * cpu_variation, 100),  # 50 = 65% CPU, 75 = 97% CPU, 100 = 100% CPU
-            'memory_percent': min(storage_level * 1.0 * memory_variation, 100),  # 50 = 50% RAM, 75 = 75% RAM, 100 = 100% RAM
-            'memory_used_mb': int(storage_level * 3.52 * memory_variation),  # 50 = 176MB, 75 = 264MB, 100 = 352MB
-            'instance_count': self._instance_count,
-            'is_running': True,
-            'source': 'simulation'
-        }
+            # Simulate some processing time
+            if i % 100 == 0:
+                time.sleep(0.001)
     
-    def _blend_metrics(self, sim_metrics: Dict, upsun_metrics: Dict) -> Dict[str, Any]:
-        """Blend simulation metrics with Upsun metrics"""
-        # Use Upsun for instance count and base values
-        # Use simulation for real-time responsiveness
-        return {
-            'cpu_percent': sim_metrics['cpu_percent'],
-            'memory_percent': sim_metrics['memory_percent'],
-            'memory_used_mb': sim_metrics['memory_used_mb'],
-            'instance_count': upsun_metrics.get('instance_count', sim_metrics['instance_count']),
-            'is_running': sim_metrics['is_running'],
-            'source': 'hybrid',
-            'upsun_cpu': upsun_metrics.get('cpu_percent', 0),
-            'upsun_memory': upsun_metrics.get('memory_percent', 0),
-            'last_upsun_update': upsun_metrics.get('timestamp', 'unknown')
-        }
-    
-    def _refresh_upsun_metrics(self):
-        """Get real metrics from Upsun platform"""
-        if not os.getenv("PLATFORM_APPLICATION_NAME"):
+    def create_completions_load(self, level: int):
+        """Create work completion simulation"""
+        if level == 0:
             return
             
-        try:
-            # Get API Gateway URL from PLATFORM_RELATIONSHIPS
-            import base64
-            import json
-            relationships_data = os.getenv("PLATFORM_RELATIONSHIPS")
-            if relationships_data:
-                relationships = json.loads(base64.b64decode(relationships_data).decode('utf-8'))
-                # Find the API Gateway service URL
-                api_gateway_url = None
-                for service_name, service_data in relationships.items():
-                    if 'api-gateway' in service_name or service_name == 'api_gateway':
-                        if isinstance(service_data, list) and len(service_data) > 0:
-                            api_gateway_url = f"http://{service_data[0]['host']}"
-                            break
-                
-                if api_gateway_url:
-                    response = requests.get(f"{api_gateway_url}/upsun-metrics/{self.app_name}", timeout=5)
-                    if response.status_code == 200:
-                        data = response.json()
-                        self._last_upsun_metrics = {
-                            'cpu_percent': data.get('cpu_percent', 0),
-                            'memory_percent': data.get('memory_percent', 0),
-                            'memory_used_mb': data.get('memory_used_mb', 0),
-                            'instance_count': data.get('instance_count', 'unknown'),
-                            'timestamp': time.time()
-                        }
-                        print(f"[{self.app_name}] Updated Upsun metrics: {self._last_upsun_metrics}")
-        except Exception as e:
-            print(f"[{self.app_name}] Error getting Upsun metrics: {e}")
-    
-    def _refresh_instance_count(self):
-        """Get instance count from Upsun resources API"""
-        if not os.getenv("PLATFORM_APPLICATION_NAME"):
-            self._instance_count = 1
-            return
-            
-        try:
-            # Get API Gateway URL from PLATFORM_RELATIONSHIPS
-            import base64
-            import json
-            relationships_data = os.getenv("PLATFORM_RELATIONSHIPS")
-            if relationships_data:
-                relationships = json.loads(base64.b64decode(relationships_data).decode('utf-8'))
-                # Find the API Gateway service URL
-                api_gateway_url = None
-                for service_name, service_data in relationships.items():
-                    if 'api-gateway' in service_name or service_name == 'api_gateway':
-                        if isinstance(service_data, list) and len(service_data) > 0:
-                            api_gateway_url = f"http://{service_data[0]['host']}"
-                            break
-                
-                if api_gateway_url and REQUESTS_AVAILABLE:
-                    response = requests.get(f"{api_gateway_url}/upsun-instances/{self.app_name}", timeout=5)
-                    if response.status_code == 200:
-                        data = response.json()
-                        self._instance_count = data.get('instances', 'unknown')
-                        print(f"[{self.app_name}] Updated instance count: {self._instance_count}")
-        except Exception as e:
-            print(f"[{self.app_name}] Error getting instance count: {e}")
-    
-    def _start_cpu_thread(self):
-        """Start CPU-intensive thread for realistic simulation"""
-        def cpu_worker():
-            while self._cpu_thread and self.resource_levels.get('processing', 0) > 0:
-                # Realistic CPU work for demo - medium load
-                sum(range(50000))  # Moderate work for demo purposes
-                time.sleep(0.01)  # Short sleep for continuous load
+        # Simulate work completion tracking
+        completions = int((level / 100) * 500)
         
-        self._cpu_thread = threading.Thread(target=cpu_worker, daemon=True)
-        self._cpu_thread.start()
-        print(f"[{self.app_name}] Started CPU thread")
+        for i in range(completions):
+            completion = {
+                "id": f"COMP-{self.app_name}-{i}",
+                "timestamp": time.time(),
+                "status": "completed",
+                "duration": random.uniform(0.1, 5.0)
+            }
+            
+            # Simulate some processing
+            if i % 50 == 0:
+                time.sleep(0.001)
     
-    def _stop_cpu_thread(self):
-        """Stop CPU thread"""
-        if self._cpu_thread:
-            self._cpu_thread = None
-            print(f"[{self.app_name}] Stopped CPU thread")
+    async def update_resources(self, levels: Dict[str, int], api_gateway_url: str = None):
+        """Update all resource levels with enhanced load generation"""
+        self.current_levels.update(levels)
+        
+        if self.use_enhanced_load and self.enhanced_microservice is not None:
+            # Use enhanced load generation for CPU and memory
+            if "processing" in levels:
+                cpu_percent = (levels["processing"] / 100) * 100  # Convert 0-100 to percentage
+                await self.enhanced_microservice.set_cpu_load(cpu_percent)
+            
+            if "storage" in levels:
+                # Convert 0-100 to MB (0% = 0MB, 100% = 200MB)
+                memory_mb = int((levels["storage"] / 100) * 200)
+                await self.enhanced_microservice.set_memory_load(memory_mb)
+        else:
+            # Use legacy load generation
+            if "processing" in levels:
+                self.create_processing_load(levels["processing"])
+            
+            if "storage" in levels:
+                self.create_storage_load(levels["storage"])
+        
+        # Create traffic load (always use legacy for network simulation)
+        if "traffic" in levels and api_gateway_url:
+            await self.create_traffic_load(levels["traffic"], api_gateway_url)
+        
+        # Create orders load (always use legacy for business simulation)
+        if "orders" in levels:
+            self.create_orders_load(levels["orders"])
+        
+        # Create completions load (always use legacy for work simulation)
+        if "completions" in levels:
+            self.create_completions_load(levels["completions"])
+    
+    def get_metrics(self):
+        """Get current resource metrics with enhanced load generation data"""
+        memory_info = psutil.virtual_memory()
+        cpu_percent = psutil.cpu_percent(interval=1)
+        
+        base_metrics = {
+            "app_name": self.app_name,
+            "cpu_percent": cpu_percent,
+            "memory_percent": memory_info.percent,
+            "memory_used_mb": (memory_info.total - memory_info.available) // (1024 * 1024),
+            "memory_total_mb": memory_info.total // (1024 * 1024),
+            "current_levels": self.current_levels,
+            "request_count": self.request_count,
+            "error_count": self.error_count,
+            "is_running": self.is_running
+        }
+        
+        if self.use_enhanced_load and self.enhanced_microservice is not None:
+            # Add enhanced load generation metrics
+            enhanced_metrics = asyncio.run(self.enhanced_microservice.get_current_load())
+            base_metrics.update({
+                "enhanced_load": enhanced_metrics,
+                "load_generation_type": "enhanced"
+            })
+        else:
+            base_metrics["load_generation_type"] = "legacy"
+            
+        return base_metrics
     
     def get_health(self):
         """Get service health status"""
@@ -274,6 +259,70 @@ class UpsunMetricsManager:
                 "app_name": self.app_name,
                 "error": str(e)
             }
+    
+    def set_enhanced_load(self, enabled: bool):
+        """Toggle between enhanced and legacy load generation"""
+        if self.enhanced_microservice is None:
+            self.use_enhanced_load = False
+            return
+            
+        self.use_enhanced_load = enabled
+        if not enabled:
+            # Stop enhanced load generation when switching to legacy
+            self.enhanced_microservice.stop_all_load()
+    
+    async def get_enhanced_load_history(self, limit: int = 10):
+        """Get enhanced load generation history"""
+        if self.use_enhanced_load and self.enhanced_microservice is not None:
+            return self.enhanced_microservice.get_load_history(limit)
+        return []
+    
+    def stop_all_load(self):
+        """Stop all load generation (both enhanced and legacy)"""
+        if self.use_enhanced_load and self.enhanced_microservice is not None:
+            self.enhanced_microservice.stop_all_load()
+        
+        # Stop legacy load generation
+        self.memory_data.clear()
+        for task in self.worker_tasks:
+            if not task.done():
+                task.cancel()
+        self.worker_tasks.clear()
+    
+    def cleanup(self):
+        """Cleanup all resources"""
+        self.stop_all_load()
+        if self.use_enhanced_load and self.enhanced_microservice is not None:
+            self.enhanced_microservice.cleanup()
+        self.thread_pool.shutdown(wait=True)
 
-# Backward compatibility
-ResourceManager = UpsunMetricsManager
+
+class UpsunMetricsManager(ResourceManager):
+    """
+    Upsun-specific metrics manager that extends ResourceManager
+    Provides compatibility with existing microservice code
+    """
+    
+    def __init__(self, app_name: str):
+        super().__init__(app_name)
+        # Enable enhanced load generation by default if available
+        if self.enhanced_microservice is not None:
+            self.use_enhanced_load = True
+    
+    def set_running(self, is_running: bool):
+        """Set the running state of the service"""
+        self.is_running = is_running
+        if not is_running:
+            self.stop_all_load()
+    
+    async def update_resources(self, levels: Dict[str, int], api_gateway_url: str = None):
+        """Update resources with Upsun-specific handling"""
+        await super().update_resources(levels, api_gateway_url)
+    
+    def get_metrics(self):
+        """Get metrics with Upsun-specific formatting"""
+        return super().get_metrics()
+    
+    def get_health(self):
+        """Get health status with Upsun-specific formatting"""
+        return super().get_health()

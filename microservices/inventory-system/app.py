@@ -114,5 +114,111 @@ async def reset_resources():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/enhanced/cpu")
+async def set_cpu_load(request_data: Dict[str, Any]):
+    """Set CPU load using enhanced PID regulator approach"""
+    try:
+        if resource_manager.enhanced_microservice is None:
+            raise HTTPException(status_code=503, detail="Enhanced load generation not available")
+            
+        target_percentage = request_data.get("target_percentage", 0)
+        if not 0 <= target_percentage <= 100:
+            raise HTTPException(status_code=400, detail="Target percentage must be between 0 and 100")
+        
+        result = await resource_manager.enhanced_microservice.set_cpu_load(target_percentage)
+        
+        return {
+            "status": "success",
+            "app_name": APP_NAME,
+            "result": result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/enhanced/memory")
+async def set_memory_load(request_data: Dict[str, Any]):
+    """Set memory load using enhanced direct allocation approach"""
+    try:
+        if resource_manager.enhanced_microservice is None:
+            raise HTTPException(status_code=503, detail="Enhanced load generation not available")
+            
+        target_mb = request_data.get("target_mb", 0)
+        if target_mb < 0:
+            raise HTTPException(status_code=400, detail="Target memory must be non-negative")
+        
+        result = await resource_manager.enhanced_microservice.set_memory_load(target_mb)
+        
+        return {
+            "status": "success",
+            "app_name": APP_NAME,
+            "result": result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/enhanced/load")
+async def get_enhanced_load():
+    """Get current enhanced load generation status"""
+    try:
+        if resource_manager.enhanced_microservice is None:
+            raise HTTPException(status_code=503, detail="Enhanced load generation not available")
+            
+        load_status = await resource_manager.enhanced_microservice.get_current_load()
+        
+        return {
+            "status": "success",
+            "app_name": APP_NAME,
+            "load_status": load_status
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/enhanced/history")
+async def get_load_history(limit: int = 10):
+    """Get enhanced load generation history"""
+    try:
+        if resource_manager.enhanced_microservice is None:
+            raise HTTPException(status_code=503, detail="Enhanced load generation not available")
+            
+        history = resource_manager.enhanced_microservice.get_load_history(limit)
+        
+        return {
+            "status": "success",
+            "app_name": APP_NAME,
+            "history": history
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/enhanced/toggle")
+async def toggle_enhanced_load(request_data: Dict[str, Any]):
+    """Toggle between enhanced and legacy load generation"""
+    try:
+        enabled = request_data.get("enabled", True)
+        resource_manager.set_enhanced_load(enabled)
+        
+        return {
+            "status": "success",
+            "app_name": APP_NAME,
+            "enhanced_load_enabled": enabled,
+            "message": f"Enhanced load generation {'enabled' if enabled else 'disabled'}"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/enhanced/stop")
+async def stop_all_load():
+    """Stop all load generation"""
+    try:
+        resource_manager.stop_all_load()
+        
+        return {
+            "status": "success",
+            "app_name": APP_NAME,
+            "message": "All load generation stopped"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=APP_PORT)
