@@ -35,7 +35,7 @@ def get_service_urls():
             "user_management": "http://localhost:8001",
             "payment_processing": "http://localhost:8002", 
             "inventory_system": "http://localhost:8003",
-            "notification_center": "http://localhost:8004",
+            "notification_center": "http://localhost:8005",
         }
 
 SERVICES = get_service_urls()
