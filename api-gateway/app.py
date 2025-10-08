@@ -361,33 +361,32 @@ async def get_instance_count(app_name: str):
                 text=True,
                 timeout=10
             )
+        except FileNotFoundError:
+            # Upsun CLI not available in container
+            print(f"Upsun CLI not available for {app_name}")
+            return {"instances": "unknown", "source": "cli_not_available"}
+        
+        if result.returncode == 0:
+            # Parse the table output to find instance count
+            lines = result.stdout.strip().split('\n')
+            print(f"Upsun resources output for {app_name}: {result.stdout}")
             
-            if result.returncode == 0:
-                # Parse the table output to find instance count
-                lines = result.stdout.strip().split('\n')
-                print(f"Upsun resources output for {app_name}: {result.stdout}")
-                
-                for line in lines:
-                    if '|' in line and app_name in line:
-                        # Split by | and look for the instances column
-                        parts = [part.strip() for part in line.split('|')]
-                        if len(parts) >= 6:  # Should have at least 6 columns
-                            try:
-                                instances = int(parts[5])  # Instances is the 6th column
-                                print(f"Found {instances} instances for {app_name} from Upsun CLI table")
-                                return {"instances": instances, "source": "upsun_cli"}
-                            except (ValueError, IndexError) as e:
-                                print(f"Error parsing instances for {app_name}: {e}")
-                                continue
-                
-                print(f"App {app_name} not found in Upsun resources table")
-            else:
-                print(f"Upsun CLI failed: {result.stderr}")
-                
-        except subprocess.TimeoutExpired:
-            print(f"Upsun CLI timeout for {app_name}")
-        except Exception as e:
-            print(f"Upsun CLI error for {app_name}: {e}")
+            for line in lines:
+                if '|' in line and app_name in line:
+                    # Split by | and look for the instances column
+                    parts = [part.strip() for part in line.split('|')]
+                    if len(parts) >= 6:  # Should have at least 6 columns
+                        try:
+                            instances = int(parts[5])  # Instances is the 6th column
+                            print(f"Found {instances} instances for {app_name} from Upsun CLI table")
+                            return {"instances": instances, "source": "upsun_cli"}
+                        except (ValueError, IndexError) as e:
+                            print(f"Error parsing instances for {app_name}: {e}")
+                            continue
+            
+            print(f"App {app_name} not found in Upsun resources table")
+        else:
+            print(f"Upsun CLI failed: {result.stderr}")
         
         # Can't get instance count from Upsun CLI - return unknown
         print(f"Could not determine instance count for {app_name} from Upsun CLI")
