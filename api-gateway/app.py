@@ -41,10 +41,10 @@ SERVICES = get_service_urls()
 
 # Global state for resource levels - per app (default to medium/50)
 resource_levels = {
-    "user_management": {"processing": 0, "storage": 0},
-    "payment_processing": {"processing": 0, "storage": 0},
-    "inventory_system": {"processing": 0, "storage": 0},
-    "notification_center": {"processing": 0, "storage": 0},
+    "user_management": {"processing": 50, "storage": 50},
+    "payment_processing": {"processing": 50, "storage": 50},
+    "inventory_system": {"processing": 50, "storage": 50},
+    "notification_center": {"processing": 50, "storage": 50},
 }
 
 # Global system state - initialize by checking microservices
@@ -93,21 +93,21 @@ async def get_apps():
                     apps[service_name] = {
                         "name": service_name.replace("_", " ").title(),
                         "status": health_data.get("status", "unknown"),
-                        "levels": resource_levels.get(service_name, {"processing": 0, "storage": 0}),
+                        "levels": resource_levels.get(service_name, {"processing": 50, "storage": 50}),
                         "has_controls": True
                     }
                 else:
                     apps[service_name] = {
                         "name": service_name.replace("_", " ").title(),
                         "status": "unhealthy",
-                        "levels": resource_levels.get(service_name, {"processing": 0, "storage": 0}),
+                        "levels": resource_levels.get(service_name, {"processing": 50, "storage": 50}),
                         "has_controls": True
                     }
         except Exception as e:
             apps[service_name] = {
                 "name": service_name.replace("_", " ").title(),
                 "status": "unhealthy",
-                "levels": resource_levels.get(service_name, {"processing": 0, "storage": 0}),
+                "levels": resource_levels.get(service_name, {"processing": 50, "storage": 50}),
                 "has_controls": True
             }
     
