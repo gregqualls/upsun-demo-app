@@ -70,6 +70,15 @@
 - **Database**: Use local PostgreSQL or SQLite for development
 - **CLI Tools**: Install Upsun CLI locally for testing
 
+### Upsun Environment Testing
+- **CRITICAL**: Local testing won't work for this project since it's designed to use resources and cause Upsun to read that usage
+- All testing must happen in Upsun environments, not locally
+- GitHub integration automatically builds and deploys changes when pushed to branches
+- Allow time for Upsun builds/deployments (typically 2-5 minutes)
+- Always test functionality in the actual Upsun environment where resource usage can be measured
+- Monitor Upsun deployment logs to troubleshoot issues
+- Use Upsun MCP tools to check environment status and logs
+
 ### Staging Environment
 - **Branch**: `enhanced-metrics-integration` branch
 - **Testing**: Comprehensive testing before production
