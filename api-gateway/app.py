@@ -47,8 +47,28 @@ resource_levels = {
     "notification_center": {"processing": 0, "storage": 0},
 }
 
-# Global system state
-system_running = False
+# Global system state - initialize by checking microservices
+async def get_initial_system_state():
+    """Check if microservices are running to determine initial system state"""
+    running_count = 0
+    total_count = len(SERVICES)
+    
+    for service_name, service_url in SERVICES.items():
+        try:
+            async with httpx.AsyncClient(timeout=2.0) as client:
+                response = await client.get(f"{service_url}/system")
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get("is_running", False):
+                        running_count += 1
+        except:
+            pass  # Service is not running
+    
+    # System is considered running if majority of services are running
+    return running_count > total_count // 2
+
+# Initialize system state
+system_running = False  # Will be updated on first request
 
 @app.get("/")
 async def root():
@@ -278,6 +298,12 @@ async def get_metrics():
 @app.get("/system")
 async def get_system_info():
     """Get system information from all services"""
+    global system_running
+    
+    # Initialize system state if not set yet
+    if not system_running:
+        system_running = await get_initial_system_state()
+    
     system_info = {
         "system_running": system_running,
         "services": {}
@@ -289,7 +315,12 @@ async def get_system_info():
             async with httpx.AsyncClient(timeout=5.0) as client:
                 response = await client.get(f"{service_url}/system")
                 if response.status_code == 200:
-                    system_info["services"][service_name] = response.json()
+                    data = response.json()
+                    system_info["services"][service_name] = {
+                        "app_name": service_name,
+                        "status": "healthy" if data.get("is_running", False) else "unhealthy",
+                        "is_running": data.get("is_running", False)
+                    }
                 else:
                     system_info["services"][service_name] = {
                         "app_name": service_name,

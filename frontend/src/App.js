@@ -343,6 +343,12 @@ function App() {
       }
       const data = await response.json();
       setSystemInfo(data);
+      
+      // Set system state based on API response
+      if (data.system_running !== undefined) {
+        setSystemState(data.system_running ? 'running' : 'stopped');
+      }
+      
       setApiError(null);
     } catch (error) {
       console.error('Error fetching system info:', error);
