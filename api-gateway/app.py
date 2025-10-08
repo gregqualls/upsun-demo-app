@@ -71,28 +71,40 @@ async def get_apps():
                 if response.status_code == 200:
                     health_data = response.json()
                     apps[service_name] = {
-                        "name": service_name,
-                        "displayName": service_name.replace("_", " ").title(),
+                        "name": service_name.replace("_", " ").title(),
                         "status": health_data.get("status", "unknown"),
                         "levels": resource_levels.get(service_name, {"processing": 0, "storage": 0}),
                         "has_controls": True
                     }
                 else:
                     apps[service_name] = {
-                        "name": service_name,
-                        "displayName": service_name.replace("_", " ").title(),
+                        "name": service_name.replace("_", " ").title(),
                         "status": "unhealthy",
                         "levels": resource_levels.get(service_name, {"processing": 0, "storage": 0}),
                         "has_controls": True
                     }
         except Exception as e:
             apps[service_name] = {
-                "name": service_name,
-                "displayName": service_name.replace("_", " ").title(),
+                "name": service_name.replace("_", " ").title(),
                 "status": "unhealthy",
                 "levels": resource_levels.get(service_name, {"processing": 0, "storage": 0}),
                 "has_controls": True
             }
+    
+    # Add API Gateway and Dashboard to the apps list
+    apps["api_gateway"] = {
+        "name": "API Gateway",
+        "status": "healthy",
+        "levels": {"processing": 0, "storage": 0},
+        "has_controls": False
+    }
+    
+    apps["dashboard"] = {
+        "name": "Dashboard", 
+        "status": "healthy",
+        "levels": {"processing": 0, "storage": 0},
+        "has_controls": False
+    }
     
     return apps
 
