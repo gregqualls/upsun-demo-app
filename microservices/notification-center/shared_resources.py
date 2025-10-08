@@ -20,14 +20,14 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, Optional
 import httpx
 
-# Import enhanced load generation
-try:
-    from enhanced_load_generator import EnhancedMicroservice, CPULoadGenerator, MemoryAllocator
-except ImportError:
-    # Fallback for when enhanced_load_generator is not available
-    EnhancedMicroservice = None
-    CPULoadGenerator = None
-    MemoryAllocator = None
+# Import enhanced load generation - TEMPORARILY DISABLED FOR DEBUGGING
+# try:
+#     from enhanced_load_generator import EnhancedMicroservice, CPULoadGenerator, MemoryAllocator
+# except ImportError:
+#     # Fallback for when enhanced_load_generator is not available
+EnhancedMicroservice = None
+CPULoadGenerator = None
+MemoryAllocator = None
 
 class ResourceManager:
     """Centralized resource management for microservices"""

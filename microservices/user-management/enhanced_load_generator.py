@@ -8,6 +8,7 @@ import psutil
 import time
 import threading
 import asyncio
+import os
 from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
 
@@ -213,7 +214,7 @@ class MemoryAllocator:
     
     def get_memory_usage_mb(self) -> int:
         """Get actual memory usage in MB"""
-        process = psutil.Process()
+        process = psutil.Process(os.getpid())
         memory_info = process.memory_info()
         return memory_info.rss // (1024 * 1024)
 
